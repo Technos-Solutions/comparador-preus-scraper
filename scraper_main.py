@@ -37,7 +37,6 @@ print("✅ Connectat a Google Sheets")
 class GoogleSheetsDB:
     def __init__(self, sheet):
         self.sheet = sheet
-    
     def guardar_preus(self, preus_list):
         if not preus_list:
             print("⚠️ No hi ha preus per guardar")
@@ -45,17 +44,21 @@ class GoogleSheetsDB:
         
         ws = self.sheet.worksheet('Preus')
         
+        # Afegir data
         for preu in preus_list:
             preu['data'] = datetime.now().strftime('%Y-%m-%d %H:%M')
         
-        existing = ws.get_all_records()
-        if existing:
-           if existing:
-            ids = [r.get('id', 0) for r in existing if isinstance(r.get('id'), (int, float))]
-            last_id = max(ids) if ids else 0
-        else:
+        # Obtenir últim ID de forma segura
+        try:
+            existing = ws.get_all_values()  # Canviat: get_all_values en lloc de get_all_records
+            if len(existing) > 1:  # Si hi ha més d'una fila (capçalera + dades)
+                last_id = len(existing) - 1  # Últim ID = número de files - 1
+            else:
+                last_id = 0
+        except:
             last_id = 0
         
+        # Preparar files
         rows = []
         for i, preu in enumerate(preus_list, start=1):
             row = [
@@ -69,6 +72,7 @@ class GoogleSheetsDB:
             ]
             rows.append(row)
         
+        # Guardar
         ws.append_rows(rows)
         print(f"✅ {len(preus_list)} preus guardats a Google Sheets!")
 
