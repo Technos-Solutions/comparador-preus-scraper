@@ -50,9 +50,11 @@ class GoogleSheetsDB:
         
         existing = ws.get_all_records()
         if existing:
-            last_id = max([r['id'] for r in existing if r.get('id')])
-        else:
-            last_id = 0
+            if existing:
+    ids = [r.get('id', 0) for r in existing if isinstance(r.get('id'), (int, float))]
+    last_id = max(ids) if ids else 0
+else:
+    last_id = 0
         
         rows = []
         for i, preu in enumerate(preus_list, start=1):
