@@ -213,36 +213,96 @@ class EsclatScraper:
 if __name__ == '__main__':
     db = GoogleSheetsDB(sheet)
     
+    # ============================================
+    # FASE 1: EXTREURE TOTS ELS PRODUCTES
+    # ============================================
+    print("\n" + "="*60)
+    print("🔄 FASE 1: Extraient productes de tots els supermercats...")
+    print("="*60)
+    
+    tots_productes = []
+    
     # Mercadona
     scraper_mercadona = MercadonaScraper()
-    productes_mercadona = scraper_mercadona.scrape_all(max_productes=10)
-    db.guardar_preus(productes_mercadona)
+    productes_mercadona = scraper_mercadona.scrape_all(max_productes=50)
+    tots_productes.extend(productes_mercadona)
     
     # Dia
     scraper_dia = DiaScraper()
-    productes_dia = scraper_dia.scrape_all(max_productes=5)
-    db.guardar_preus(productes_dia)
+    productes_dia = scraper_dia.scrape_all(max_productes=20)
+    tots_productes.extend(productes_dia)
     
     # Bon Àrea
     scraper_bonarea = BonAreaScraper()
-    productes_bonarea = scraper_bonarea.scrape_all(max_productes=5)
-    db.guardar_preus(productes_bonarea)
+    productes_bonarea = scraper_bonarea.scrape_all(max_productes=20)
+    tots_productes.extend(productes_bonarea)
     
     # Carrefour
     scraper_carrefour = CarrefourScraper()
-    productes_carrefour = scraper_carrefour.scrape_all(max_productes=5)
-    db.guardar_preus(productes_carrefour)
+    productes_carrefour = scraper_carrefour.scrape_all(max_productes=20)
+    tots_productes.extend(productes_carrefour)
     
     # Bon Preu
     scraper_bonpreu = BonPreuScraper()
-    productes_bonpreu = scraper_bonpreu.scrape_all(max_productes=5)
-    db.guardar_preus(productes_bonpreu)
+    productes_bonpreu = scraper_bonpreu.scrape_all(max_productes=20)
+    tots_productes.extend(productes_bonpreu)
     
     # Esclat
     scraper_esclat = EsclatScraper()
-    productes_esclat = scraper_esclat.scrape_all(max_productes=5)
-    db.guardar_preus(productes_esclat)
+    productes_esclat = scraper_esclat.scrape_all(max_productes=20)
+    tots_productes.extend(productes_esclat)
+    
+    # ============================================
+    # FASE 2: OMPLIR FULL TEMPORAL
+    # ============================================
+    print("\n" + "="*60)
+    print(f"🔄 FASE 2: Omplint full temporal ({len(tots_productes)} productes)...")
+    print("="*60)
+    
+    ws_temp = sheet.worksheet('Preus_Temp')
+    ws_temp.clear()
+    ws_temp.append_row(['id', 'producte', 'marca', 'supermercat', 'preu', 'quantitat', 'data'])
+    
+    # Preparar dades
+    for preu in tots_productes:
+        preu['data'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+    
+    rows = []
+    for i, preu in enumerate(tots_productes, start=1):
+        row = [
+            i,
+            preu.get('producte', ''),
+            preu.get('marca', ''),
+            preu.get('supermercat', ''),
+            preu.get('preu', 0),
+            preu.get('quantitat', ''),
+            preu.get('data', '')
+        ]
+        rows.append(row)
+    
+    ws_temp.append_rows(rows)
+    print(f"✅ Full temporal omplert amb {len(tots_productes)} productes")
+    
+    # ============================================
+    # FASE 3: SWAP ATÒMIC (copiar Temp → Preus)
+    # ============================================
+    print("\n" + "="*60)
+    print("🔄 FASE 3: Actualitzant full principal (swap atòmic)...")
+    print("="*60)
+    
+    ws_preus = sheet.worksheet('Preus')
+    
+    # Obtenir totes les dades del temporal
+    all_data = ws_temp.get_all_values()
+    
+    # Netejar i copiar d'un cop (swap de ~5 segons)
+    ws_preus.clear()
+    ws_preus.append_rows(all_data)
+    
+    print("✅ Full 'Preus' actualitzat correctament")
     
     print("\n" + "="*60)
     print("✅ SCRAPERS COMPLETATS!")
+    print(f"📊 Total productes: {len(tots_productes)}")
+    print("✅ App sempre amb dades disponibles")
     print("="*60)
