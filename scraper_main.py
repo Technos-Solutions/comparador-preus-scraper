@@ -169,7 +169,7 @@ class BonAreaScraper:
         return productes
 
 class CarrefourScraper:
-    def __init__(self):
+   def __init__(self):
         self.base_url = 'https://www.carrefour.es'
         
         # Configuració Chrome headless
@@ -180,7 +180,13 @@ class CarrefourScraper:
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         
-        self.driver = webdriver.Chrome(options=chrome_options)
+        # Path Chrome per GitHub Actions
+        chrome_options.binary_location = '/usr/bin/chromium-browser'  # ← AFEGEIX AIXÒ
+        
+        from selenium.webdriver.chrome.service import Service  # ← AFEGEIX AIXÒ
+        service = Service('/usr/bin/chromedriver')  # ← AFEGEIX AIXÒ
+        
+        self.driver = webdriver.Chrome(service=service, options=chrome_options)  # ← MODIFICA AIXÒ
         self.productes = []
     
     def scrape_categoria(self, url_categoria, max_productes=50):
