@@ -236,7 +236,7 @@ class CarrefourScraper:
     
     def scrape_all(self, max_productes=100):
         """Extreu productes amb Selenium"""
-        print("\n🟠 Carrefour Selenium: extraient productes...")
+        print("\n🔴 Carrefour: extraient productes amb Selenium...")
         
         categories = [
             f'{self.base_url}/supermercado/frescos/cat20002/c',
