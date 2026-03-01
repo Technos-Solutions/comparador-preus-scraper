@@ -173,7 +173,7 @@ class DiaScraper:
             print(f"  ❌ Error Dia: {e}")
         self.driver.quit()
         return self.productes
-
+        
 class BonAreaScraper:
     def scrape_all(self, max_productes=10):
         print(f"\n🟠 Bon Àrea: extraient {max_productes} productes...")
