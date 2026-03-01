@@ -181,15 +181,15 @@ class CarrefourScraper:
         from selenium.webdriver.chrome.service import Service
         service = Service('/usr/bin/chromedriver')
         self.driver = webdriver.Chrome(service=service, options=chrome_options)
-        self.productes = []
+        self.productes = [] 
     
     def scrape_categoria(self, url_categoria, max_productes=50):
         print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
         self.driver.get(url_categoria)
         time.sleep(5)
-        for i in range(3):
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(2)
+        for i in range(10):  # ← 10 scrolls (més productes)
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(3)  # ← Més temps per carregar
         try:
             WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.product-card__title-link')))
             productes_noms = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__title-link')
