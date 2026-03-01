@@ -169,75 +169,58 @@ class BonAreaScraper:
         return productes
 
 class CarrefourScraper:
-   def __init__(self):
+    def __init__(self):
         self.base_url = 'https://www.carrefour.es'
-        
-        # Configuració Chrome headless
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
-        
-        # Path Chrome per GitHub Actions
-        chrome_options.binary_location = '/usr/bin/chromium-browser'  # ← AFEGEIX AIXÒ
-        
-        from selenium.webdriver.chrome.service import Service  # ← AFEGEIX AIXÒ
-        service = Service('/usr/bin/chromedriver')  # ← AFEGEIX AIXÒ
-        
-        self.driver = webdriver.Chrome(service=service, options=chrome_options)  # ← MODIFICA AIXÒ
+        chrome_options.binary_location = '/usr/bin/chromium-browser'
+        from selenium.webdriver.chrome.service import Service
+        service = Service('/usr/bin/chromedriver')
+        self.driver = webdriver.Chrome(service=service, options=chrome_options)
         self.productes = []
     
     def scrape_categoria(self, url_categoria, max_productes=50):
-        """Extreu productes d'una categoria"""
         print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
-        
         self.driver.get(url_categoria)
         time.sleep(5)
-        
-        # Scroll
         for i in range(3):
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(2)
-        
         try:
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, '.product-card__title-link'))
-            )
-            
+            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.product-card__title-link')))
             productes_noms = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__title-link')
             productes_preus = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__price')
-            
             count = 0
             for i in range(min(len(productes_noms), len(productes_preus), max_productes)):
                 try:
                     nom = productes_noms[i].text.strip()
                     preu_text = productes_preus[i].text.strip()
-                    
                     if not nom or not preu_text:
                         continue
-                    
                     preu_text = preu_text.replace('€', '').replace(',', '.').strip()
                     preu = float(preu_text)
-                    
-                    self.productes.append({
-                        'producte': nom,
-                        'marca': 'Carrefour',
-                        'supermercat': 'Carrefour',
-                        'preu': preu,
-                        'quantitat': '1u'
-                    })
+                    self.productes.append({'producte': nom, 'marca': 'Carrefour', 'supermercat': 'Carrefour', 'preu': preu, 'quantitat': '1u'})
                     count += 1
-                    
                 except:
                     continue
-            
             print(f"  ✅ {count} productes extrets")
-        
         except Exception as e:
             print(f"  ❌ Error: {e}")
-        
+        return self.productes
+    
+    def scrape_all(self, max_productes=100):
+        print("\n🔴 Carrefour: extraient productes amb Selenium...")
+        categories = [f'{self.base_url}/supermercado/frescos/cat20002/c', f'{self.base_url}/supermercado/despensa/cat20014/c', f'{self.base_url}/supermercado/bebidas/cat20006/c']
+        productes_per_cat = max_productes // len(categories)
+        for url in categories:
+            self.scrape_categoria(url, max_productes=productes_per_cat)
+            time.sleep(2)
+        self.driver.quit()
+        print(f"✅ Carrefour: {len(self.productes)} productes extrets")
         return self.productes
     
     def scrape_all(self, max_productes=100):
