@@ -132,24 +132,47 @@ class MercadonaScraper:
 
 class DiaScraper:
     def __init__(self):
-        pass
+        self.base_url = 'https://www.dia.es/compra-online'
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+        chrome_options.binary_location = '/usr/bin/chromium-browser'
+        from selenium.webdriver.chrome.service import Service
+        service = Service('/usr/bin/chromedriver')
+        self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        self.productes = []
     
-    def scrape_all(self, max_productes=10):
-        print(f"\n🟣 Dia: extraient {max_productes} productes...")
-        
-        productes = [
-            {'producte': 'Leche semidesnatada Día Láctea', 'marca': 'Día Láctea', 'supermercat': 'Dia', 'preu': 0.88, 'quantitat': '1L'},
-            {'producte': 'Leche entera Día Láctea', 'marca': 'Día Láctea', 'supermercat': 'Dia', 'preu': 0.92, 'quantitat': '1L'},
-            {'producte': 'Leche desnatada Día Láctea', 'marca': 'Día Láctea', 'supermercat': 'Dia', 'preu': 0.88, 'quantitat': '1L'},
-            {'producte': 'Pan de molde blanco Día', 'marca': 'Día', 'supermercat': 'Dia', 'preu': 0.75, 'quantitat': '450g'},
-            {'producte': 'Arroz largo Día', 'marca': 'Día', 'supermercat': 'Dia', 'preu': 0.95, 'quantitat': '1kg'},
-            {'producte': 'Aceite de girasol Día', 'marca': 'Día', 'supermercat': 'Dia', 'preu': 2.49, 'quantitat': '1L'},
-            {'producte': 'Pasta macarrones Día', 'marca': 'Día', 'supermercat': 'Dia', 'preu': 0.79, 'quantitat': '500g'},
-            {'producte': 'Tomate frito Día', 'marca': 'Día', 'supermercat': 'Dia', 'preu': 0.55, 'quantitat': '400g'},
-        ][:max_productes]
-        
-        print(f"✅ Dia: {len(productes)} productes extrets")
-        return productes
+    def scrape_all(self, max_productes=50):
+        print("\n🟣 Dia: extraient productes amb Selenium...")
+        self.driver.get(self.base_url)
+        time.sleep(8)
+        for i in range(5):
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(3)
+        try:
+            WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.search-product-card__top-section-content')))
+            productes_cards = self.driver.find_elements(By.CSS_SELECTOR, '.search-product-card__top-section-content')
+            print(f"  Trobats {len(productes_cards)} productes")
+            count = 0
+            for card in productes_cards[:max_productes]:
+                try:
+                    nom = card.text.split('\n')[0].strip()
+                    preu_element = card.find_element(By.CSS_SELECTOR, '.search-product-card__active-price')
+                    preu_text = preu_element.text.replace('€', '').replace(',', '.').strip()
+                    preu = float(preu_text)
+                    if nom and preu > 0:
+                        self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
+                        count += 1
+                except:
+                    continue
+            print(f"✅ Dia: {count} productes extrets")
+        except Exception as e:
+            print(f"  ❌ Error Dia: {e}")
+        self.driver.quit()
+        return self.productes
 
 class BonAreaScraper:
     def scrape_all(self, max_productes=10):
