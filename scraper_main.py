@@ -144,7 +144,6 @@ class DiaScraper:
         service = Service('/usr/bin/chromedriver')
         self.driver = webdriver.Chrome(service=service, options=chrome_options)
         self.productes = []
-    
     def scrape_all(self, max_productes=50):
         print("\n🟣 Dia: extraient productes amb Selenium...")
         self.driver.get(self.base_url)
