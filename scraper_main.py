@@ -210,10 +210,10 @@ class CarrefourScraper:
     print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
     self.driver.get(url_categoria)
     time.sleep(5)
-    for i in range(10):  # ← 10 scrolls (més productes)
+        for i in range(10):  # ← 10 scrolls (més productes)
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(3)  # ← Més temps per carregar
-    try:
+        try:
         WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.product-card__title-link')))
         productes_noms = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__title-link')
         productes_preus = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__price')
