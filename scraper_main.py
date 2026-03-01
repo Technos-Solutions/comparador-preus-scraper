@@ -207,17 +207,17 @@ class CarrefourScraper:
         self.productes = [] 
     
     def scrape_categoria(self, url_categoria, max_productes=50):
-        print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
-        self.driver.get(url_categoria)
-        time.sleep(5)
-        for i in range(10):  # ← 10 scrolls (més productes)
+    print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
+    self.driver.get(url_categoria)
+    time.sleep(5)
+    for i in range(10):  # ← 10 scrolls (més productes)
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(3)  # ← Més temps per carregar
-        try:
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.product-card__title-link')))
-            productes_noms = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__title-link')
-            productes_preus = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__price')
-            count = 0
+    try:
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.product-card__title-link')))
+        productes_noms = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__title-link')
+        productes_preus = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__price')
+        count = 0
             for i in range(min(len(productes_noms), len(productes_preus), max_productes)):
                 try:
                     nom = productes_noms[i].text.strip()
