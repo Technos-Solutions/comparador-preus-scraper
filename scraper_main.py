@@ -152,24 +152,24 @@ class DiaScraper:
         for i in range(5):
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(3)
-        try:
-            WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.search-product-card__top-section-content')))
-            productes_cards = self.driver.find_elements(By.CSS_SELECTOR, '.search-product-card__top-section-content')
-            print(f"  Trobats {len(productes_cards)} productes")
-            count = 0
-            for card in productes_cards[:max_productes]:
-                try:
-                    nom = card.text.split('\n')[0].strip()
-                    preu_element = card.find_element(By.CSS_SELECTOR, '.search-product-card__active-price')
-                    preu_text = preu_element.text.replace('€', '').replace(',', '.').strip()
-                    preu = float(preu_text)
-                    if nom and preu > 0:
-                        self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
-                        count += 1
-                except:
-                    continue
+    try:
+        WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.search-product-card__top-section-content')))
+        productes_cards = self.driver.find_elements(By.CSS_SELECTOR, '.search-product-card__top-section-content')
+        print(f"  Trobats {len(productes_cards)} productes")
+        count = 0
+        for card in productes_cards[:max_productes]:
+            try:
+                nom = card.text.split('\n')[0].strip()
+                preu_element = card.find_element(By.CSS_SELECTOR, '.search-product-card__active-price')
+                preu_text = preu_element.text.replace('€', '').replace(',', '.').strip()
+                preu = float(preu_text)
+                if nom and preu > 0:
+                    self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
+                    count += 1
+            except:
+                continue
             print(f"✅ Dia: {count} productes extrets")
-        except Exception as e:
+            except Exception as e:
             print(f"  ❌ Error Dia: {e}")
         self.driver.quit()
         return self.productes
