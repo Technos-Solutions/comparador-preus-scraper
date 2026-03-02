@@ -152,7 +152,7 @@ class DiaScraper:
         for i in range(5):
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(3)
-    try:
+        try:
         WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.search-product-card__top-section-content')))
         productes_cards = self.driver.find_elements(By.CSS_SELECTOR, '.search-product-card__top-section-content')
         print(f"  Trobats {len(productes_cards)} productes")
