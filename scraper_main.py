@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 import time
 
-# Importacions Selenium ← AFEGEIX AQUÍ
+# Importacions Selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -44,6 +44,7 @@ print("✅ Connectat a Google Sheets")
 class GoogleSheetsDB:
     def __init__(self, sheet):
         self.sheet = sheet
+
     def guardar_preus(self, preus_list):
         if not preus_list:
             print("⚠️ No hi ha preus per guardar")
@@ -57,9 +58,9 @@ class GoogleSheetsDB:
         
         # Obtenir últim ID de forma segura
         try:
-            existing = ws.get_all_values()  # Canviat: get_all_values en lloc de get_all_records
-            if len(existing) > 1:  # Si hi ha més d'una fila (capçalera + dades)
-                last_id = len(existing) - 1  # Últim ID = número de files - 1
+            existing = ws.get_all_values()
+            if len(existing) > 1:
+                last_id = len(existing) - 1
             else:
                 last_id = 0
         except:
@@ -82,6 +83,7 @@ class GoogleSheetsDB:
         # Guardar
         ws.append_rows(rows)
         print(f"✅ {len(preus_list)} preus guardats a Google Sheets!")
+
 
 # SCRAPERS
 class MercadonaScraper:
@@ -130,6 +132,7 @@ class MercadonaScraper:
         print(f"✅ Mercadona: {len(productes)} productes extrets")
         return productes
 
+
 class DiaScraper:
     def __init__(self):
         self.base_url = 'https://www.dia.es/compra-online'
@@ -153,27 +156,28 @@ class DiaScraper:
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(3)
         try:
-        WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.search-product-card__top-section-content')))
-        productes_cards = self.driver.find_elements(By.CSS_SELECTOR, '.search-product-card__top-section-content')
-        print(f"  Trobats {len(productes_cards)} productes")
-        count = 0
-        for card in productes_cards[:max_productes]:
-            try:
-                nom = card.text.split('\n')[0].strip()
-                preu_element = card.find_element(By.CSS_SELECTOR, '.search-product-card__active-price')
-                preu_text = preu_element.text.replace('€', '').replace(',', '.').strip()
-                preu = float(preu_text)
-                if nom and preu > 0:
-                    self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
-                    count += 1
-            except:
-                continue
-        print(f"✅ Dia: {count} productes extrets")
-    except Exception as e:
-        print(f"  ❌ Error Dia: {e}")
-    self.driver.quit()
-    return self.productes
-        
+            WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.search-product-card__top-section-content')))
+            productes_cards = self.driver.find_elements(By.CSS_SELECTOR, '.search-product-card__top-section-content')
+            print(f"  Trobats {len(productes_cards)} productes")
+            count = 0
+            for card in productes_cards[:max_productes]:
+                try:
+                    nom = card.text.split('\n')[0].strip()
+                    preu_element = card.find_element(By.CSS_SELECTOR, '.search-product-card__active-price')
+                    preu_text = preu_element.text.replace('€', '').replace(',', '.').strip()
+                    preu = float(preu_text)
+                    if nom and preu > 0:
+                        self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
+                        count += 1
+                except:
+                    continue
+            print(f"✅ Dia: {count} productes extrets")
+        except Exception as e:
+            print(f"  ❌ Error Dia: {e}")
+        self.driver.quit()
+        return self.productes
+
+
 class BonAreaScraper:
     def scrape_all(self, max_productes=10):
         print(f"\n🟠 Bon Àrea: extraient {max_productes} productes...")
@@ -191,6 +195,7 @@ class BonAreaScraper:
         print(f"✅ Bon Àrea: {len(productes)} productes extrets")
         return productes
 
+
 class CarrefourScraper:
     def __init__(self):
         self.base_url = 'https://www.carrefour.es'
@@ -204,7 +209,7 @@ class CarrefourScraper:
         from selenium.webdriver.chrome.service import Service
         service = Service('/usr/bin/chromedriver')
         self.driver = webdriver.Chrome(service=service, options=chrome_options)
-        self.productes = [] 
+        self.productes = []
     
     def scrape_categoria(self, url_categoria, max_productes=50):
         print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
@@ -236,17 +241,6 @@ class CarrefourScraper:
         return self.productes
     
     def scrape_all(self, max_productes=100):
-        print("\n🔴 Carrefour: extraient productes amb Selenium...")
-        categories = [f'{self.base_url}/supermercado/frescos/cat20002/c', f'{self.base_url}/supermercado/despensa/cat20014/c', f'{self.base_url}/supermercado/bebidas/cat20006/c']
-        productes_per_cat = max_productes // len(categories)
-        for url in categories:
-            self.scrape_categoria(url, max_productes=productes_per_cat)
-            time.sleep(2)
-        self.driver.quit()
-        print(f"✅ Carrefour: {len(self.productes)} productes extrets")
-        return self.productes
-    
-    def scrape_all(self, max_productes=100):
         """Extreu productes amb Selenium"""
         print("\n🔴 Carrefour: extraient productes amb Selenium...")
         
@@ -267,6 +261,7 @@ class CarrefourScraper:
         print(f"✅ Carrefour: {len(self.productes)} productes extrets")
         return self.productes
 
+
 class BonPreuScraper:
     def scrape_all(self, max_productes=10):
         print(f"\n🟢 Bon Preu: extraient {max_productes} productes...")
@@ -283,6 +278,7 @@ class BonPreuScraper:
         print(f"✅ Bon Preu: {len(productes)} productes extrets")
         return productes
 
+
 class EsclatScraper:
     def scrape_all(self, max_productes=10):
         print(f"\n🟣 Esclat: extraient {max_productes} productes...")
@@ -298,6 +294,7 @@ class EsclatScraper:
         
         print(f"✅ Esclat: {len(productes)} productes extrets")
         return productes
+
 
 # EXECUTAR SCRAPERS
 if __name__ == '__main__':
