@@ -169,7 +169,7 @@ class DiaScraper:
             except:
                 continue
             print(f"✅ Dia: {count} productes extrets")
-            except Exception as e:
+        except Exception as e:
             print(f"  ❌ Error Dia: {e}")
         self.driver.quit()
         return self.productes
