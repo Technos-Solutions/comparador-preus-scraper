@@ -152,17 +152,16 @@ class DiaScraper:
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(3)
         try:
-            WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-test-id="search-product-card-prices"]')))
-            productes_cards = self.driver.find_elements(By.CSS_SELECTOR, '[data-test-id="search-product-card-prices"]')
-            print(f"  Trobats {len(productes_cards)} productes")
+            WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.search-product-card')))
+            cards = self.driver.find_elements(By.CSS_SELECTOR, '.search-product-card')
+            print(f"  Trobats {len(cards)} productes")
             count = 0
-            for card in productes_cards[:max_productes]:
+            for card in cards[:max_productes]:
                 try:
-                    preu_element = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-unit-price"]')
-                    preu_text = preu_element.text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
+                    nom = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-name"]').text.strip()
+                    preu_text = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-unit-price"]').text
+                    preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
                     preu = float(preu_text)
-                    nom_element = card.find_element(By.XPATH, './ancestor::*[contains(@class,"search-product-card")]//p[contains(@class,"product-card__title") or contains(@class,"search-product-card__name")]')
-                    nom = nom_element.text.strip()
                     if nom and preu > 0:
                         self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
                         count += 1
@@ -210,12 +209,12 @@ class CarrefourScraper:
     
     def scrape_categoria(self, url_categoria, max_productes=50):
         print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
-        self.driver.get(url_categoria)
-        time.sleep(5)
-        for i in range(10):
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(3)
         try:
+            self.driver.get(url_categoria)
+            time.sleep(5)
+            for i in range(3):  # ← reduït de 10 a 3 scrolls
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(2)
             WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.product-card__title-link')))
             productes_noms = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__title-link')
             productes_preus = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__price')
@@ -234,7 +233,7 @@ class CarrefourScraper:
                     continue
             print(f"  ✅ {count} productes extrets")
         except Exception as e:
-            print(f"  ❌ Error: {e}")
+            print(f"  ❌ Error categoria: {e}")
         return self.productes
     
     def scrape_all(self, max_productes=100):
