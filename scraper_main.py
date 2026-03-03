@@ -164,7 +164,7 @@ class DiaScraper:
                 try:
                     nom = card.text.split('\n')[0].strip()
                     preu_element = card.find_element(By.CSS_SELECTOR, '.search-product-card__active-price')
-                    preu_text = preu_element.text.replace('€', '').replace(',', '.').strip()
+                    preu_text = preu_element.text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
                     preu = float(preu_text)
                     if nom and preu > 0:
                         self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
