@@ -52,11 +52,9 @@ class GoogleSheetsDB:
         
         ws = self.sheet.worksheet('Preus')
         
-        # Afegir data
         for preu in preus_list:
             preu['data'] = datetime.now().strftime('%Y-%m-%d %H:%M')
         
-        # Obtenir últim ID de forma segura
         try:
             existing = ws.get_all_values()
             if len(existing) > 1:
@@ -66,7 +64,6 @@ class GoogleSheetsDB:
         except:
             last_id = 0
         
-        # Preparar files
         rows = []
         for i, preu in enumerate(preus_list, start=1):
             row = [
@@ -80,7 +77,6 @@ class GoogleSheetsDB:
             ]
             rows.append(row)
         
-        # Guardar
         ws.append_rows(rows)
         print(f"✅ {len(preus_list)} preus guardats a Google Sheets!")
 
@@ -134,36 +130,49 @@ class MercadonaScraper:
 
 
 class DiaScraper:
+    def __init__(self):
+        self.base_url = 'https://www.dia.es/compra-online'
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+        chrome_options.binary_location = '/usr/bin/chromium-browser'
+        from selenium.webdriver.chrome.service import Service
+        service = Service('/usr/bin/chromedriver')
+        self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        self.productes = []
+
     def scrape_all(self, max_productes=50):
-    print("\n🟣 Dia: extraient productes amb Selenium...")
-    self.driver.get(self.base_url)
-    time.sleep(8)
-    for i in range(5):
-        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(3)
-    try:
-        WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-test-id="search-product-card-prices"]')))
-        productes_cards = self.driver.find_elements(By.CSS_SELECTOR, '[data-test-id="search-product-card-prices"]')
-        print(f"  Trobats {len(productes_cards)} productes")
-        count = 0
-        for card in productes_cards[:max_productes]:
-            try:
-                preu_element = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-unit-price"]')
-                preu_text = preu_element.text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
-                preu = float(preu_text)
-                # Nom: pujar al pare per trobar-lo
-                nom_element = card.find_element(By.XPATH, './ancestor::*[contains(@class,"search-product-card")]//p[contains(@class,"product-card__title") or contains(@class,"search-product-card__name")]')
-                nom = nom_element.text.strip()
-                if nom and preu > 0:
-                    self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
-                    count += 1
-            except:
-                continue
-        print(f"✅ Dia: {count} productes extrets")
-    except Exception as e:
-        print(f"  ❌ Error Dia: {e}")
-    self.driver.quit()
-    return self.productes
+        print("\n🟣 Dia: extraient productes amb Selenium...")
+        self.driver.get(self.base_url)
+        time.sleep(8)
+        for i in range(5):
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(3)
+        try:
+            WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-test-id="search-product-card-prices"]')))
+            productes_cards = self.driver.find_elements(By.CSS_SELECTOR, '[data-test-id="search-product-card-prices"]')
+            print(f"  Trobats {len(productes_cards)} productes")
+            count = 0
+            for card in productes_cards[:max_productes]:
+                try:
+                    preu_element = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-unit-price"]')
+                    preu_text = preu_element.text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
+                    preu = float(preu_text)
+                    nom_element = card.find_element(By.XPATH, './ancestor::*[contains(@class,"search-product-card")]//p[contains(@class,"product-card__title") or contains(@class,"search-product-card__name")]')
+                    nom = nom_element.text.strip()
+                    if nom and preu > 0:
+                        self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
+                        count += 1
+                except:
+                    continue
+            print(f"✅ Dia: {count} productes extrets")
+        except Exception as e:
+            print(f"  ❌ Error Dia: {e}")
+        self.driver.quit()
+        return self.productes
 
 
 class BonAreaScraper:
@@ -203,9 +212,9 @@ class CarrefourScraper:
         print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
         self.driver.get(url_categoria)
         time.sleep(5)
-        for i in range(10):  # ← 10 scrolls (més productes)
+        for i in range(10):
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(3)  # ← Més temps per carregar
+            time.sleep(3)
         try:
             WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.product-card__title-link')))
             productes_noms = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__title-link')
@@ -288,9 +297,6 @@ class EsclatScraper:
 if __name__ == '__main__':
     db = GoogleSheetsDB(sheet)
     
-    # ============================================
-    # FASE 1: EXTREURE TOTS ELS PRODUCTES
-    # ============================================
     print("\n" + "="*60)
     print("🔄 FASE 1: Extraient productes de tots els supermercats...")
     print("="*60)
@@ -327,9 +333,6 @@ if __name__ == '__main__':
     productes_esclat = scraper_esclat.scrape_all(max_productes=20)
     tots_productes.extend(productes_esclat)
     
-    # ============================================
-    # FASE 2: OMPLIR FULL TEMPORAL
-    # ============================================
     print("\n" + "="*60)
     print(f"🔄 FASE 2: Omplint full temporal ({len(tots_productes)} productes)...")
     print("="*60)
@@ -338,7 +341,6 @@ if __name__ == '__main__':
     ws_temp.clear()
     ws_temp.append_row(['id', 'producte', 'marca', 'supermercat', 'preu', 'quantitat', 'data'])
     
-    # Preparar dades
     for preu in tots_productes:
         preu['data'] = datetime.now().strftime('%Y-%m-%d %H:%M')
     
@@ -358,19 +360,12 @@ if __name__ == '__main__':
     ws_temp.append_rows(rows)
     print(f"✅ Full temporal omplert amb {len(tots_productes)} productes")
     
-    # ============================================
-    # FASE 3: SWAP ATÒMIC (copiar Temp → Preus)
-    # ============================================
     print("\n" + "="*60)
     print("🔄 FASE 3: Actualitzant full principal (swap atòmic)...")
     print("="*60)
     
     ws_preus = sheet.worksheet('Preus')
-    
-    # Obtenir totes les dades del temporal
     all_data = ws_temp.get_all_values()
-    
-    # Netejar i copiar d'un cop (swap de ~5 segons)
     ws_preus.clear()
     ws_preus.append_rows(all_data)
     
