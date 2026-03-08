@@ -40,7 +40,7 @@ sheet = client.open('Comparador_Preus_DB')
 
 print("✅ Connectat a Google Sheets")
 
-# Classe GoogleSheetsDB
+
 class GoogleSheetsDB:
     def __init__(self, sheet):
         self.sheet = sheet
@@ -81,7 +81,6 @@ class GoogleSheetsDB:
         print(f"✅ {len(preus_list)} preus guardats a Google Sheets!")
 
 
-# SCRAPERS
 class MercadonaScraper:
     def __init__(self):
         self.base_url = 'https://tienda.mercadona.es/api'
@@ -94,10 +93,8 @@ class MercadonaScraper:
             import requests
             url = f'{self.base_url}/products/{producte_id}/'
             response = requests.get(url, headers=self.headers)
-            
             if response.status_code != 200:
                 return None
-            
             prod = response.json()
             return {
                 'producte': prod['display_name'],
@@ -111,20 +108,16 @@ class MercadonaScraper:
     
     def scrape_all(self, max_productes=20):
         print(f"\n🟢 Mercadona: extraient {max_productes} productes...")
-        
         import requests
         productes = []
-        
         product_ids = [10382, 10380, 10543, 10933, 10721, 15599, 9407, 9420, 
                        34180, 28171, 28812, 15554, 75536, 25593, 34432, 82343,
                        25718, 7668, 8169, 66]
-        
         for prod_id in product_ids[:max_productes]:
             prod = self.scrape_producte(prod_id)
             if prod:
                 productes.append(prod)
             time.sleep(1)
-        
         print(f"✅ Mercadona: {len(productes)} productes extrets")
         return productes
 
@@ -158,8 +151,8 @@ class DiaScraper:
             count = 0
             for card in cards[:max_productes]:
                 try:
-                    nom = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-name"]').text.strip()
-                    preu_text = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-unit-price"]').text
+                    nom = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-name"]').get_attribute('innerText').strip()
+                    preu_text = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-unit-price"]').get_attribute('innerText')
                     preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
                     preu = float(preu_text)
                     if nom and preu > 0:
@@ -177,7 +170,6 @@ class DiaScraper:
 class BonAreaScraper:
     def scrape_all(self, max_productes=10):
         print(f"\n🟠 Bon Àrea: extraient {max_productes} productes...")
-        
         productes = [
             {'producte': 'Llet semidesnatada bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 0.83, 'quantitat': '1L'},
             {'producte': 'Llet sencera bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 0.89, 'quantitat': '1L'},
@@ -187,7 +179,6 @@ class BonAreaScraper:
             {'producte': 'Oli gira-sol bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 2.35, 'quantitat': '1L'},
             {'producte': 'Pasta macarrons bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 0.75, 'quantitat': '500g'},
         ][:max_productes]
-        
         print(f"✅ Bon Àrea: {len(productes)} productes extrets")
         return productes
 
@@ -205,8 +196,8 @@ class CarrefourScraper:
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--disable-extensions')
-        chrome_options.add_argument('--window-size=1280,720')
-        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         chrome_options.binary_location = '/usr/bin/chromium-browser'
         from selenium.webdriver.chrome.service import Service
         service = Service('/usr/bin/chromedriver')
@@ -216,18 +207,21 @@ class CarrefourScraper:
         print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
         try:
             driver.get(url_categoria)
-            time.sleep(5)
-            for i in range(3):
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(10)  # ← espera llarga per JS
+            for i in range(5):
+                driver.execute_script("window.scrollBy(0, 400);")
                 time.sleep(2)
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a.product-card__title-link')))
+            time.sleep(3)  # ← espera extra després dels scrolls
+
             productes_noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
             productes_preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
+
+            print(f"  Trobats {len(productes_noms)} noms, {len(productes_preus)} preus")
             count = 0
             for i in range(min(len(productes_noms), len(productes_preus), max_productes)):
                 try:
-                    nom = productes_noms[i].innerText.strip()
-                    preu_text = productes_preus[i].innerText.strip()
+                    nom = productes_noms[i].get_attribute('innerText').strip()
+                    preu_text = productes_preus[i].get_attribute('innerText').strip()
                     if not nom or not preu_text:
                         continue
                     preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
@@ -240,22 +234,19 @@ class CarrefourScraper:
         except Exception as e:
             print(f"  ❌ Error categoria: {e}")
 
-    def scrape_all(self, max_productes=100):
+    def scrape_all(self, max_productes=60):
         """Extreu productes amb Selenium - driver nou per cada categoria"""
         print("\n🔴 Carrefour: extraient productes amb Selenium...")
-        
         categories = [
             f'{self.base_url}/supermercado/frescos/cat20002/c',
             f'{self.base_url}/supermercado/despensa/cat20014/c',
             f'{self.base_url}/supermercado/bebidas/cat20006/c',
         ]
-        
         productes_per_cat = max_productes // len(categories)
-        
         for url in categories:
             driver = None
             try:
-                driver = self._crear_driver()   # ← driver nou per cada categoria
+                driver = self._crear_driver()
                 self.scrape_categoria(driver, url, max_productes=productes_per_cat)
             except Exception as e:
                 print(f"  ❌ Error general: {e}")
@@ -266,7 +257,6 @@ class CarrefourScraper:
                     except:
                         pass
             time.sleep(3)
-        
         print(f"✅ Carrefour: {len(self.productes)} productes extrets")
         return self.productes
 
@@ -274,7 +264,6 @@ class CarrefourScraper:
 class BonPreuScraper:
     def scrape_all(self, max_productes=10):
         print(f"\n🟢 Bon Preu: extraient {max_productes} productes...")
-        
         productes = [
             {'producte': 'Llet semidesnatada Bon Preu', 'marca': 'Bon Preu', 'supermercat': 'Bon Preu', 'preu': 0.86, 'quantitat': '1L'},
             {'producte': 'Llet sencera Bon Preu', 'marca': 'Bon Preu', 'supermercat': 'Bon Preu', 'preu': 0.92, 'quantitat': '1L'},
@@ -283,7 +272,6 @@ class BonPreuScraper:
             {'producte': 'Arròs Bon Preu', 'marca': 'Bon Preu', 'supermercat': 'Bon Preu', 'preu': 0.93, 'quantitat': '1kg'},
             {'producte': 'Oli gira-sol Bon Preu', 'marca': 'Bon Preu', 'supermercat': 'Bon Preu', 'preu': 2.39, 'quantitat': '1L'},
         ][:max_productes]
-        
         print(f"✅ Bon Preu: {len(productes)} productes extrets")
         return productes
 
@@ -291,7 +279,6 @@ class BonPreuScraper:
 class EsclatScraper:
     def scrape_all(self, max_productes=10):
         print(f"\n🟣 Esclat: extraient {max_productes} productes...")
-        
         productes = [
             {'producte': 'Llet semidesnatada Esclat', 'marca': 'Esclat', 'supermercat': 'Esclat', 'preu': 0.84, 'quantitat': '1L'},
             {'producte': 'Llet sencera Esclat', 'marca': 'Esclat', 'supermercat': 'Esclat', 'preu': 0.90, 'quantitat': '1L'},
@@ -300,7 +287,6 @@ class EsclatScraper:
             {'producte': 'Arròs Esclat', 'marca': 'Esclat', 'supermercat': 'Esclat', 'preu': 0.91, 'quantitat': '1kg'},
             {'producte': 'Oli gira-sol Esclat', 'marca': 'Esclat', 'supermercat': 'Esclat', 'preu': 2.37, 'quantitat': '1L'},
         ][:max_productes]
-        
         print(f"✅ Esclat: {len(productes)} productes extrets")
         return productes
 
@@ -315,35 +301,23 @@ if __name__ == '__main__':
     
     tots_productes = []
     
-    # Mercadona
     scraper_mercadona = MercadonaScraper()
-    productes_mercadona = scraper_mercadona.scrape_all(max_productes=50)
-    tots_productes.extend(productes_mercadona)
+    tots_productes.extend(scraper_mercadona.scrape_all(max_productes=50))
     
-    # Dia
     scraper_dia = DiaScraper()
-    productes_dia = scraper_dia.scrape_all(max_productes=20)
-    tots_productes.extend(productes_dia)
+    tots_productes.extend(scraper_dia.scrape_all(max_productes=20))
     
-    # Bon Àrea
     scraper_bonarea = BonAreaScraper()
-    productes_bonarea = scraper_bonarea.scrape_all(max_productes=20)
-    tots_productes.extend(productes_bonarea)
+    tots_productes.extend(scraper_bonarea.scrape_all(max_productes=20))
     
-    # Carrefour
     scraper_carrefour = CarrefourScraper()
-    productes_carrefour = scraper_carrefour.scrape_all(max_productes=20)
-    tots_productes.extend(productes_carrefour)
+    tots_productes.extend(scraper_carrefour.scrape_all(max_productes=60))
     
-    # Bon Preu
     scraper_bonpreu = BonPreuScraper()
-    productes_bonpreu = scraper_bonpreu.scrape_all(max_productes=20)
-    tots_productes.extend(productes_bonpreu)
+    tots_productes.extend(scraper_bonpreu.scrape_all(max_productes=20))
     
-    # Esclat
     scraper_esclat = EsclatScraper()
-    productes_esclat = scraper_esclat.scrape_all(max_productes=20)
-    tots_productes.extend(productes_esclat)
+    tots_productes.extend(scraper_esclat.scrape_all(max_productes=20))
     
     print("\n" + "="*60)
     print(f"🔄 FASE 2: Omplint full temporal ({len(tots_productes)} productes)...")
