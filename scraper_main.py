@@ -163,30 +163,8 @@ class BonAreaScraper:
     def __init__(self):
         self.base_url = 'https://www.bonarea-online.com'
         self.productes = []
-        self.categories = [
-            '/categories/carns-i-ous/13_300_010',
-            '/categories/embotits-i-xarcuteria/13_300_020',
-            '/categories/cuinats/13_300_230',
-            '/categories/brous-cremes-i-pures/13_300_180',
-            '/categories/cafe-i-infusions/13_300_030',
-            '/categories/congelats/13_300_190',
-            '/categories/conserves/13_300_040',
-            '/categories/formatges/13_300_050',
-            '/categories/fruita-i-verdura/13_300_060',
-            '/categories/fruita-seca-i-patates-xips/13_300_070',
-            '/categories/llegums-secs-i-arrossos/13_300_100',
-            '/categories/lactics-i-derivats/13_300_080',
-            '/categories/oli-i-condiments/13_300_110',
-            '/categories/pa/13_300_120',
-            '/categories/pasta-i-farines/13_300_140',
-            '/categories/pastisseria-galetes-i-cereals/13_300_130',
-            '/categories/salses/13_300_150',
-            '/categories/xocolata-i-cacau/13_300_170',
-            '/categories/aigua/13_320_010',
-            '/categories/begudes-refrescants/13_320_030',
-            '/categories/cervesa/13_320_050',
-            '/categories/sucs-i-nectars/13_320_070',
-        ]
+        # Categories que ens interessen (alimentació, cuinats, begudes, drogueria, higiene, perfumeria, mascotes)
+        self.codis_valids = ['13_300', '13_310', '13_320', '13_330', '13_340', '13_350', '13_030']
 
     def _crear_driver(self):
         chrome_options = Options()
@@ -202,13 +180,33 @@ class BonAreaScraper:
         service = Service('/usr/bin/chromedriver')
         return webdriver.Chrome(service=service, options=chrome_options)
 
+    def descobrir_categories(self, driver):
+        """Llegeix totes les categories del menú i filtra les que ens interessen"""
+        print("  🔍 Descobrint categories automàticament...")
+        driver.get(f'{self.base_url}/ca/shop/shopping')
+        time.sleep(6)
+        links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
+        categories = []
+        vistos = set()
+        for link in links:
+            href = link.get_attribute('href')
+            if not href or href in vistos:
+                continue
+            vistos.add(href)
+            # Filtrar només categories que ens interessen i que tinguin subcategoria (_XXX_XXX_XXX)
+            codi = href.split('/')[-1]
+            if any(codi.startswith(c) for c in self.codis_valids) and codi.count('_') >= 3:
+                categories.append(href)
+        print(f"  ✅ {len(categories)} categories trobades")
+        return categories
+
     def scrape_categoria(self, driver, url):
         nom_cat = url.split('/')[-2]
         print(f"  📂 Categoria: {nom_cat}")
         count = 0
         try:
-            driver.get(self.base_url + url)
-            time.sleep(5)
+            driver.get(url)
+            time.sleep(6)
             for i in range(3):
                 driver.execute_script("window.scrollBy(0, 400);")
                 time.sleep(1)
@@ -232,7 +230,23 @@ class BonAreaScraper:
 
     def scrape_all(self, max_productes=999):
         print(f"\n🟠 Bon Àrea: extraient productes amb Selenium...")
-        for url in self.categories:
+        # Primer descobrim les categories automàticament
+        driver_descobrir = None
+        categories = []
+        try:
+            driver_descobrir = self._crear_driver()
+            categories = self.descobrir_categories(driver_descobrir)
+        except Exception as e:
+            print(f"  ❌ Error descobrint categories: {e}")
+        finally:
+            if driver_descobrir:
+                try:
+                    driver_descobrir.quit()
+                except:
+                    pass
+
+        # Després rasquem cada categoria amb driver nou
+        for url in categories:
             driver = None
             try:
                 driver = self._crear_driver()
