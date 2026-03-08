@@ -6,7 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 print("="*60)
-print("🔍 DEBUG CARREFOUR - Anàlisi completa")
+print("🔍 DEBUG CARREFOUR v2 - Esperant contingut JS")
 print("="*60)
 
 def crear_driver():
@@ -24,68 +24,62 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 url = 'https://www.carrefour.es/supermercado/frescos/cat20002/c'
-
 driver = crear_driver()
 
 try:
     print(f"\n📡 Carregant: {url}")
     driver.get(url)
-    print("⏳ Esperant 8 segons...")
-    time.sleep(8)
+    print("⏳ Esperant 10 segons per JS...")
+    time.sleep(10)
 
-    # Títol de la pàgina
-    print(f"\n📄 Títol de la pàgina: {driver.title}")
-
-    # URL final (per si hi ha redirecció)
-    print(f"🔗 URL final: {driver.current_url}")
-
-    # Primer tros del HTML
-    print("\n" + "="*60)
-    print("📝 PRIMERS 3000 CARÀCTERS DEL HTML:")
-    print("="*60)
-    print(driver.page_source[:3000])
-
-    # Scroll
-    print("\n⏳ Fent scrolls...")
-    for i in range(3):
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    # Scroll per activar lazy loading
+    print("⏳ Fent scrolls lents...")
+    for i in range(5):
+        driver.execute_script("window.scrollBy(0, 400);")
         time.sleep(2)
 
-    # Comptar elements amb diferents selectors
+    # Esperar que algun element tingui text
+    print("⏳ Esperant que els textos es carreguin...")
+    time.sleep(5)
+
+    # Provar de llegir el text dels elements
     print("\n" + "="*60)
-    print("🔍 PROVANT SELECTORS:")
+    print("🔍 LLEGINT TEXT DELS PRIMERS 5 PRODUCTES:")
     print("="*60)
 
-    selectors = [
-        'a.product-card__title-link',
-        'span.product-card__price',
-        '.product-card',
-        '.product-card__title',
-        'h2.product-card__title',
-        '[class*="product-card"]',
-        '[class*="product"]',
-        'article',
-    ]
+    noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
+    preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
 
-    for selector in selectors:
-        try:
-            elements = driver.find_elements(By.CSS_SELECTOR, selector)
-            print(f"  '{selector}' → {len(elements)} elements trobats")
-            if elements and len(elements) > 0:
-                print(f"    → Text primer element: '{elements[0].text[:100]}'")
-        except Exception as e:
-            print(f"  '{selector}' → ERROR: {e}")
+    print(f"Noms trobats: {len(noms)}")
+    print(f"Preus trobats: {len(preus)}")
 
-    # HTML després del scroll
+    for i in range(min(5, len(noms))):
+        nom_text = noms[i].text
+        nom_inner = noms[i].get_attribute('innerHTML')
+        nom_inner_text = noms[i].get_attribute('innerText')
+        print(f"\nProducte {i+1}:")
+        print(f"  .text → '{nom_text}'")
+        print(f"  innerText → '{nom_inner_text}'")
+        print(f"  innerHTML → '{nom_inner[:200]}'")
+
     print("\n" + "="*60)
-    print("📝 HTML DESPRÉS DEL SCROLL (primers 3000 caràcters):")
+    print("🔍 LLEGINT TEXT DELS PRIMERS 5 PREUS:")
     print("="*60)
-    print(driver.page_source[:3000])
+    for i in range(min(5, len(preus))):
+        preu_text = preus[i].text
+        preu_inner = preus[i].get_attribute('innerText')
+        print(f"Preu {i+1}: .text='{preu_text}' | innerText='{preu_inner}'")
+
+    # Mirar si .product-card té text
+    print("\n" + "="*60)
+    print("🔍 TEXT DE .product-card:")
+    print("="*60)
+    cards = driver.find_elements(By.CSS_SELECTOR, '.product-card')
+    for i in range(min(3, len(cards))):
+        print(f"\nCard {i+1}: '{cards[i].text[:300]}'")
 
 except Exception as e:
     print(f"\n❌ Error general: {e}")
-
 finally:
     driver.quit()
     print("\n✅ Driver tancat")
-    print("="*60)
