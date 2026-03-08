@@ -1,4 +1,4 @@
-name: Debug Carrefour
+name: Debug bonarea
 on:
   workflow_dispatch:
 
