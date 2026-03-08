@@ -226,8 +226,8 @@ class CarrefourScraper:
             count = 0
             for i in range(min(len(productes_noms), len(productes_preus), max_productes)):
                 try:
-                    nom = productes_noms[i].text.strip()
-                    preu_text = productes_preus[i].text.strip()
+                    nom = productes_noms[i].innerText.strip()
+                    preu_text = productes_preus[i].innerText.strip()
                     if not nom or not preu_text:
                         continue
                     preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
