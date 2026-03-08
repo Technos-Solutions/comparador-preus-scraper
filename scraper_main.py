@@ -195,29 +195,34 @@ class BonAreaScraper:
 class CarrefourScraper:
     def __init__(self):
         self.base_url = 'https://www.carrefour.es'
+        self.productes = []
+
+    def _crear_driver(self):
+        """Crea un driver Chromium nou i net"""
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--disable-extensions')
+        chrome_options.add_argument('--window-size=1280,720')
         chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         chrome_options.binary_location = '/usr/bin/chromium-browser'
         from selenium.webdriver.chrome.service import Service
         service = Service('/usr/bin/chromedriver')
-        self.driver = webdriver.Chrome(service=service, options=chrome_options)
-        self.productes = []
-    
-    def scrape_categoria(self, url_categoria, max_productes=50):
+        return webdriver.Chrome(service=service, options=chrome_options)
+
+    def scrape_categoria(self, driver, url_categoria, max_productes=50):
         print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
         try:
-            self.driver.get(url_categoria)
+            driver.get(url_categoria)
             time.sleep(5)
-            for i in range(3):  # ← reduït de 10 a 3 scrolls
-                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            for i in range(3):
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 time.sleep(2)
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.product-card__title-link')))
-            productes_noms = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__title-link')
-            productes_preus = self.driver.find_elements(By.CSS_SELECTOR, '.product-card__price')
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a.product-card__title-link')))
+            productes_noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
+            productes_preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
             count = 0
             for i in range(min(len(productes_noms), len(productes_preus), max_productes)):
                 try:
@@ -225,7 +230,7 @@ class CarrefourScraper:
                     preu_text = productes_preus[i].text.strip()
                     if not nom or not preu_text:
                         continue
-                    preu_text = preu_text.replace('€', '').replace(',', '.').strip()
+                    preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
                     preu = float(preu_text)
                     self.productes.append({'producte': nom, 'marca': 'Carrefour', 'supermercat': 'Carrefour', 'preu': preu, 'quantitat': '1u'})
                     count += 1
@@ -234,10 +239,9 @@ class CarrefourScraper:
             print(f"  ✅ {count} productes extrets")
         except Exception as e:
             print(f"  ❌ Error categoria: {e}")
-        return self.productes
-    
+
     def scrape_all(self, max_productes=100):
-        """Extreu productes amb Selenium"""
+        """Extreu productes amb Selenium - driver nou per cada categoria"""
         print("\n🔴 Carrefour: extraient productes amb Selenium...")
         
         categories = [
@@ -249,10 +253,19 @@ class CarrefourScraper:
         productes_per_cat = max_productes // len(categories)
         
         for url in categories:
-            self.scrape_categoria(url, max_productes=productes_per_cat)
-            time.sleep(2)
-        
-        self.driver.quit()
+            driver = None
+            try:
+                driver = self._crear_driver()   # ← driver nou per cada categoria
+                self.scrape_categoria(driver, url, max_productes=productes_per_cat)
+            except Exception as e:
+                print(f"  ❌ Error general: {e}")
+            finally:
+                if driver:
+                    try:
+                        driver.quit()
+                    except:
+                        pass
+            time.sleep(3)
         
         print(f"✅ Carrefour: {len(self.productes)} productes extrets")
         return self.productes
