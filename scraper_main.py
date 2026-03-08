@@ -49,21 +49,14 @@ class GoogleSheetsDB:
         if not preus_list:
             print("⚠️ No hi ha preus per guardar")
             return
-        
         ws = self.sheet.worksheet('Preus')
-        
         for preu in preus_list:
             preu['data'] = datetime.now().strftime('%Y-%m-%d %H:%M')
-        
         try:
             existing = ws.get_all_values()
-            if len(existing) > 1:
-                last_id = len(existing) - 1
-            else:
-                last_id = 0
+            last_id = len(existing) - 1 if len(existing) > 1 else 0
         except:
             last_id = 0
-        
         rows = []
         for i, preu in enumerate(preus_list, start=1):
             row = [
@@ -76,7 +69,6 @@ class GoogleSheetsDB:
                 preu.get('data', '')
             ]
             rows.append(row)
-        
         ws.append_rows(rows)
         print(f"✅ {len(preus_list)} preus guardats a Google Sheets!")
 
@@ -168,19 +160,94 @@ class DiaScraper:
 
 
 class BonAreaScraper:
-    def scrape_all(self, max_productes=10):
-        print(f"\n🟠 Bon Àrea: extraient {max_productes} productes...")
-        productes = [
-            {'producte': 'Llet semidesnatada bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 0.83, 'quantitat': '1L'},
-            {'producte': 'Llet sencera bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 0.89, 'quantitat': '1L'},
-            {'producte': 'Llet desnatada bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 0.83, 'quantitat': '1L'},
-            {'producte': 'Pa de motlle blanc bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 0.69, 'quantitat': '450g'},
-            {'producte': 'Arròs bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 0.89, 'quantitat': '1kg'},
-            {'producte': 'Oli gira-sol bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 2.35, 'quantitat': '1L'},
-            {'producte': 'Pasta macarrons bonÀrea', 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': 0.75, 'quantitat': '500g'},
-        ][:max_productes]
-        print(f"✅ Bon Àrea: {len(productes)} productes extrets")
-        return productes
+    def __init__(self):
+        self.base_url = 'https://www.bonarea-online.com'
+        self.productes = []
+        self.categories = [
+            '/categories/carns-i-ous/13_300_010',
+            '/categories/embotits-i-xarcuteria/13_300_020',
+            '/categories/cuinats/13_300_230',
+            '/categories/brous-cremes-i-pures/13_300_180',
+            '/categories/cafe-i-infusions/13_300_030',
+            '/categories/congelats/13_300_190',
+            '/categories/conserves/13_300_040',
+            '/categories/formatges/13_300_050',
+            '/categories/fruita-i-verdura/13_300_060',
+            '/categories/fruita-seca-i-patates-xips/13_300_070',
+            '/categories/llegums-secs-i-arrossos/13_300_100',
+            '/categories/lactics-i-derivats/13_300_080',
+            '/categories/oli-i-condiments/13_300_110',
+            '/categories/pa/13_300_120',
+            '/categories/pasta-i-farines/13_300_140',
+            '/categories/pastisseria-galetes-i-cereals/13_300_130',
+            '/categories/salses/13_300_150',
+            '/categories/xocolata-i-cacau/13_300_170',
+            '/categories/aigua/13_320_010',
+            '/categories/begudes-refrescants/13_320_030',
+            '/categories/cervesa/13_320_050',
+            '/categories/sucs-i-nectars/13_320_070',
+        ]
+
+    def _crear_driver(self):
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--disable-extensions')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        chrome_options.binary_location = '/usr/bin/chromium-browser'
+        from selenium.webdriver.chrome.service import Service
+        service = Service('/usr/bin/chromedriver')
+        return webdriver.Chrome(service=service, options=chrome_options)
+
+    def scrape_categoria(self, driver, url):
+        nom_cat = url.split('/')[-2]
+        print(f"  📂 Categoria: {nom_cat}")
+        count = 0
+        try:
+            driver.get(self.base_url + url)
+            time.sleep(5)
+            for i in range(3):
+                driver.execute_script("window.scrollBy(0, 400);")
+                time.sleep(1)
+            productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+            for prod in productes:
+                try:
+                    nom = prod.find_element(By.CSS_SELECTOR, 'a.article-link div.text p').get_attribute('innerText').strip()
+                    preu_text = prod.find_element(By.CSS_SELECTOR, 'div.price span').get_attribute('innerText')
+                    preu_text = preu_text.replace('€/u.', '').replace('€', '').replace(',', '.').replace('\xa0', '').strip()
+                    preu = float(preu_text)
+                    quantitat = prod.find_element(By.CSS_SELECTOR, 'div.weight').get_attribute('innerText').strip()
+                    if nom and preu > 0:
+                        self.productes.append({'producte': nom, 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': preu, 'quantitat': quantitat})
+                        count += 1
+                except:
+                    continue
+            print(f"    ✅ {count} productes extrets")
+        except Exception as e:
+            print(f"    ❌ Error: {e}")
+        return count
+
+    def scrape_all(self, max_productes=999):
+        print(f"\n🟠 Bon Àrea: extraient productes amb Selenium...")
+        for url in self.categories:
+            driver = None
+            try:
+                driver = self._crear_driver()
+                self.scrape_categoria(driver, url)
+            except Exception as e:
+                print(f"  ❌ Error general categoria: {e}")
+            finally:
+                if driver:
+                    try:
+                        driver.quit()
+                    except:
+                        pass
+            time.sleep(2)
+        print(f"✅ Bon Àrea: {len(self.productes)} productes extrets")
+        return self.productes
 
 
 class CarrefourScraper:
@@ -189,7 +256,6 @@ class CarrefourScraper:
         self.productes = []
 
     def _crear_driver(self):
-        """Crea un driver Chromium nou i net"""
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
@@ -207,15 +273,13 @@ class CarrefourScraper:
         print(f"📂 Carrefour - Categoria: {url_categoria.split('/')[-2]}")
         try:
             driver.get(url_categoria)
-            time.sleep(10)  # ← espera llarga per JS
+            time.sleep(10)
             for i in range(5):
                 driver.execute_script("window.scrollBy(0, 400);")
                 time.sleep(2)
-            time.sleep(3)  # ← espera extra després dels scrolls
-
+            time.sleep(3)
             productes_noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
             productes_preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
-
             print(f"  Trobats {len(productes_noms)} noms, {len(productes_preus)} preus")
             count = 0
             for i in range(min(len(productes_noms), len(productes_preus), max_productes)):
@@ -235,7 +299,6 @@ class CarrefourScraper:
             print(f"  ❌ Error categoria: {e}")
 
     def scrape_all(self, max_productes=60):
-        """Extreu productes amb Selenium - driver nou per cada categoria"""
         print("\n🔴 Carrefour: extraient productes amb Selenium...")
         categories = [
             f'{self.base_url}/supermercado/frescos/cat20002/c',
@@ -308,7 +371,7 @@ if __name__ == '__main__':
     tots_productes.extend(scraper_dia.scrape_all(max_productes=20))
     
     scraper_bonarea = BonAreaScraper()
-    tots_productes.extend(scraper_bonarea.scrape_all(max_productes=20))
+    tots_productes.extend(scraper_bonarea.scrape_all())
     
     scraper_carrefour = CarrefourScraper()
     tots_productes.extend(scraper_carrefour.scrape_all(max_productes=60))
