@@ -16,5 +16,5 @@ jobs:
           sudo apt-get install -y chromium-browser chromium-chromedriver
       - name: Install dependencies
         run: pip install selenium
-      - name: Debug Carrefour
-        run: python debug_carrefour.py
+       - name: Debug Bon Area
+        run: python debug_bonarea.py
