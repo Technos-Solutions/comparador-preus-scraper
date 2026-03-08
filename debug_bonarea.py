@@ -16,18 +16,16 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-urls = [
-    'https://www.bonarea-online.com/categories/lactics-i-derivats/13_300_080',
-    'https://www.bonarea-online.com/categories/lactics-i-derivats/13_300_080_010',
-]
+driver = crear_driver()
+driver.get('https://www.bonarea-online.com/ca/shop/shopping')
+time.sleep(6)
 
-for url in urls:
-    driver = crear_driver()
-    print(f"\n📡 Provant: {url}")
-    driver.get(url)
-    time.sleep(6)
-    productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
-    print(f"  → Productes trobats: {len(productes)}")
-    if productes:
-        print(f"  → Primer: {productes[0].get_attribute('innerText')[:80]}")
-    driver.quit()
+print("🔍 CERCANT URLS DE CATEGORIES:")
+links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
+for link in links:
+    href = link.get_attribute('href')
+    text = link.get_attribute('innerText').strip()
+    if href and text:
+        print(f"  {text} → {href}")
+
+driver.quit()
