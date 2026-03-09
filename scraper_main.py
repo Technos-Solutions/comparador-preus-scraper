@@ -193,9 +193,9 @@ class BonAreaScraper:
             if not href or href in vistos:
                 continue
             vistos.add(href)
-            # Filtrar només categories que ens interessen i que tinguin subcategoria (_XXX_XXX_XXX)
+            # Filtrar només categories que ens interessen i que tinguin subcategoria (_XXX_XXX)
             codi = href.split('/')[-1]
-            if any(codi.startswith(c) for c in self.codis_valids) and codi.count('_') >= 3:
+            if any(codi.startswith(c) for c in self.codis_valids) and codi.count('_') >= 2:
                 categories.append(href)
         print(f"  ✅ {len(categories)} categories trobades")
         return categories
@@ -206,10 +206,11 @@ class BonAreaScraper:
         count = 0
         try:
             driver.get(url)
-            time.sleep(6)
+            time.sleep(8)  # espera redirecció automàtica
             for i in range(3):
                 driver.execute_script("window.scrollBy(0, 400);")
                 time.sleep(1)
+            time.sleep(2)
             productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
             for prod in productes:
                 try:
