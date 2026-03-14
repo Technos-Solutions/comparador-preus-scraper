@@ -339,34 +339,119 @@ class CarrefourScraper:
         return self.productes
 
 
-class BonPreuScraper:
-    def scrape_all(self, max_productes=10):
-        print(f"\n🟢 Bon Preu: extraient {max_productes} productes...")
-        productes = [
-            {'producte': 'Llet semidesnatada Bon Preu', 'marca': 'Bon Preu', 'supermercat': 'Bon Preu', 'preu': 0.86, 'quantitat': '1L'},
-            {'producte': 'Llet sencera Bon Preu', 'marca': 'Bon Preu', 'supermercat': 'Bon Preu', 'preu': 0.92, 'quantitat': '1L'},
-            {'producte': 'Llet desnatada Bon Preu', 'marca': 'Bon Preu', 'supermercat': 'Bon Preu', 'preu': 0.86, 'quantitat': '1L'},
-            {'producte': 'Pa de motlle Bon Preu', 'marca': 'Bon Preu', 'supermercat': 'Bon Preu', 'preu': 0.73, 'quantitat': '450g'},
-            {'producte': 'Arròs Bon Preu', 'marca': 'Bon Preu', 'supermercat': 'Bon Preu', 'preu': 0.93, 'quantitat': '1kg'},
-            {'producte': 'Oli gira-sol Bon Preu', 'marca': 'Bon Preu', 'supermercat': 'Bon Preu', 'preu': 2.39, 'quantitat': '1L'},
-        ][:max_productes]
-        print(f"✅ Bon Preu: {len(productes)} productes extrets")
-        return productes
+class BonPreuEsclatScraper:
+    def __init__(self):
+        self.base_url = 'https://www.compraonline.bonpreuesclat.cat'
+        self.productes = []
+        # Categories que ens interessen per nom
+        self.categories_valides = [
+            'frescos', 'alimentaci', 'begudes', 'congelats',
+            'lactics', 'làctics', 'cura-personal', 'neteja',
+            'espai-mascotes', 'nadons'
+        ]
 
+    def _crear_driver(self):
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--disable-extensions')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        chrome_options.binary_location = '/usr/bin/chromium-browser'
+        from selenium.webdriver.chrome.service import Service
+        service = Service('/usr/bin/chromedriver')
+        return webdriver.Chrome(service=service, options=chrome_options)
 
-class EsclatScraper:
-    def scrape_all(self, max_productes=10):
-        print(f"\n🟣 Esclat: extraient {max_productes} productes...")
-        productes = [
-            {'producte': 'Llet semidesnatada Esclat', 'marca': 'Esclat', 'supermercat': 'Esclat', 'preu': 0.84, 'quantitat': '1L'},
-            {'producte': 'Llet sencera Esclat', 'marca': 'Esclat', 'supermercat': 'Esclat', 'preu': 0.90, 'quantitat': '1L'},
-            {'producte': 'Llet desnatada Esclat', 'marca': 'Esclat', 'supermercat': 'Esclat', 'preu': 0.84, 'quantitat': '1L'},
-            {'producte': 'Pa de motlle Esclat', 'marca': 'Esclat', 'supermercat': 'Esclat', 'preu': 0.71, 'quantitat': '450g'},
-            {'producte': 'Arròs Esclat', 'marca': 'Esclat', 'supermercat': 'Esclat', 'preu': 0.91, 'quantitat': '1kg'},
-            {'producte': 'Oli gira-sol Esclat', 'marca': 'Esclat', 'supermercat': 'Esclat', 'preu': 2.37, 'quantitat': '1L'},
-        ][:max_productes]
-        print(f"✅ Esclat: {len(productes)} productes extrets")
-        return productes
+    def descobrir_categories(self, driver):
+        """Llegeix categories del menú i filtra les que ens interessen, desduplicant per UUID"""
+        print("  🔍 Descobrint categories automàticament...")
+        driver.get(self.base_url)
+        time.sleep(8)
+        links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
+        categories = []
+        uuids_vistos = set()
+        for link in links:
+            href = link.get_attribute('href')
+            text = link.get_attribute('innerText').strip().lower()
+            if not href or not text:
+                continue
+            # Extreure UUID (últim segment abans del ?)
+            uuid = href.split('/')[-1].split('?')[0]
+            if uuid in uuids_vistos:
+                continue
+            # Filtrar per categories que ens interessen
+            if any(cat in text for cat in self.categories_valides):
+                uuids_vistos.add(uuid)
+                # Usar URL neta sense paràmetres extra
+                url_neta = f"{self.base_url}/categories/{href.split('/categories/')[1].split('?')[0]}"
+                categories.append((text.title(), url_neta))
+        print(f"  ✅ {len(categories)} categories trobades")
+        return categories
+
+    def scrape_categoria(self, driver, nom_cat, url):
+        print(f"  📂 Categoria: {nom_cat}")
+        count = 0
+        try:
+            driver.get(url)
+            time.sleep(10)
+            for i in range(5):
+                driver.execute_script("window.scrollBy(0, 400);")
+                time.sleep(2)
+            noms = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
+            preus = driver.find_elements(By.CSS_SELECTOR, 'span[data-test="fop-price"]')
+            for i in range(min(len(noms), len(preus))):
+                try:
+                    nom = noms[i].get_attribute('innerText').strip()
+                    preu_text = preus[i].get_attribute('innerText').strip()
+                    preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
+                    preu = float(preu_text)
+                    if nom and preu > 0:
+                        self.productes.append({'producte': nom, 'marca': 'Bon Preu / Esclat', 'supermercat': 'Bon Preu / Esclat', 'preu': preu, 'quantitat': '1u'})
+                        count += 1
+                except:
+                    continue
+            print(f"    ✅ {count} productes extrets")
+        except Exception as e:
+            print(f"    ❌ Error: {e}")
+        return count
+
+    def scrape_all(self):
+        print(f"\n🟡 Bon Preu / Esclat: extraient productes amb Selenium...")
+        # Descobrir categories
+        driver_descobrir = None
+        categories = []
+        try:
+            driver_descobrir = self._crear_driver()
+            categories = self.descobrir_categories(driver_descobrir)
+        except Exception as e:
+            print(f"  ❌ Error descobrint categories: {e}")
+        finally:
+            if driver_descobrir:
+                try:
+                    driver_descobrir.quit()
+                except:
+                    pass
+
+        # Rasquem cada categoria
+        for nom_cat, url in categories:
+            driver = None
+            try:
+                driver = self._crear_driver()
+                self.scrape_categoria(driver, nom_cat, url)
+            except Exception as e:
+                print(f"  ❌ Error general categoria: {e}")
+            finally:
+                if driver:
+                    try:
+                        driver.quit()
+                    except:
+                        pass
+            time.sleep(2)
+
+        print(f"✅ Bon Preu / Esclat: {len(self.productes)} productes extrets")
+        return self.productes
 
 
 # EXECUTAR SCRAPERS
@@ -391,11 +476,8 @@ if __name__ == '__main__':
     scraper_carrefour = CarrefourScraper()
     tots_productes.extend(scraper_carrefour.scrape_all(max_productes=60))
     
-    scraper_bonpreu = BonPreuScraper()
-    tots_productes.extend(scraper_bonpreu.scrape_all(max_productes=20))
-    
-    scraper_esclat = EsclatScraper()
-    tots_productes.extend(scraper_esclat.scrape_all(max_productes=20))
+    scraper_bonpreuesclat = BonPreuEsclatScraper()
+    tots_productes.extend(scraper_bonpreuesclat.scrape_all())
     
     print("\n" + "="*60)
     print(f"🔄 FASE 2: Omplint full temporal ({len(tots_productes)} productes)...")
