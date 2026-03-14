@@ -16,16 +16,28 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-driver = crear_driver()
-driver.get('https://www.bonarea-online.com/ca/shop/shopping')
-time.sleep(6)
+url = 'https://www.compraonline.bonpreuesclat.cat/categories/frescos/c95cfbf2-501d-433f-bae3-10fcef330b11?sortBy=favorite'
 
-print("🔍 CERCANT URLS DE CATEGORIES:")
-links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
-for link in links:
-    href = link.get_attribute('href')
-    text = link.get_attribute('innerText').strip()
-    if href and text:
-        print(f"  {text} → {href}")
+driver = crear_driver()
+print(f"📡 Carregant: {url}")
+driver.get(url)
+time.sleep(10)
+
+for i in range(5):
+    driver.execute_script("window.scrollBy(0, 400);")
+    time.sleep(2)
+
+print(f"📄 Títol: {driver.title}")
+
+noms = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
+preus = driver.find_elements(By.CSS_SELECTOR, 'span[data-test="fop-price"]')
+
+print(f"\n🔍 Noms trobats: {len(noms)}")
+print(f"🔍 Preus trobats: {len(preus)}")
+
+for i in range(min(5, len(noms), len(preus))):
+    nom = noms[i].get_attribute('innerText').strip()
+    preu = preus[i].get_attribute('innerText').strip()
+    print(f"  {nom} → {preu}")
 
 driver.quit()
