@@ -17,11 +17,12 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 driver = crear_driver()
-driver.get('https://www.compraonline.bonpreuesclat.cat')
+driver.get('https://www.carrefour.es/supermercado')
 time.sleep(8)
 
-print("🔍 CERCANT URLS DE CATEGORIES:")
-links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
+print(f"📄 Títol: {driver.title}")
+print("\n🔍 CERCANT URLS DE CATEGORIES:")
+links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/supermercado/"]')
 vistos = set()
 for link in links:
     href = link.get_attribute('href')
