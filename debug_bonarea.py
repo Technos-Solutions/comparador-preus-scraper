@@ -16,18 +16,19 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-for offset in [0, 24, 48]:
-    driver = crear_driver()
-    url = f'https://www.carrefour.es/supermercado/frescos/cat20002/c?offset={offset}'
-    print(f"\n📡 Provant offset={offset}")
-    driver.get(url)
-    time.sleep(10)
-    for i in range(3):
-        driver.execute_script("window.scrollBy(0, 400);")
-        time.sleep(2)
-    noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
-    preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
-    print(f"  Noms: {len(noms)}, Preus: {len(preus)}")
-    if noms:
-        print(f"  Primer: {noms[0].get_attribute('innerText').strip()}")
-    driver.quit()
+driver = crear_driver()
+driver.get('https://www.dia.es/compra-online')
+time.sleep(8)
+
+print(f"📄 Títol: {driver.title}")
+print("\n🔍 CERCANT URLS DE CATEGORIES:")
+links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/compra-online/"]')
+vistos = set()
+for link in links:
+    href = link.get_attribute('href')
+    text = link.get_attribute('innerText').strip()
+    if href and href not in vistos and text:
+        vistos.add(href)
+        print(f"  {text} → {href}")
+
+driver.quit()
