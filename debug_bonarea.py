@@ -18,10 +18,13 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 driver = crear_driver()
-driver.get('https://www.dia.es')
+driver.get('https://www.dia.es/frutas/c/L105')
 time.sleep(10)
 
-print("🔍 CATEGORIES DIA (patró /c/LXXX):")
+print(f"📄 Títol: {driver.title}")
+print(f"🔗 URL final: {driver.current_url}")
+
+print("\n🔍 CATEGORIES (patró /c/L):")
 links = driver.find_elements(By.TAG_NAME, 'a')
 vistos = set()
 for link in links:
@@ -31,5 +34,13 @@ for link in links:
         vistos.add(href)
         print(f"  {text} → {href}")
 
-print(f"\nTotal categories: {len(vistos)}")
+print(f"\nTotal: {len(vistos)}")
+
+# Productes a la categoria fruitas
+cards = driver.find_elements(By.CSS_SELECTOR, '.search-product-card')
+print(f"\n🛒 Productes a frutas: {len(cards)}")
+if cards:
+    nom = cards[0].find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-name"]').get_attribute('innerText')
+    print(f"  Primer: {nom}")
+
 driver.quit()
