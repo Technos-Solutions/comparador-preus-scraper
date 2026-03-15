@@ -495,18 +495,30 @@ if __name__ == '__main__':
     tots_productes.extend(scraper_bonpreuesclat.scrape_all())
     
     print("\n" + "="*60)
-    print(f"🔄 FASE 2: Omplint full temporal ({len(tots_productes)} productes)...")
+    print(f"🔄 FASE 2: Desduplicant i omplint full temporal...")
     print("="*60)
+
+    # Desduplicar per nom + supermercat
+    vistos = set()
+    tots_productes_unics = []
+    for p in tots_productes:
+        clau = (p.get('producte', '').strip().lower(), p.get('supermercat', '').strip().lower())
+        if clau not in vistos:
+            vistos.add(clau)
+            tots_productes_unics.append(p)
+
+    duplicats = len(tots_productes) - len(tots_productes_unics)
+    print(f"✅ {len(tots_productes)} productes → {len(tots_productes_unics)} únics ({duplicats} duplicats eliminats)")
     
     ws_temp = sheet.worksheet('Preus_Temp')
     ws_temp.clear()
     ws_temp.append_row(['id', 'producte', 'marca', 'supermercat', 'preu', 'quantitat', 'data'])
     
-    for preu in tots_productes:
+    for preu in tots_productes_unics:
         preu['data'] = datetime.now().strftime('%Y-%m-%d %H:%M')
     
     rows = []
-    for i, preu in enumerate(tots_productes, start=1):
+    for i, preu in enumerate(tots_productes_unics, start=1):
         row = [
             i,
             preu.get('producte', ''),
@@ -519,7 +531,7 @@ if __name__ == '__main__':
         rows.append(row)
     
     ws_temp.append_rows(rows)
-    print(f"✅ Full temporal omplert amb {len(tots_productes)} productes")
+    print(f"✅ Full temporal omplert amb {len(tots_productes_unics)} productes")
     
     print("\n" + "="*60)
     print("🔄 FASE 3: Actualitzant full principal (swap atòmic)...")
@@ -534,6 +546,6 @@ if __name__ == '__main__':
     
     print("\n" + "="*60)
     print("✅ SCRAPERS COMPLETATS!")
-    print(f"📊 Total productes: {len(tots_productes)}")
+    print(f"📊 Total brut: {len(tots_productes)} | Únics: {len(tots_productes_unics)} | Duplicats eliminats: {duplicats}")
     print("✅ App sempre amb dades disponibles")
     print("="*60)
