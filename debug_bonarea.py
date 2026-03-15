@@ -17,20 +17,24 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 driver = crear_driver()
-driver.get('https://www.dia.es/compra-online')
+driver.get('https://www.dia.es')
 time.sleep(10)
 
-print(f"📄 Títol: {driver.title}")
-print(f"🔗 URL final: {driver.current_url}")
-
-# Tots els links de la pàgina
-print("\n🔍 TOTS ELS LINKS (primers 30):")
+# Busquem links de categories (sense /p/ i sense paraules de navegació)
+print("🔍 CATEGORIES POTENCIALS:")
 links = driver.find_elements(By.TAG_NAME, 'a')
-print(f"Total links: {len(links)}")
-for link in links[:30]:
-    href = link.get_attribute('href')
-    text = link.get_attribute('innerText').strip()[:50]
-    if href and text:
-        print(f"  {text} → {href}")
+vistos = set()
+for link in links:
+    href = link.get_attribute('href') or ''
+    text = link.get_attribute('innerText').strip()
+    if (href and 
+        'dia.es/' in href and 
+        '/p/' not in href and 
+        href not in vistos and
+        text and
+        len(text) > 2 and
+        not any(x in href for x in ['login', 'cart', 'account', 'tiendas', 'clubdia', 'envios', 'metodos'])):
+        vistos.add(href)
+        print(f"  {text[:50]} → {href}")
 
 driver.quit()
