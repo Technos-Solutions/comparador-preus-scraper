@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
+import re
 
 def crear_driver():
     chrome_options = Options()
@@ -20,21 +21,15 @@ driver = crear_driver()
 driver.get('https://www.dia.es')
 time.sleep(10)
 
-# Busquem links de categories (sense /p/ i sense paraules de navegació)
-print("🔍 CATEGORIES POTENCIALS:")
+print("🔍 CATEGORIES DIA (patró /c/LXXX):")
 links = driver.find_elements(By.TAG_NAME, 'a')
 vistos = set()
 for link in links:
     href = link.get_attribute('href') or ''
     text = link.get_attribute('innerText').strip()
-    if (href and 
-        'dia.es/' in href and 
-        '/p/' not in href and 
-        href not in vistos and
-        text and
-        len(text) > 2 and
-        not any(x in href for x in ['login', 'cart', 'account', 'tiendas', 'clubdia', 'envios', 'metodos'])):
+    if re.search(r'/c/L\d+', href) and href not in vistos and text:
         vistos.add(href)
-        print(f"  {text[:50]} → {href}")
+        print(f"  {text} → {href}")
 
+print(f"\nTotal categories: {len(vistos)}")
 driver.quit()
