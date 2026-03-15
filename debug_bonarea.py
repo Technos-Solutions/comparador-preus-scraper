@@ -18,17 +18,19 @@ def crear_driver():
 
 driver = crear_driver()
 driver.get('https://www.dia.es/compra-online')
-time.sleep(8)
+time.sleep(10)
 
 print(f"📄 Títol: {driver.title}")
-print("\n🔍 CERCANT URLS DE CATEGORIES:")
-links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/compra-online/"]')
-vistos = set()
-for link in links:
+print(f"🔗 URL final: {driver.current_url}")
+
+# Tots els links de la pàgina
+print("\n🔍 TOTS ELS LINKS (primers 30):")
+links = driver.find_elements(By.TAG_NAME, 'a')
+print(f"Total links: {len(links)}")
+for link in links[:30]:
     href = link.get_attribute('href')
-    text = link.get_attribute('innerText').strip()
-    if href and href not in vistos and text:
-        vistos.add(href)
+    text = link.get_attribute('innerText').strip()[:50]
+    if href and text:
         print(f"  {text} → {href}")
 
 driver.quit()
