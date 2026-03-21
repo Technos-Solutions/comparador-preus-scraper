@@ -264,9 +264,9 @@ class BonAreaScraper:
             if not href or href in vistos:
                 continue
             vistos.add(href)
-            # Filtrar només categories que ens interessen i que tinguin subcategoria (_XXX_XXX_XXX)
+            # Filtrar només categories que ens interessen i que tinguin subcategoria (_XXX_XXX)
             codi = href.split('/')[-1]
-            if any(codi.startswith(c) for c in self.codis_valids) and codi.count('_') >= 3:
+            if any(codi.startswith(c) for c in self.codis_valids) and codi.count('_') >= 2:
                 categories.append(href)
         print(f"  ✅ {len(categories)} categories trobades")
         return categories
@@ -620,4 +620,3 @@ if __name__ == '__main__':
     print(f"📊 Total brut: {len(tots_productes)} | Únics: {len(tots_productes_unics)} | Duplicats eliminats: {duplicats}")
     print("✅ App sempre amb dades disponibles")
     print("="*60)
-
