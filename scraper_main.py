@@ -116,46 +116,117 @@ class MercadonaScraper:
 
 class DiaScraper:
     def __init__(self):
-        self.base_url = 'https://www.dia.es/compra-online'
+        self.base_url = 'https://www.dia.es'
+        self.productes = []
+        # Categories a excloure (no alimentació/neteja)
+        self.excloure = ['freidora-de-aire', 'sin-gluten', 'ofertas', 'recetas']
+
+    def _crear_driver(self):
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+        chrome_options.add_argument('--disable-extensions')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         chrome_options.binary_location = '/usr/bin/chromium-browser'
         from selenium.webdriver.chrome.service import Service
+        import re
         service = Service('/usr/bin/chromedriver')
-        self.driver = webdriver.Chrome(service=service, options=chrome_options)
-        self.productes = []
+        return webdriver.Chrome(service=service, options=chrome_options)
 
-    def scrape_all(self, max_productes=50):
-        print("\n🟣 Dia: extraient productes amb Selenium...")
-        self.driver.get(self.base_url)
+    def descobrir_categories(self, driver):
+        """Descobreix categories principals (sense subcategories) des d'una pàgina de categoria"""
+        import re
+        print("  🔍 Descobrint categories automàticament...")
+        driver.get(f'{self.base_url}/frutas/c/L105')
         time.sleep(8)
-        for i in range(5):
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(3)
+        links = driver.find_elements(By.TAG_NAME, 'a')
+        categories = []
+        vistos = set()
+        for link in links:
+            href = link.get_attribute('href') or ''
+            text = link.get_attribute('innerText').strip()
+            # Només categories principals (un sol segment abans de /c/)
+            match = re.search(r'dia\.es/([^/]+)/c/L(\d+)$', href)
+            if match and href not in vistos and text:
+                nom_cat = match.group(1)
+                if not any(excl in nom_cat for excl in self.excloure):
+                    vistos.add(href)
+                    categories.append((text, href))
+        print(f"  ✅ {len(categories)} categories trobades")
+        return categories
+
+    def scrape_categoria(self, driver, nom_cat, url, max_productes=100):
+        print(f"  📂 Categoria: {nom_cat}")
+        count = 0
+        pagina = 0
+        while count < max_productes:
+            try:
+                url_pagina = f"{url}?q=%3Arelevance&pageSize=48&currentPage={pagina}"
+                driver.get(url_pagina)
+                time.sleep(8)
+                for i in range(3):
+                    driver.execute_script("window.scrollBy(0, 400);")
+                    time.sleep(1)
+                cards = driver.find_elements(By.CSS_SELECTOR, '.search-product-card')
+                if not cards:
+                    break
+                for card in cards:
+                    try:
+                        nom = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-name"]').get_attribute('innerText').strip()
+                        preu_text = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-unit-price"]').get_attribute('innerText')
+                        preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
+                        preu = float(preu_text)
+                        if nom and preu > 0:
+                            self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
+                            count += 1
+                    except:
+                        continue
+                print(f"    pàgina {pagina} → {len(cards)} productes")
+                if len(cards) < 48:
+                    break
+                pagina += 1
+            except Exception as e:
+                print(f"    ❌ Error pàgina {pagina}: {e}")
+                break
+        print(f"    ✅ {count} productes extrets")
+
+    def scrape_all(self, max_per_categoria=100):
+        print("\n🟣 Dia: extraient productes amb Selenium...")
+        # Descobrir categories
+        driver_descobrir = None
+        categories = []
         try:
-            WebDriverWait(self.driver, 15).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.search-product-card')))
-            cards = self.driver.find_elements(By.CSS_SELECTOR, '.search-product-card')
-            print(f"  Trobats {len(cards)} productes")
-            count = 0
-            for card in cards[:max_productes]:
-                try:
-                    nom = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-name"]').get_attribute('innerText').strip()
-                    preu_text = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-unit-price"]').get_attribute('innerText')
-                    preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
-                    preu = float(preu_text)
-                    if nom and preu > 0:
-                        self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
-                        count += 1
-                except:
-                    continue
-            print(f"✅ Dia: {count} productes extrets")
+            driver_descobrir = self._crear_driver()
+            categories = self.descobrir_categories(driver_descobrir)
         except Exception as e:
-            print(f"  ❌ Error Dia: {e}")
-        self.driver.quit()
+            print(f"  ❌ Error descobrint categories: {e}")
+        finally:
+            if driver_descobrir:
+                try:
+                    driver_descobrir.quit()
+                except:
+                    pass
+
+        # Rasquem cada categoria
+        for nom_cat, url in categories:
+            driver = None
+            try:
+                driver = self._crear_driver()
+                self.scrape_categoria(driver, nom_cat, url, max_productes=max_per_categoria)
+            except Exception as e:
+                print(f"  ❌ Error general categoria: {e}")
+            finally:
+                if driver:
+                    try:
+                        driver.quit()
+                    except:
+                        pass
+            time.sleep(2)
+
+        print(f"✅ Dia: {len(self.productes)} productes extrets")
         return self.productes
 
 
@@ -483,7 +554,7 @@ if __name__ == '__main__':
     tots_productes.extend(scraper_mercadona.scrape_all(max_productes=50))
     
     scraper_dia = DiaScraper()
-    tots_productes.extend(scraper_dia.scrape_all(max_productes=20))
+    tots_productes.extend(scraper_dia.scrape_all(max_per_categoria=100))
     
     scraper_bonarea = BonAreaScraper()
     tots_productes.extend(scraper_bonarea.scrape_all())
