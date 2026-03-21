@@ -16,18 +16,20 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-driver = crear_driver()
-driver.get('https://www.bonarea-online.com/ca/shop/shopping')
-time.sleep(8)
+# Provem una URL que dona 0 i una que funciona
+urls = [
+    'https://www.bonarea-online.com/categories/lactics-i-derivats/13_300_080',
+    'https://www.bonarea-online.com/categories/lleixius-i-desinfectants/13_330_080',
+]
 
-print("🔍 TOTES LES URLS /categories/ trobades:")
-links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
-codis_valids = ['13_300', '13_310', '13_320', '13_330', '13_340', '13_350', '13_030']
-for link in links:
-    href = link.get_attribute('href') or ''
-    codi = href.split('/')[-1]
-    if any(codi.startswith(c) for c in codis_valids):
-        guions = codi.count('_')
-        print(f"  guions={guions} → {href}")
-
-driver.quit()
+for url in urls:
+    driver = crear_driver()
+    print(f"\n📡 Provant: {url}")
+    driver.get(url)
+    time.sleep(10)
+    print(f"  URL final: {driver.current_url}")
+    productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+    print(f"  Productes: {len(productes)}")
+    if productes:
+        print(f"  Primer: {productes[0].get_attribute('innerText')[:60]}")
+    driver.quit()
