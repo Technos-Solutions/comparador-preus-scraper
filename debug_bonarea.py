@@ -2,7 +2,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
-import re
 
 def crear_driver():
     chrome_options = Options()
@@ -17,30 +16,22 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
+url = 'https://www.carrefour.es/supermercado/frescos/cat20002/c'
 driver = crear_driver()
-driver.get('https://www.dia.es/frutas/c/L105')
+print(f"📡 Carregant: {url}")
+driver.get(url)
 time.sleep(10)
+for i in range(3):
+    driver.execute_script("window.scrollBy(0, 400);")
+    time.sleep(2)
 
 print(f"📄 Títol: {driver.title}")
 print(f"🔗 URL final: {driver.current_url}")
 
-print("\n🔍 CATEGORIES (patró /c/L):")
-links = driver.find_elements(By.TAG_NAME, 'a')
-vistos = set()
-for link in links:
-    href = link.get_attribute('href') or ''
-    text = link.get_attribute('innerText').strip()
-    if re.search(r'/c/L\d+', href) and href not in vistos and text:
-        vistos.add(href)
-        print(f"  {text} → {href}")
-
-print(f"\nTotal: {len(vistos)}")
-
-# Productes a la categoria fruitas
-cards = driver.find_elements(By.CSS_SELECTOR, '.search-product-card')
-print(f"\n🛒 Productes a frutas: {len(cards)}")
-if cards:
-    nom = cards[0].find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-name"]').get_attribute('innerText')
-    print(f"  Primer: {nom}")
+noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
+preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
+print(f"Noms: {len(noms)}, Preus: {len(preus)}")
+if noms:
+    print(f"Primer: {noms[0].get_attribute('innerText')}")
 
 driver.quit()
