@@ -16,22 +16,18 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-url = 'https://www.carrefour.es/supermercado/frescos/cat20002/c'
 driver = crear_driver()
-print(f"📡 Carregant: {url}")
-driver.get(url)
-time.sleep(10)
-for i in range(3):
-    driver.execute_script("window.scrollBy(0, 400);")
-    time.sleep(2)
+driver.get('https://www.bonarea-online.com/ca/shop/shopping')
+time.sleep(8)
 
-print(f"📄 Títol: {driver.title}")
-print(f"🔗 URL final: {driver.current_url}")
-
-noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
-preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
-print(f"Noms: {len(noms)}, Preus: {len(preus)}")
-if noms:
-    print(f"Primer: {noms[0].get_attribute('innerText')}")
+print("🔍 TOTES LES URLS /categories/ trobades:")
+links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
+codis_valids = ['13_300', '13_310', '13_320', '13_330', '13_340', '13_350', '13_030']
+for link in links:
+    href = link.get_attribute('href') or ''
+    codi = href.split('/')[-1]
+    if any(codi.startswith(c) for c in codis_valids):
+        guions = codi.count('_')
+        print(f"  guions={guions} → {href}")
 
 driver.quit()
