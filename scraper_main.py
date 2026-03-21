@@ -277,12 +277,24 @@ class BonAreaScraper:
         count = 0
         try:
             driver.get(url)
-            time.sleep(8)  # espera redirecció automàtica
+            time.sleep(8)
             for i in range(3):
                 driver.execute_script("window.scrollBy(0, 400);")
                 time.sleep(1)
             time.sleep(2)
             productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+
+            # Si no troba productes, provar amb _010 al final
+            if not productes:
+                url_alt = url + '_010'
+                driver.get(url_alt)
+                time.sleep(8)
+                for i in range(3):
+                    driver.execute_script("window.scrollBy(0, 400);")
+                    time.sleep(1)
+                time.sleep(2)
+                productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+
             for prod in productes:
                 try:
                     nom = prod.find_element(By.CSS_SELECTOR, 'a.article-link div.text p').get_attribute('innerText').strip()
