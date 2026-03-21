@@ -264,9 +264,9 @@ class BonAreaScraper:
             if not href or href in vistos:
                 continue
             vistos.add(href)
-            # Filtrar només categories que ens interessen i que tinguin subcategoria (_XXX_XXX)
+            # Filtrar només categories que ens interessen i que tinguin subcategoria (_XXX_XXX_XXX)
             codi = href.split('/')[-1]
-            if any(codi.startswith(c) for c in self.codis_valids) and codi.count('_') >= 2:
+            if any(codi.startswith(c) for c in self.codis_valids) and codi.count('_') >= 3:
                 categories.append(href)
         print(f"  ✅ {len(categories)} categories trobades")
         return categories
@@ -553,17 +553,17 @@ if __name__ == '__main__':
     scraper_mercadona = MercadonaScraper()
     tots_productes.extend(scraper_mercadona.scrape_all(max_productes=50))
     
-    scraper_dia = DiaScraper()
-    tots_productes.extend(scraper_dia.scrape_all(max_per_categoria=100))
-    
-    scraper_bonarea = BonAreaScraper()
-    tots_productes.extend(scraper_bonarea.scrape_all())
-    
     scraper_carrefour = CarrefourScraper()
     tots_productes.extend(scraper_carrefour.scrape_all(max_per_categoria=100))
     
     scraper_bonpreuesclat = BonPreuEsclatScraper()
     tots_productes.extend(scraper_bonpreuesclat.scrape_all())
+    
+    scraper_dia = DiaScraper()
+    tots_productes.extend(scraper_dia.scrape_all(max_per_categoria=100))
+    
+    scraper_bonarea = BonAreaScraper()
+    tots_productes.extend(scraper_bonarea.scrape_all())
     
     print("\n" + "="*60)
     print(f"🔄 FASE 2: Desduplicant i omplint full temporal...")
@@ -620,3 +620,4 @@ if __name__ == '__main__':
     print(f"📊 Total brut: {len(tots_productes)} | Únics: {len(tots_productes_unics)} | Duplicats eliminats: {duplicats}")
     print("✅ App sempre amb dades disponibles")
     print("="*60)
+
