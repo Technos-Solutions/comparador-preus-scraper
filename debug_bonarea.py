@@ -16,20 +16,30 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-# Provem una URL que dona 0 i una que funciona
-urls = [
-    'https://www.bonarea-online.com/categories/lactics-i-derivats/13_300_080',
-    'https://www.bonarea-online.com/categories/lleixius-i-desinfectants/13_330_080',
-]
+base_url = 'https://www.carrefour.es/supermercado'
+nom_cat = 'mascotas'
+codi_cat = 'cat20007'
+max_productes = 100
+count = 0
+offset = 0
+noms_anteriors = set()
 
-for url in urls:
+while count < max_productes:
     driver = crear_driver()
-    print(f"\n📡 Provant: {url}")
+    url = f'{base_url}/{nom_cat}/{codi_cat}/c?offset={offset}'
     driver.get(url)
     time.sleep(10)
-    print(f"  URL final: {driver.current_url}")
-    productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
-    print(f"  Productes: {len(productes)}")
-    if productes:
-        print(f"  Primer: {productes[0].get_attribute('innerText')[:60]}")
+    for i in range(3):
+        driver.execute_script("window.scrollBy(0, 400);")
+        time.sleep(2)
+    noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
+    preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
     driver.quit()
+
+    if not noms:
+        print(f"  offset={offset} → 0 productes, parant")
+        break
+
+    noms_actuals = set(n.get_attribute('innerText').strip() for n in noms)
+    if noms_actuals == noms_anteriors:
+        print(f"  offset={offset} → pàgina repetida, parant
