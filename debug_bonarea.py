@@ -33,20 +33,22 @@ while count < max_productes:
         driver.execute_script("window.scrollBy(0, 400);")
         time.sleep(2)
     noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
+
+    # Extreure text ABANS de tancar el driver
+    noms_actuals = set(n.get_attribute('innerText').strip() for n in noms)
     driver.quit()
 
-    if not noms:
+    if not noms_actuals:
         print(f"offset={offset} -> 0 productes, parant")
         break
 
-    noms_actuals = set(n.get_attribute('innerText').strip() for n in noms)
     if noms_actuals == noms_anteriors:
         print(f"offset={offset} -> pagina repetida, parant!")
         break
 
     noms_anteriors = noms_actuals
-    count += len(noms)
-    print(f"offset={offset} -> {len(noms)} productes")
+    count += len(noms_actuals)
+    print(f"offset={offset} -> {len(noms_actuals)} productes")
     offset += 24
 
 print(f"Total: {count} productes")
