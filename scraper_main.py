@@ -404,6 +404,7 @@ class CarrefourScraper:
         print(f"  📂 Categoria: {nom_cat}")
         count = 0
         offset = 0
+        noms_anteriors = set()
         while count < max_productes:
             driver = None
             try:
@@ -412,6 +413,12 @@ class CarrefourScraper:
                 productes = self.scrape_pagina(driver, url)
                 if not productes:
                     break
+                # Detectar pàgina repetida
+                noms_actuals = set(p['producte'] for p in productes)
+                if noms_actuals == noms_anteriors:
+                    print(f"    ⚠️ Pàgina repetida detectada, parant")
+                    break
+                noms_anteriors = noms_actuals
                 self.productes.extend(productes)
                 count += len(productes)
                 print(f"    offset={offset} → {len(productes)} productes")
