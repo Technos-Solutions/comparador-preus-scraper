@@ -2,25 +2,17 @@ import subprocess
 subprocess.run(['pip', 'install', 'requests', '--break-system-packages', '-q'])
 
 import requests
+import json
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     'Accept-Language': 'es-ES'
 }
 
-# Obtenim totes les categories
-url = 'https://tienda.mercadona.es/api/categories/?lang=es&wh=mad1'
-data = requests.get(url, headers=headers).json()
-
-total = 0
-for cat in data['results']:
-    print(f"\n{cat['name']}:")
-    for subcat in cat['categories']:
-        # Productes de cada subcategoria
-        url_sub = f"https://tienda.mercadona.es/api/categories/{subcat['id']}/?lang=es&wh=mad1"
-        sub_data = requests.get(url_sub, headers=headers).json()
-        prods = sub_data.get('products', [])
-        print(f"  {subcat['name']} -> {len(prods)} productes")
-        total += len(prods)
-
-print(f"\nTOTAL: {total} productes")
+# Mirem el contingut d'una subcategoria concreta (Aceite = id 112)
+url = 'https://tienda.mercadona.es/api/categories/112/?lang=es&wh=mad1'
+response = requests.get(url, headers=headers)
+print(f"Status: {response.status_code}")
+data = response.json()
+print("Claus:", list(data.keys()))
+print(json.dumps(data, ensure_ascii=False)[:800])
