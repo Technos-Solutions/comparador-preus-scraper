@@ -77,39 +77,40 @@ class MercadonaScraper:
     def __init__(self):
         self.base_url = 'https://tienda.mercadona.es/api'
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept-Language': 'es-ES'
         }
-    
-    def scrape_producte(self, producte_id):
-        try:
-            import requests
-            url = f'{self.base_url}/products/{producte_id}/'
-            response = requests.get(url, headers=self.headers)
-            if response.status_code != 200:
-                return None
-            prod = response.json()
-            return {
-                'producte': prod['display_name'],
-                'marca': prod.get('brand', 'Hacendado'),
-                'supermercat': 'Mercadona',
-                'preu': prod['price_instructions']['unit_price'],
-                'quantitat': prod.get('packaging', '1 u')
-            }
-        except:
-            return None
-    
-    def scrape_all(self, max_productes=20):
-        print(f"\n🟢 Mercadona: extraient {max_productes} productes...")
+
+    def scrape_all(self):
+        print(f"\n🟢 Mercadona: extraient productes via API...")
         import requests
         productes = []
-        product_ids = [10382, 10380, 10543, 10933, 10721, 15599, 9407, 9420, 
-                       34180, 28171, 28812, 15554, 75536, 25593, 34432, 82343,
-                       25718, 7668, 8169, 66]
-        for prod_id in product_ids[:max_productes]:
-            prod = self.scrape_producte(prod_id)
-            if prod:
-                productes.append(prod)
-            time.sleep(1)
+        try:
+            url_cats = f'{self.base_url}/categories/?lang=es&wh=mad1'
+            cats = requests.get(url_cats, headers=self.headers).json()
+            for cat in cats.get('results', []):
+                for subcat in cat.get('categories', []):
+                    try:
+                        url_sub = f"{self.base_url}/categories/{subcat['id']}/?lang=es&wh=mad1"
+                        sub_data = requests.get(url_sub, headers=self.headers).json()
+                        for sub2 in sub_data.get('categories', []):
+                            for prod in sub2.get('products', []):
+                                try:
+                                    preu = prod['price_instructions']['unit_price']
+                                    productes.append({
+                                        'producte': prod['display_name'],
+                                        'marca': prod.get('brand') or 'Hacendado',
+                                        'supermercat': 'Mercadona',
+                                        'preu': float(preu),
+                                        'quantitat': prod.get('packaging', '1u')
+                                    })
+                                except:
+                                    continue
+                        time.sleep(0.2)
+                    except:
+                        continue
+        except Exception as e:
+            print(f"  ❌ Error Mercadona: {e}")
         print(f"✅ Mercadona: {len(productes)} productes extrets")
         return productes
 
@@ -570,7 +571,7 @@ if __name__ == '__main__':
     tots_productes = []
     
     scraper_mercadona = MercadonaScraper()
-    tots_productes.extend(scraper_mercadona.scrape_all(max_productes=50))
+    tots_productes.extend(scraper_mercadona.scrape_all())
     
     scraper_carrefour = CarrefourScraper()
     tots_productes.extend(scraper_carrefour.scrape_all(max_per_categoria=100))
