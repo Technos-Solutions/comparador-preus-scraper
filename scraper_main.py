@@ -439,7 +439,7 @@ class CarrefourScraper:
         print("\n🔴 Carrefour: extraient productes amb Selenium...")
         for nom_cat, codi_cat in self.categories:
             self.scrape_categoria(nom_cat, codi_cat, max_productes=max_per_categoria)
-            time.sleep(3)
+            time.sleep(10)
         print(f"✅ Carrefour: {len(self.productes)} productes extrets")
         return self.productes
 
