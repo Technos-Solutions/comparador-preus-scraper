@@ -17,38 +17,24 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 base_url = 'https://www.carrefour.es/supermercado'
-nom_cat = 'mascotas'
-codi_cat = 'cat20007'
-max_productes = 100
-count = 0
-offset = 0
-noms_anteriors = set()
+categories = [
+    ('bebe', 'cat20006'),
+    ('mascotas', 'cat20007'),
+]
 
-while count < max_productes:
+for nom_cat, codi_cat in categories:
+    print(f"\nCategoria: {nom_cat}")
+    time.sleep(10)
     driver = crear_driver()
-    url = f'{base_url}/{nom_cat}/{codi_cat}/c?offset={offset}'
+    url = f'{base_url}/{nom_cat}/{codi_cat}/c?offset=0'
     driver.get(url)
     time.sleep(10)
     for i in range(3):
         driver.execute_script("window.scrollBy(0, 400);")
         time.sleep(2)
     noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
-
-    # Extreure text ABANS de tancar el driver
-    noms_actuals = set(n.get_attribute('innerText').strip() for n in noms)
+    noms_text = [n.get_attribute('innerText').strip() for n in noms]
     driver.quit()
-
-    if not noms_actuals:
-        print(f"offset={offset} -> 0 productes, parant")
-        break
-
-    if noms_actuals == noms_anteriors:
-        print(f"offset={offset} -> pagina repetida, parant!")
-        break
-
-    noms_anteriors = noms_actuals
-    count += len(noms_actuals)
-    print(f"offset={offset} -> {len(noms_actuals)} productes")
-    offset += 24
-
-print(f"Total: {count} productes")
+    print(f"  Productes: {len(noms_text)}")
+    if noms_text:
+        print(f"  Primer: {noms_text[0]}")
