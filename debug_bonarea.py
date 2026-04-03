@@ -1,24 +1,32 @@
-import re
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+import time
 
-def extreure_quantitat(nom):
-    # Cas pack: "6 x 52 g" -> "6 x 52 g"
-    match_pack = re.search(r'(\d+)\s*x\s*(\d+[.,]?\d*)\s*(kg|g|l|ml|cl)', nom, re.IGNORECASE)
-    if match_pack:
-        return f"{match_pack.group(1)} x {match_pack.group(2)} {match_pack.group(3).lower()}"
-    # Cas normal: última quantitat
-    matches = re.findall(r'(\d+[.,]?\d*)\s*(kg|g|l|ml|cl|ud|unidades?)', nom, re.IGNORECASE)
-    if matches:
-        val, unitat = matches[-1]
-        return f"{val} {unitat.lower()}"
-    return ''
+def crear_driver():
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+    chrome_options.binary_location = '/usr/bin/chromium-browser'
+    from selenium.webdriver.chrome.service import Service
+    service = Service('/usr/bin/chromedriver')
+    return webdriver.Chrome(service=service, options=chrome_options)
 
-# Test
-noms = [
-    'Atun en aceite de girasol Dia Mari Marinera 6 x 52 g',
-    'Tomate frito casero Dia Vegecampo 350 g',
-    'Agua mineral Dia 1.5 L',
-    'Leche semidesnatada Dia pack 6 x 1 L',
-    'Patatas fritas Dia 150 g',
-]
-for nom in noms:
-    print(f"  {nom[:50]:<50} -> {extreure_quantitat(nom)}")
+driver = crear_driver()
+driver.get('https://www.compraonline.bonpreuesclat.cat/categories/alimentaci%C3%B3')
+time.sleep(12)
+for i in range(5):
+    driver.execute_script("window.scrollBy(0, 400);")
+    time.sleep(2)
+
+noms = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
+print(f"Productes: {len(noms)}")
+if noms:
+    print("\nHTML primer producte:")
+    print(noms[0].find_element(By.XPATH, '../..').get_attribute('innerHTML')[:2000])
+
+driver.quit()
