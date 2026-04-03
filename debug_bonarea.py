@@ -16,18 +16,17 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-# Carreguem la categoria de vins i veiem quines subcategories apareixen al menú
 driver = crear_driver()
-driver.get('https://www.bonarea-online.com/categories/vi-blanc/13_320_090')
-time.sleep(8)
+driver.get('https://www.bonarea-online.com/categories/vi-blanc/13_320_090_001')
+time.sleep(10)
 
-print('URLs de subcategories trobades:')
+print('TOTS ELS LINKS /categories/ de la pagina:')
 links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
-for link in links:
+print(f'Total: {len(links)}')
+for link in links[:30]:
     href = link.get_attribute('href') or ''
-    text = link.get_attribute('innerText').strip()
+    text = link.get_attribute('innerText').strip()[:40]
     codi = href.split('/')[-1]
-    if codi.startswith('13_320_090') and codi.count('_') >= 3:
-        print(f'  {text} -> {codi}')
+    print(f'  {codi} | {text}')
 
 driver.quit()
