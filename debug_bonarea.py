@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
+import re
 
 def crear_driver():
     chrome_options = Options()
@@ -17,7 +18,6 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 driver = crear_driver()
-# Conserves - tindran quantitats com 400g, 500g etc
 driver.get('https://www.bonarea-online.com/categories/conserves/13_300_040_010')
 time.sleep(8)
 for i in range(3):
@@ -25,14 +25,21 @@ for i in range(3):
     time.sleep(1)
 
 productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
-print(f"Productes trobats: {len(productes)}")
 for prod in productes[:5]:
     nom = prod.find_element(By.CSS_SELECTOR, 'a.article-link div.text p').get_attribute('innerText').strip()
-    preu = prod.find_element(By.CSS_SELECTOR, 'div.price span').get_attribute('innerText').strip()
     pes = prod.find_element(By.CSS_SELECTOR, 'div.weight').get_attribute('innerText').strip()
-    print(f"\n  {nom} | {pes} | {preu}")
-    # Imprimim tot el HTML del bloc de preu
-    bloc_preu = prod.find_element(By.CSS_SELECTOR, 'div.price').get_attribute('innerHTML')
-    print(f"  HTML preu: {bloc_preu}")
+    preu_text = prod.find_element(By.CSS_SELECTOR, 'div.price span').get_attribute('innerText').strip()
+    preu_text = preu_text.replace('€/u.', '').replace('€', '').replace(',', '.').strip()
+    preu = float(preu_text)
+    # Extreure preu/kg o preu/l del text complet del bloc
+    bloc_text = prod.find_element(By.CSS_SELECTOR, 'div.price').get_attribute('innerText')
+    match = re.search(r'\(([0-9.,]+)\s*€/(kg|l|litre)\)', bloc_text)
+    if match:
+        preu_norm = float(match.group(1).replace(',', '.'))
+        unitat = match.group(2)
+    else:
+        preu_norm = None
+        unitat = ''
+    print(f"  {nom} | {pes} | {preu} EUR | {preu_norm} EUR/{unitat}")
 
 driver.quit()
