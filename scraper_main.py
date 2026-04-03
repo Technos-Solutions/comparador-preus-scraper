@@ -16,28 +16,23 @@ print("="*60)
 print(f"🚀 SCRAPER INICIAT - {datetime.now()}")
 print("="*60)
 
-# Llegir credencials des de variable d'entorn (GitHub Secret)
 try:
     creds_json = os.environ.get('GOOGLE_CREDENTIALS')
     if not creds_json:
         raise Exception("⚠️ GOOGLE_CREDENTIALS no trobat!")
-    
     creds_dict = json.loads(creds_json)
     print("✅ Credencials carregades correctament")
 except Exception as e:
     print(f"❌ Error carregant credencials: {e}")
     exit(1)
 
-# Connexió Google Sheets
 scope = [
     'https://spreadsheets.google.com/feeds',
     'https://www.googleapis.com/auth/drive'
 ]
-
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 sheet = client.open('Comparador_Preus_DB')
-
 print("✅ Connectat a Google Sheets")
 
 
@@ -66,6 +61,7 @@ class GoogleSheetsDB:
                 preu.get('supermercat', ''),
                 preu.get('preu', 0),
                 preu.get('quantitat', ''),
+                preu.get('envas', ''),
                 preu.get('data', '')
             ]
             rows.append(row)
@@ -138,7 +134,6 @@ class DiaScraper:
     def __init__(self):
         self.base_url = 'https://www.dia.es'
         self.productes = []
-        # Categories a excloure (no alimentació/neteja)
         self.excloure = ['freidora-de-aire', 'sin-gluten', 'ofertas', 'recetas']
 
     def _crear_driver(self):
@@ -149,7 +144,7 @@ class DiaScraper:
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--disable-extensions')
         chrome_options.add_argument('--window-size=1920,1080')
-        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         chrome_options.binary_location = '/usr/bin/chromium-browser'
         from selenium.webdriver.chrome.service import Service
         import re
@@ -157,7 +152,6 @@ class DiaScraper:
         return webdriver.Chrome(service=service, options=chrome_options)
 
     def descobrir_categories(self, driver):
-        """Descobreix categories principals (sense subcategories) des d'una pàgina de categoria"""
         import re
         print("  🔍 Descobrint categories automàticament...")
         driver.get(f'{self.base_url}/frutas/c/L105')
@@ -168,7 +162,6 @@ class DiaScraper:
         for link in links:
             href = link.get_attribute('href') or ''
             text = link.get_attribute('innerText').strip()
-            # Només categories principals (un sol segment abans de /c/)
             match = re.search(r'dia\.es/([^/]+)/c/L(\d+)$', href)
             if match and href not in vistos and text:
                 nom_cat = match.group(1)
@@ -215,18 +208,17 @@ class DiaScraper:
                             count += 1
                     except:
                         continue
-                print(f"    pàgina {pagina} → {len(cards)} productes")
+                print(f"    pagina {pagina} -> {len(cards)} productes")
                 if len(cards) < 48:
                     break
                 pagina += 1
             except Exception as e:
-                print(f"    ❌ Error pàgina {pagina}: {e}")
+                print(f"    ❌ Error pagina {pagina}: {e}")
                 break
         print(f"    ✅ {count} productes extrets")
 
     def scrape_all(self, max_per_categoria=100):
         print("\n🟣 Dia: extraient productes amb Selenium...")
-        # Descobrir categories
         driver_descobrir = None
         categories = []
         try:
@@ -241,7 +233,6 @@ class DiaScraper:
                 except:
                     pass
 
-        # Rasquem cada categoria
         for nom_cat, url in categories:
             driver = None
             try:
@@ -265,7 +256,6 @@ class BonAreaScraper:
     def __init__(self):
         self.base_url = 'https://www.bonarea-online.com'
         self.productes = []
-        # Categories que ens interessen (alimentació, cuinats, begudes, drogueria, higiene, perfumeria, mascotes)
         self.codis_valids = ['13_300', '13_310', '13_320', '13_330', '13_340', '13_350', '13_030']
 
     def _crear_driver(self):
@@ -276,14 +266,13 @@ class BonAreaScraper:
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--disable-extensions')
         chrome_options.add_argument('--window-size=1920,1080')
-        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         chrome_options.binary_location = '/usr/bin/chromium-browser'
         from selenium.webdriver.chrome.service import Service
         service = Service('/usr/bin/chromedriver')
         return webdriver.Chrome(service=service, options=chrome_options)
 
     def descobrir_categories(self, driver):
-        """Llegeix totes les categories del menú i filtra les que ens interessen"""
         print("  🔍 Descobrint categories automàticament...")
         driver.get(f'{self.base_url}/ca/shop/shopping')
         time.sleep(6)
@@ -295,49 +284,90 @@ class BonAreaScraper:
             if not href or href in vistos:
                 continue
             vistos.add(href)
-            # Filtrar només categories que ens interessen i que tinguin subcategoria (_XXX_XXX)
             codi = href.split('/')[-1]
             if any(codi.startswith(c) for c in self.codis_valids) and codi.count('_') >= 2:
                 categories.append(href)
         print(f"  ✅ {len(categories)} categories trobades")
         return categories
 
+    def comptar_productes(self, driver, url):
+        """Carrega una URL i retorna el nombre de productes trobats"""
+        driver.get(url)
+        time.sleep(8)
+        for i in range(3):
+            driver.execute_script("window.scrollBy(0, 400);")
+            time.sleep(1)
+        time.sleep(2)
+        return driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+
+    def extreure_productes(self, productes_elements):
+        """Extreu dades dels elements de producte trobats"""
+        extrets = []
+        for prod in productes_elements:
+            try:
+                nom = prod.find_element(By.CSS_SELECTOR, 'a.article-link div.text p').get_attribute('innerText').strip()
+                preu_text = prod.find_element(By.CSS_SELECTOR, 'div.price span').get_attribute('innerText')
+                preu_text = preu_text.replace('€/u.', '').replace('€', '').replace(',', '.').replace('\xa0', '').strip()
+                preu = float(preu_text)
+                quantitat = prod.find_element(By.CSS_SELECTOR, 'div.weight').get_attribute('innerText').strip()
+                if nom and preu > 0:
+                    extrets.append({'producte': nom, 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': preu, 'quantitat': quantitat, 'envas': ''})
+            except:
+                continue
+        return extrets
+
     def scrape_categoria(self, driver, url):
         nom_cat = url.split('/')[-2]
         print(f"  📂 Categoria: {nom_cat}")
         count = 0
         try:
-            driver.get(url)
+            # Pas 1: comprovar _001 i _010
+            driver.get(url + '_001')
             time.sleep(8)
             for i in range(3):
                 driver.execute_script("window.scrollBy(0, 400);")
                 time.sleep(1)
-            time.sleep(2)
-            productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+            p001 = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+            n001 = len(p001)
 
-            # Si no troba productes, provar amb _010 al final
-            if not productes:
-                url_alt = url + '_010'
-                driver.get(url_alt)
-                time.sleep(8)
-                for i in range(3):
-                    driver.execute_script("window.scrollBy(0, 400);")
-                    time.sleep(1)
-                time.sleep(2)
-                productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+            driver.get(url + '_010')
+            time.sleep(8)
+            for i in range(3):
+                driver.execute_script("window.scrollBy(0, 400);")
+                time.sleep(1)
+            p010 = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+            n010 = len(p010)
 
-            for prod in productes:
-                try:
-                    nom = prod.find_element(By.CSS_SELECTOR, 'a.article-link div.text p').get_attribute('innerText').strip()
-                    preu_text = prod.find_element(By.CSS_SELECTOR, 'div.price span').get_attribute('innerText')
-                    preu_text = preu_text.replace('€/u.', '').replace('€', '').replace(',', '.').replace('\xa0', '').strip()
-                    preu = float(preu_text)
-                    quantitat = prod.find_element(By.CSS_SELECTOR, 'div.weight').get_attribute('innerText').strip()
-                    if nom and preu > 0:
-                        self.productes.append({'producte': nom, 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': preu, 'quantitat': quantitat, 'envas': ''})
-                        count += 1
-                except:
-                    continue
+            # Pas 2: decidir estrategia
+            # Si _001 te molts mes productes que _010, es la vista "tots"
+            if n010 == 0 or (n001 > 0 and n001 >= n010 * 3):
+                # Usar _001 directament
+                print(f"    Estrategia: usar _001 ({n001} productes)")
+                extrets = self.extreure_productes(p001)
+                self.productes.extend(extrets)
+                count += len(extrets)
+            else:
+                # Iterar _010, _020, _030...
+                print(f"    Estrategia: iterar subcategories (_010, _020...)")
+                # Primer afegim els de _010 que ja tenim
+                extrets = self.extreure_productes(p010)
+                self.productes.extend(extrets)
+                count += len(extrets)
+                # Continuem amb _020, _030...
+                for n in range(2, 30):
+                    suffix = f'_{n*10:03d}'
+                    driver.get(url + suffix)
+                    time.sleep(6)
+                    for i in range(3):
+                        driver.execute_script("window.scrollBy(0, 400);")
+                        time.sleep(1)
+                    productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+                    if not productes:
+                        break
+                    extrets = self.extreure_productes(productes)
+                    self.productes.extend(extrets)
+                    count += len(extrets)
+
             print(f"    ✅ {count} productes extrets")
         except Exception as e:
             print(f"    ❌ Error: {e}")
@@ -345,7 +375,6 @@ class BonAreaScraper:
 
     def scrape_all(self, max_productes=999):
         print(f"\n🟠 Bon Àrea: extraient productes amb Selenium...")
-        # Primer descobrim les categories automàticament
         driver_descobrir = None
         categories = []
         try:
@@ -360,7 +389,6 @@ class BonAreaScraper:
                 except:
                     pass
 
-        # Després rasquem cada categoria amb driver nou
         for url in categories:
             driver = None
             try:
@@ -402,14 +430,13 @@ class CarrefourScraper:
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--disable-extensions')
         chrome_options.add_argument('--window-size=1920,1080')
-        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         chrome_options.binary_location = '/usr/bin/chromium-browser'
         from selenium.webdriver.chrome.service import Service
         service = Service('/usr/bin/chromedriver')
         return webdriver.Chrome(service=service, options=chrome_options)
 
     def scrape_pagina(self, driver, url):
-        """Extreu productes d'una pàgina"""
         import re
         def extreure_quantitat(nom):
             matches = re.findall(r'(\d+[.,]?\d*)\s*(kg|g|l|ml|cl|ud|unidades?)', nom, re.IGNORECASE)
@@ -453,15 +480,14 @@ class CarrefourScraper:
                 productes = self.scrape_pagina(driver, url)
                 if not productes:
                     break
-                # Detectar pàgina repetida
                 noms_actuals = set(p['producte'] for p in productes)
                 if noms_actuals == noms_anteriors:
-                    print(f"    ⚠️ Pàgina repetida detectada, parant")
+                    print(f"    ⚠️ Pagina repetida detectada, parant")
                     break
                 noms_anteriors = noms_actuals
                 self.productes.extend(productes)
                 count += len(productes)
-                print(f"    offset={offset} → {len(productes)} productes")
+                print(f"    offset={offset} -> {len(productes)} productes")
                 offset += 24
             except Exception as e:
                 print(f"    ❌ Error offset={offset}: {e}")
@@ -488,10 +514,9 @@ class BonPreuEsclatScraper:
     def __init__(self):
         self.base_url = 'https://www.compraonline.bonpreuesclat.cat'
         self.productes = []
-        # Categories que ens interessen per nom
         self.categories_valides = [
             'frescos', 'alimentaci', 'begudes', 'congelats',
-            'lactics', 'làctics', 'cura-personal', 'neteja',
+            'lactics', 'lactics', 'cura-personal', 'neteja',
             'espai-mascotes', 'nadons'
         ]
 
@@ -503,14 +528,13 @@ class BonPreuEsclatScraper:
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--disable-extensions')
         chrome_options.add_argument('--window-size=1920,1080')
-        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         chrome_options.binary_location = '/usr/bin/chromium-browser'
         from selenium.webdriver.chrome.service import Service
         service = Service('/usr/bin/chromedriver')
         return webdriver.Chrome(service=service, options=chrome_options)
 
     def descobrir_categories(self, driver):
-        """Llegeix categories del menú i filtra les que ens interessen, desduplicant per UUID"""
         print("  🔍 Descobrint categories automàticament...")
         driver.get(self.base_url)
         time.sleep(8)
@@ -522,14 +546,11 @@ class BonPreuEsclatScraper:
             text = link.get_attribute('innerText').strip().lower()
             if not href or not text:
                 continue
-            # Extreure UUID (últim segment abans del ?)
             uuid = href.split('/')[-1].split('?')[0]
             if uuid in uuids_vistos:
                 continue
-            # Filtrar per categories que ens interessen
             if any(cat in text for cat in self.categories_valides):
                 uuids_vistos.add(uuid)
-                # Usar URL neta sense paràmetres extra
                 url_neta = f"{self.base_url}/categories/{href.split('/categories/')[1].split('?')[0]}"
                 categories.append((text.title(), url_neta))
         print(f"  ✅ {len(categories)} categories trobades")
@@ -571,7 +592,6 @@ class BonPreuEsclatScraper:
                     preu_text = preus[i].get_attribute('innerText').strip()
                     preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
                     preu = float(preu_text)
-                    # Extreure quantitat
                     try:
                         contenidor = noms[i].find_element(By.XPATH, '../../../..')
                         pes_el = contenidor.find_element(By.CSS_SELECTOR, 'span[class*="weight"]')
@@ -590,7 +610,6 @@ class BonPreuEsclatScraper:
 
     def scrape_all(self):
         print(f"\n🟡 Bon Preu / Esclat: extraient productes amb Selenium...")
-        # Descobrir categories
         driver_descobrir = None
         categories = []
         try:
@@ -605,7 +624,6 @@ class BonPreuEsclatScraper:
                 except:
                     pass
 
-        # Rasquem cada categoria
         for nom_cat, url in categories:
             driver = None
             try:
@@ -628,33 +646,32 @@ class BonPreuEsclatScraper:
 # EXECUTAR SCRAPERS
 if __name__ == '__main__':
     db = GoogleSheetsDB(sheet)
-    
+
     print("\n" + "="*60)
     print("🔄 FASE 1: Extraient productes de tots els supermercats...")
     print("="*60)
-    
+
     tots_productes = []
-    
+
     scraper_mercadona = MercadonaScraper()
     tots_productes.extend(scraper_mercadona.scrape_all())
-    
+
     scraper_carrefour = CarrefourScraper()
     tots_productes.extend(scraper_carrefour.scrape_all(max_per_categoria=100))
-    
+
     scraper_bonpreuesclat = BonPreuEsclatScraper()
     tots_productes.extend(scraper_bonpreuesclat.scrape_all())
-    
+
     scraper_dia = DiaScraper()
     tots_productes.extend(scraper_dia.scrape_all(max_per_categoria=100))
-    
+
     scraper_bonarea = BonAreaScraper()
     tots_productes.extend(scraper_bonarea.scrape_all())
-    
+
     print("\n" + "="*60)
     print(f"🔄 FASE 2: Desduplicant i omplint full temporal...")
     print("="*60)
 
-    # Desduplicar per nom + supermercat
     vistos = set()
     tots_productes_unics = []
     for p in tots_productes:
@@ -664,15 +681,15 @@ if __name__ == '__main__':
             tots_productes_unics.append(p)
 
     duplicats = len(tots_productes) - len(tots_productes_unics)
-    print(f"✅ {len(tots_productes)} productes → {len(tots_productes_unics)} únics ({duplicats} duplicats eliminats)")
-    
+    print(f"✅ {len(tots_productes)} productes -> {len(tots_productes_unics)} unics ({duplicats} duplicats eliminats)")
+
     ws_temp = sheet.worksheet('Preus_Temp')
     ws_temp.clear()
     ws_temp.append_row(['id', 'producte', 'marca', 'supermercat', 'preu', 'quantitat', 'envas', 'data'])
-    
+
     for preu in tots_productes_unics:
         preu['data'] = datetime.now().strftime('%Y-%m-%d %H:%M')
-    
+
     rows = []
     for i, preu in enumerate(tots_productes_unics, start=1):
         row = [
@@ -686,23 +703,23 @@ if __name__ == '__main__':
             preu.get('data', '')
         ]
         rows.append(row)
-    
+
     ws_temp.append_rows(rows)
     print(f"✅ Full temporal omplert amb {len(tots_productes_unics)} productes")
-    
+
     print("\n" + "="*60)
-    print("🔄 FASE 3: Actualitzant full principal (swap atòmic)...")
+    print("🔄 FASE 3: Actualitzant full principal (swap atomic)...")
     print("="*60)
-    
+
     ws_preus = sheet.worksheet('Preus')
     all_data = ws_temp.get_all_values()
     ws_preus.clear()
     ws_preus.append_rows(all_data)
-    
+
     print("✅ Full 'Preus' actualitzat correctament")
-    
+
     print("\n" + "="*60)
     print("✅ SCRAPERS COMPLETATS!")
-    print(f"📊 Total brut: {len(tots_productes)} | Únics: {len(tots_productes_unics)} | Duplicats eliminats: {duplicats}")
+    print(f"📊 Total brut: {len(tots_productes)} | Unics: {len(tots_productes_unics)} | Duplicats eliminats: {duplicats}")
     print("✅ App sempre amb dades disponibles")
     print("="*60)
