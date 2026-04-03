@@ -16,17 +16,17 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-driver = crear_driver()
-driver.get('https://www.bonarea-online.com/categories/vi-blanc/13_320_090_001')
-time.sleep(10)
+urls = [
+    ('Vi blanc _001 (tots)', 'https://www.bonarea-online.com/categories/tots-els-vins-blancs/13_320_090_001'),
+    ('Vi blanc _010 (DO Segre)', 'https://www.bonarea-online.com/categories/do-costers-del-segre/13_320_090_010'),
+    ('Refrescos _001', 'https://www.bonarea-online.com/categories/begudes-refrescants/13_320_030_001'),
+    ('Refrescos _010', 'https://www.bonarea-online.com/categories/begudes-refrescants/13_320_030_010'),
+]
 
-print('TOTS ELS LINKS /categories/ de la pagina:')
-links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
-print(f'Total: {len(links)}')
-for link in links[:30]:
-    href = link.get_attribute('href') or ''
-    text = link.get_attribute('innerText').strip()[:40]
-    codi = href.split('/')[-1]
-    print(f'  {codi} | {text}')
-
-driver.quit()
+for nom, url in urls:
+    driver = crear_driver()
+    driver.get(url)
+    time.sleep(6)
+    productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+    print(f'{nom} -> {len(productes)} productes')
+    driver.quit()
