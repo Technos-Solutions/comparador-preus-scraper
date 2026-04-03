@@ -18,10 +18,11 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 def extreure_quantitat(nom):
-    # Patrons: 500 g, 1 kg, 1,5 l, 330 ml, 4x33cl, 4 ud, etc.
-    match = re.search(r'(\d+[.,]?\d*)\s*(kg|g|l|ml|cl|ud|unidades?)\s*\.?$', nom, re.IGNORECASE)
-    if match:
-        return f"{match.group(1)} {match.group(2).lower()}"
+    # Cerca la ULTIMA ocurrencia de quantitat al nom
+    matches = re.findall(r'(\d+[.,]?\d*)\s*(kg|g|l|ml|cl|ud|unidades?)', nom, re.IGNORECASE)
+    if matches:
+        val, unitat = matches[-1]
+        return f"{val} {unitat.lower()}"
     return ''
 
 driver = crear_driver()
