@@ -17,13 +17,16 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 driver = crear_driver()
-driver.get('https://www.bonarea-online.com/categories/conserves/13_300_040_010')
-time.sleep(8)
+driver.get('https://www.carrefour.es/supermercado/conservas-caldos-y-cremas/cat20014/c?offset=0')
+time.sleep(10)
+for i in range(3):
+    driver.execute_script("window.scrollBy(0, 400);")
+    time.sleep(2)
 
-productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
-print(f"Productes: {len(productes)}")
-if productes:
-    print("\nHTML complet del primer producte:")
-    print(productes[0].get_attribute('innerHTML'))
+cards = driver.find_elements(By.CSS_SELECTOR, 'article.product-card')
+print(f"Productes: {len(cards)}")
+if cards:
+    print("\nHTML primer producte:")
+    print(cards[0].get_attribute('innerHTML')[:2000])
 
 driver.quit()
