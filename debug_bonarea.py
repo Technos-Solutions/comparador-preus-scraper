@@ -16,16 +16,26 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-driver = crear_driver()
-driver.get('https://www.bonarea-online.com/ca/shop/shopping')
-time.sleep(8)
+def trobar_suffix(base_url):
+    suffixos = ['', '_010', '_020', '_030', '_040', '_050',
+                '_001', '_002', '_003', '_004', '_005']
+    for suffix in suffixos:
+        driver = crear_driver()
+        url = base_url + suffix
+        driver.get(url)
+        time.sleep(6)
+        productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+        driver.quit()
+        if productes:
+            print(f'OK: {base_url.split("/")[-1]}{suffix} -> {len(productes)} productes')
+            return
+    print(f'ERROR: {base_url.split("/")[-1]} -> cap suffix funciona')
 
-links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
-codis_valids = ['13_300', '13_310', '13_320', '13_330', '13_340', '13_350', '13_030']
-for link in links:
-    href = link.get_attribute('href') or ''
-    codi = href.split('/')[-1]
-    if any(codi.startswith(c) for c in codis_valids):
-        print(f'{codi.count("_")} guions | {codi}')
+categories_test = [
+    'https://www.bonarea-online.com/categories/begudes-refrescants/13_320_030',
+    'https://www.bonarea-online.com/categories/vi-blanc/13_320_090',
+    'https://www.bonarea-online.com/categories/lactics-i-derivats/13_300_080',
+]
 
-driver.quit()
+for url in categories_test:
+    trobar_suffix(url)
