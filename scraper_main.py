@@ -81,6 +81,24 @@ class MercadonaScraper:
             'Accept-Language': 'es-ES'
         }
 
+    def calcular_quantitat(self, pi):
+        unit_size = pi.get('unit_size', 0)
+        size_format = pi.get('size_format', '')
+        if size_format == 'kg':
+            if unit_size < 1:
+                return f"{int(unit_size*1000)} g"
+            else:
+                val = int(unit_size) if unit_size == int(unit_size) else unit_size
+                return f"{val} kg"
+        elif size_format == 'l':
+            if unit_size < 1:
+                return f"{int(unit_size*1000)} ml"
+            else:
+                val = int(unit_size) if unit_size == int(unit_size) else unit_size
+                return f"{val} l"
+        else:
+            return f"{unit_size} {size_format}".strip()
+
     def scrape_all(self):
         print(f"\n🟢 Mercadona: extraient productes via API...")
         import requests
@@ -96,13 +114,14 @@ class MercadonaScraper:
                         for sub2 in sub_data.get('categories', []):
                             for prod in sub2.get('products', []):
                                 try:
-                                    preu = prod['price_instructions']['unit_price']
+                                    pi = prod['price_instructions']
                                     productes.append({
                                         'producte': prod['display_name'],
                                         'marca': prod.get('brand') or 'Hacendado',
                                         'supermercat': 'Mercadona',
-                                        'preu': float(preu),
-                                        'quantitat': prod.get('packaging', '1u')
+                                        'preu': float(pi['unit_price']),
+                                        'quantitat': self.calcular_quantitat(pi),
+                                        'envas': prod.get('packaging') or ''
                                     })
                                 except:
                                     continue
@@ -603,7 +622,7 @@ if __name__ == '__main__':
     
     ws_temp = sheet.worksheet('Preus_Temp')
     ws_temp.clear()
-    ws_temp.append_row(['id', 'producte', 'marca', 'supermercat', 'preu', 'quantitat', 'data'])
+    ws_temp.append_row(['id', 'producte', 'marca', 'supermercat', 'preu', 'quantitat', 'envas', 'data'])
     
     for preu in tots_productes_unics:
         preu['data'] = datetime.now().strftime('%Y-%m-%d %H:%M')
@@ -617,6 +636,7 @@ if __name__ == '__main__':
             preu.get('supermercat', ''),
             preu.get('preu', 0),
             preu.get('quantitat', ''),
+            preu.get('envas', ''),
             preu.get('data', '')
         ]
         rows.append(row)
