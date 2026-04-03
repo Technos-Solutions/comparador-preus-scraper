@@ -17,16 +17,21 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 driver = crear_driver()
-driver.get('https://www.carrefour.es/supermercado/conservas-caldos-y-cremas/cat20014/c?offset=0')
+driver.get('https://www.carrefour.es/supermercado/frescos/cat20002/c?offset=0')
 time.sleep(10)
 for i in range(3):
     driver.execute_script("window.scrollBy(0, 400);")
     time.sleep(2)
 
-cards = driver.find_elements(By.CSS_SELECTOR, 'article.product-card')
-print(f"Productes: {len(cards)}")
-if cards:
-    print("\nHTML primer producte:")
-    print(cards[0].get_attribute('innerHTML')[:2000])
+noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
+print(f"Productes trobats: {len(noms)}")
+if noms:
+    # Imprimim el HTML del contenidor del primer producte
+    pare = driver.execute_script("return arguments[0].closest('.product-card')", noms[0])
+    if pare:
+        print("\nHTML primer producte:")
+        print(pare.get_attribute('innerHTML')[:2000])
+    else:
+        print("\nText primer producte:", noms[0].get_attribute('innerText'))
 
 driver.quit()
