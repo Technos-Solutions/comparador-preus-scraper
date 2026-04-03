@@ -16,17 +16,37 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-urls = [
-    ('Vi blanc _001 (tots)', 'https://www.bonarea-online.com/categories/tots-els-vins-blancs/13_320_090_001'),
-    ('Vi blanc _010 (DO Segre)', 'https://www.bonarea-online.com/categories/do-costers-del-segre/13_320_090_010'),
-    ('Refrescos _001', 'https://www.bonarea-online.com/categories/begudes-refrescants/13_320_030_001'),
-    ('Refrescos _010', 'https://www.bonarea-online.com/categories/begudes-refrescants/13_320_030_010'),
-]
-
-for nom, url in urls:
+def comptar_subcategories(base_url, nom):
+    print(f'\n{nom}:')
+    total = 0
+    # Provar _001 primer
     driver = crear_driver()
-    driver.get(url)
+    driver.get(base_url + '_001')
     time.sleep(6)
-    productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
-    print(f'{nom} -> {len(productes)} productes')
+    p001 = len(driver.find_elements(By.CSS_SELECTOR, 'div.block-product'))
     driver.quit()
+    print(f'  _001 -> {p001} productes')
+
+    # Provar _010, _020...
+    for n in range(1, 15):
+        suffix = f'_{n*10:03d}'
+        driver = crear_driver()
+        driver.get(base_url + suffix)
+        time.sleep(6)
+        p = len(driver.find_elements(By.CSS_SELECTOR, 'div.block-product'))
+        driver.quit()
+        print(f'  {suffix} -> {p} productes')
+        if p == 0:
+            break
+        total += p
+
+    print(f'  TOTAL iterant _010... = {total}')
+
+comptar_subcategories(
+    'https://www.bonarea-online.com/categories/vi-blanc/13_320_090',
+    'Vi blanc'
+)
+comptar_subcategories(
+    'https://www.bonarea-online.com/categories/begudes-refrescants/13_320_030',
+    'Refrescos'
+)
