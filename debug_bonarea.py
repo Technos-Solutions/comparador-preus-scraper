@@ -24,14 +24,23 @@ for i in range(3):
     time.sleep(2)
 
 noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
-print(f"Productes trobats: {len(noms)}")
-if noms:
-    # Imprimim el HTML del contenidor del primer producte
-    pare = driver.execute_script("return arguments[0].closest('.product-card')", noms[0])
+preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
+print(f"Productes: {len(noms)}")
+for i in range(min(5, len(noms))):
+    nom = noms[i].get_attribute('innerText').strip()
+    preu = preus[i].get_attribute('innerText').strip() if i < len(preus) else ''
+    print(f"\n  Nom: {nom}")
+    print(f"  Preu: {preu}")
+    # Busquem camps de quantitat específics
+    pare = driver.execute_script("return arguments[0].closest('.product-card')", noms[i])
     if pare:
-        print("\nHTML primer producte:")
-        print(pare.get_attribute('innerHTML')[:2000])
-    else:
-        print("\nText primer producte:", noms[0].get_attribute('innerText'))
+        for selector in ['span.product-card__unit', 'div.product-card__quantity',
+                        'span.product-card__weight', 'p.product-card__description',
+                        'span[class*="unit"]', 'span[class*="weight"]', 'span[class*="quantity"]']:
+            try:
+                el = pare.find_element(By.CSS_SELECTOR, selector)
+                print(f"  [{selector}]: {el.get_attribute('innerText').strip()}")
+            except:
+                pass
 
 driver.quit()
