@@ -17,31 +17,26 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
+def convertir_pes(pes_text):
+    match = re.match(r'([0-9.]+)(kg|l|g|ml)', pes_text.strip(), re.IGNORECASE)
+    if not match:
+        return pes_text
+    val = float(match.group(1))
+    unitat = match.group(2).lower()
+    if unitat == 'kg':
+        if val < 1:
+            return f"{int(val*1000)} g"
+        else:
+            return f"{val} kg"
+    elif unitat == 'l':
+        if val < 1:
+            return f"{int(val*1000)} ml"
+        else:
+            return f"{val} l"
+    return pes_text
+
 driver = crear_driver()
 driver.get('https://www.compraonline.bonpreuesclat.cat/categories/alimentaci%C3%B3/c49d1ef2-bf51-44a7-b631-4a35474a21ac')
 time.sleep(12)
 for i in range(5):
-    driver.execute_script("window.scrollBy(0, 400);")
-    time.sleep(2)
-
-noms = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
-preus = driver.find_elements(By.CSS_SELECTOR, 'span[data-test="fop-price"]')
-print(f"Productes: {len(noms)}")
-
-for i in range(min(5, len(noms))):
-    nom = noms[i].get_attribute('innerText').strip()
-    preu = preus[i].get_attribute('innerText').strip() if i < len(preus) else ''
-    # Busquem el selector de quantitat
-    contenidor = noms[i].find_element(By.XPATH, '../../../..')
-    for sel in ['[data-test="fop-weight"]', '[data-test="fop-unit-price"]',
-                'p[class*="weight"]', 'span[class*="weight"]',
-                'p[class*="unit"]', 'span[class*="unit"]']:
-        try:
-            el = contenidor.find_element(By.CSS_SELECTOR, sel)
-            print(f"  [{sel}]: {el.get_attribute('innerText').strip()}")
-        except:
-            pass
-    print(f"  Nom: {nom} | Preu: {preu}")
-    print()
-
-driver.quit()
+    driver.execute_script("
