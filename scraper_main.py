@@ -179,6 +179,17 @@ class DiaScraper:
         return categories
 
     def scrape_categoria(self, driver, nom_cat, url, max_productes=100):
+        import re
+        def extreure_quantitat(nom):
+            match_pack = re.search(r'(\d+)\s*x\s*(\d+[.,]?\d*)\s*(kg|g|l|ml|cl)', nom, re.IGNORECASE)
+            if match_pack:
+                return f"{match_pack.group(1)} x {match_pack.group(2)} {match_pack.group(3).lower()}"
+            matches = re.findall(r'(\d+[.,]?\d*)\s*(kg|g|l|ml|cl|ud|unidades?)', nom, re.IGNORECASE)
+            if matches:
+                val, unitat = matches[-1]
+                return f"{val} {unitat.lower()}"
+            return ''
+
         print(f"  📂 Categoria: {nom_cat}")
         count = 0
         pagina = 0
@@ -200,7 +211,7 @@ class DiaScraper:
                         preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
                         preu = float(preu_text)
                         if nom and preu > 0:
-                            self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': '1u'})
+                            self.productes.append({'producte': nom, 'marca': 'Día', 'supermercat': 'Dia', 'preu': preu, 'quantitat': extreure_quantitat(nom), 'envas': ''})
                             count += 1
                     except:
                         continue
@@ -323,7 +334,7 @@ class BonAreaScraper:
                     preu = float(preu_text)
                     quantitat = prod.find_element(By.CSS_SELECTOR, 'div.weight').get_attribute('innerText').strip()
                     if nom and preu > 0:
-                        self.productes.append({'producte': nom, 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': preu, 'quantitat': quantitat})
+                        self.productes.append({'producte': nom, 'marca': 'bonÀrea', 'supermercat': 'Bon Àrea', 'preu': preu, 'quantitat': quantitat, 'envas': ''})
                         count += 1
                 except:
                     continue
@@ -399,6 +410,14 @@ class CarrefourScraper:
 
     def scrape_pagina(self, driver, url):
         """Extreu productes d'una pàgina"""
+        import re
+        def extreure_quantitat(nom):
+            matches = re.findall(r'(\d+[.,]?\d*)\s*(kg|g|l|ml|cl|ud|unidades?)', nom, re.IGNORECASE)
+            if matches:
+                val, unitat = matches[-1]
+                return f"{val} {unitat.lower()}"
+            return ''
+
         driver.get(url)
         time.sleep(10)
         for i in range(3):
@@ -415,7 +434,8 @@ class CarrefourScraper:
                     continue
                 preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
                 preu = float(preu_text)
-                productes.append({'producte': nom, 'marca': 'Carrefour', 'supermercat': 'Carrefour', 'preu': preu, 'quantitat': '1u'})
+                quantitat = extreure_quantitat(nom)
+                productes.append({'producte': nom, 'marca': 'Carrefour', 'supermercat': 'Carrefour', 'preu': preu, 'quantitat': quantitat, 'envas': ''})
             except:
                 continue
         return productes
@@ -516,6 +536,25 @@ class BonPreuEsclatScraper:
         return categories
 
     def scrape_categoria(self, driver, nom_cat, url):
+        import re
+        def convertir_pes(pes_text):
+            match = re.match(r'([0-9.]+)(kg|l|g|ml)', pes_text.strip(), re.IGNORECASE)
+            if not match:
+                return pes_text
+            val = float(match.group(1))
+            unitat = match.group(2).lower()
+            if unitat == 'kg':
+                if val < 1:
+                    return str(int(val*1000)) + ' g'
+                v = int(val) if val == int(val) else val
+                return str(v) + ' kg'
+            elif unitat == 'l':
+                if val < 1:
+                    return str(int(val*1000)) + ' ml'
+                v = int(val) if val == int(val) else val
+                return str(v) + ' l'
+            return pes_text
+
         print(f"  📂 Categoria: {nom_cat}")
         count = 0
         try:
@@ -532,8 +571,15 @@ class BonPreuEsclatScraper:
                     preu_text = preus[i].get_attribute('innerText').strip()
                     preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
                     preu = float(preu_text)
+                    # Extreure quantitat
+                    try:
+                        contenidor = noms[i].find_element(By.XPATH, '../../../..')
+                        pes_el = contenidor.find_element(By.CSS_SELECTOR, 'span[class*="weight"]')
+                        quantitat = convertir_pes(pes_el.get_attribute('innerText').strip())
+                    except:
+                        quantitat = ''
                     if nom and preu > 0:
-                        self.productes.append({'producte': nom, 'marca': 'Bon Preu / Esclat', 'supermercat': 'Bon Preu / Esclat', 'preu': preu, 'quantitat': '1u'})
+                        self.productes.append({'producte': nom, 'marca': 'Bon Preu / Esclat', 'supermercat': 'Bon Preu / Esclat', 'preu': preu, 'quantitat': quantitat, 'envas': ''})
                         count += 1
                 except:
                     continue
