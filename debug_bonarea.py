@@ -2,7 +2,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
-import re
 
 def crear_driver():
     chrome_options = Options()
@@ -17,41 +16,16 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-def convertir_pes(pes_text):
-    match = re.match(r'([0-9.]+)(kg|l|g|ml)', pes_text.strip(), re.IGNORECASE)
-    if not match:
-        return pes_text
-    val = float(match.group(1))
-    unitat = match.group(2).lower()
-    if unitat == 'kg':
-        if val < 1:
-            return str(int(val*1000)) + ' g'
-        return str(val) + ' kg'
-    elif unitat == 'l':
-        if val < 1:
-            return str(int(val*1000)) + ' ml'
-        return str(val) + ' l'
-    return pes_text
-
 driver = crear_driver()
-driver.get('https://www.compraonline.bonpreuesclat.cat/categories/alimentaci%C3%B3/c49d1ef2-bf51-44a7-b631-4a35474a21ac')
-time.sleep(12)
-driver.execute_script('window.scrollBy(0, 2000)')
-time.sleep(5)
+driver.get('https://www.bonarea-online.com/ca/shop/shopping')
+time.sleep(8)
 
-noms = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
-preus = driver.find_elements(By.CSS_SELECTOR, 'span[data-test="fop-price"]')
-print('Producte | Quantitat | Preu')
-print('-'*60)
-for i in range(min(10, len(noms))):
-    nom = noms[i].get_attribute('innerText').strip()
-    preu = preus[i].get_attribute('innerText').strip() if i < len(preus) else ''
-    try:
-        contenidor = noms[i].find_element(By.XPATH, '../../../..')
-        pes_el = contenidor.find_element(By.CSS_SELECTOR, 'span[class*="weight"]')
-        quantitat = convertir_pes(pes_el.get_attribute('innerText').strip())
-    except:
-        quantitat = ''
-    print(nom[:40] + ' | ' + quantitat + ' | ' + preu)
+links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
+codis_valids = ['13_300', '13_310', '13_320', '13_330', '13_340', '13_350', '13_030']
+for link in links:
+    href = link.get_attribute('href') or ''
+    codi = href.split('/')[-1]
+    if any(codi.startswith(c) for c in codis_valids):
+        print(f'{codi.count("_")} guions | {codi}')
 
 driver.quit()
