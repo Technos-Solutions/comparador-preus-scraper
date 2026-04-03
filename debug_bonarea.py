@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
+import re
 
 def crear_driver():
     chrome_options = Options()
@@ -16,6 +17,13 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
+def extreure_quantitat(nom):
+    # Patrons: 500 g, 1 kg, 1,5 l, 330 ml, 4x33cl, 4 ud, etc.
+    match = re.search(r'(\d+[.,]?\d*)\s*(kg|g|l|ml|cl|ud|unidades?)\s*\.?$', nom, re.IGNORECASE)
+    if match:
+        return f"{match.group(1)} {match.group(2).lower()}"
+    return ''
+
 driver = crear_driver()
 driver.get('https://www.carrefour.es/supermercado/frescos/cat20002/c?offset=0')
 time.sleep(10)
@@ -24,23 +32,11 @@ for i in range(3):
     time.sleep(2)
 
 noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
-preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
-print(f"Productes: {len(noms)}")
-for i in range(min(5, len(noms))):
-    nom = noms[i].get_attribute('innerText').strip()
-    preu = preus[i].get_attribute('innerText').strip() if i < len(preus) else ''
-    print(f"\n  Nom: {nom}")
-    print(f"  Preu: {preu}")
-    # Busquem camps de quantitat específics
-    pare = driver.execute_script("return arguments[0].closest('.product-card')", noms[i])
-    if pare:
-        for selector in ['span.product-card__unit', 'div.product-card__quantity',
-                        'span.product-card__weight', 'p.product-card__description',
-                        'span[class*="unit"]', 'span[class*="weight"]', 'span[class*="quantity"]']:
-            try:
-                el = pare.find_element(By.CSS_SELECTOR, selector)
-                print(f"  [{selector}]: {el.get_attribute('innerText').strip()}")
-            except:
-                pass
+print(f"{'Nom':<55} {'Quantitat':<15}")
+print("-"*70)
+for nom_el in noms[:10]:
+    nom = nom_el.get_attribute('innerText').strip()
+    quantitat = extreure_quantitat(nom)
+    print(f"{nom[:55]:<55} {quantitat:<15}")
 
 driver.quit()
