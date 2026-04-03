@@ -16,17 +16,19 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
+# Primer descobrim la URL correcta
 driver = crear_driver()
-driver.get('https://www.compraonline.bonpreuesclat.cat/categories/alimentaci%C3%B3')
-time.sleep(12)
-for i in range(5):
-    driver.execute_script("window.scrollBy(0, 400);")
-    time.sleep(2)
+driver.get('https://www.compraonline.bonpreuesclat.cat')
+time.sleep(10)
 
-noms = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
-print(f"Productes: {len(noms)}")
-if noms:
-    print("\nHTML primer producte:")
-    print(noms[0].find_element(By.XPATH, '../..').get_attribute('innerHTML')[:2000])
+links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
+print("URLs de categories trobades:")
+vistos = set()
+for link in links:
+    href = link.get_attribute('href')
+    text = link.get_attribute('innerText').strip().lower()
+    if href and href not in vistos and 'alimentaci' in text:
+        vistos.add(href)
+        print(f"  {text} -> {href}")
 
 driver.quit()
