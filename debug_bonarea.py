@@ -1,41 +1,29 @@
-import subprocess
-subprocess.run(['pip', 'install', 'requests', '--break-system-packages', '-q'])
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+import time
 
-import requests
+def crear_driver():
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+    chrome_options.binary_location = '/usr/bin/chromium-browser'
+    from selenium.webdriver.chrome.service import Service
+    service = Service('/usr/bin/chromedriver')
+    return webdriver.Chrome(service=service, options=chrome_options)
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    'Accept-Language': 'es-ES'
-}
+driver = crear_driver()
+driver.get('https://www.bonarea-online.com/categories/conserves/13_300_040_010')
+time.sleep(8)
 
-def calcular_quantitat(pi):
-    unit_size = pi.get('unit_size', 0)
-    size_format = pi.get('size_format', '')
-    if size_format == 'kg':
-        if unit_size < 1:
-            return f"{int(unit_size*1000)} g"
-        else:
-            val = int(unit_size) if unit_size == int(unit_size) else unit_size
-            return f"{val} kg"
-    elif size_format == 'l':
-        if unit_size < 1:
-            return f"{int(unit_size*1000)} ml"
-        else:
-            val = int(unit_size) if unit_size == int(unit_size) else unit_size
-            return f"{val} l"
-    else:
-        return f"{unit_size} {size_format}".strip()
+productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+print(f"Productes: {len(productes)}")
+if productes:
+    print("\nHTML complet del primer producte:")
+    print(productes[0].get_attribute('innerHTML'))
 
-categories_test = [115, 221, 181, 112]
-
-for cat_id in categories_test:
-    url = f'https://tienda.mercadona.es/api/categories/{cat_id}/?lang=es&wh=mad1'
-    data = requests.get(url, headers=headers).json()
-    print(f"\nCategoria {cat_id}:")
-    for sub in data.get('categories', [])[:1]:
-        for prod in sub.get('products', [])[:3]:
-            pi = prod['price_instructions']
-            envàs = prod.get('packaging') or ''
-            quantitat = calcular_quantitat(pi)
-            print(f"  {prod['display_name']}")
-            print(f"    envas={envàs} | quantitat={quantitat} | preu={pi['unit_price']}€")
+driver.quit()
