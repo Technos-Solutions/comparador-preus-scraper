@@ -25,21 +25,25 @@ for i in range(3):
     time.sleep(1)
 
 productes = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
-for prod in productes[:5]:
-    nom = prod.find_element(By.CSS_SELECTOR, 'a.article-link div.text p').get_attribute('innerText').strip()
-    pes = prod.find_element(By.CSS_SELECTOR, 'div.weight').get_attribute('innerText').strip()
-    preu_text = prod.find_element(By.CSS_SELECTOR, 'div.price span').get_attribute('innerText').strip()
-    preu_text = preu_text.replace('€/u.', '').replace('€', '').replace(',', '.').strip()
-    preu = float(preu_text)
-    # Extreure preu/kg o preu/l del text complet del bloc
-    bloc_text = prod.find_element(By.CSS_SELECTOR, 'div.price').get_attribute('innerText')
-    match = re.search(r'\(([0-9.,]+)\s*€/(kg|l|litre)\)', bloc_text)
-    if match:
-        preu_norm = float(match.group(1).replace(',', '.'))
-        unitat = match.group(2)
-    else:
-        preu_norm = None
-        unitat = ''
-    print(f"  {nom} | {pes} | {preu} EUR | {preu_norm} EUR/{unitat}")
+print(f"{'Producte':<40} {'Quantitat':<12} {'Preu':>8} {'Preu/kg-l':>10} {'Unitat':<6}")
+print("-"*80)
+for prod in productes[:8]:
+    try:
+        nom = prod.find_element(By.CSS_SELECTOR, 'a.article-link div.text p').get_attribute('innerText').strip()[:40]
+        pes = prod.find_element(By.CSS_SELECTOR, 'div.weight').get_attribute('innerText').strip()
+        preu_text = prod.find_element(By.CSS_SELECTOR, 'div.price span').get_attribute('innerText')
+        preu_text = preu_text.replace('€/u.', '').replace('€', '').replace(',', '.').strip()
+        preu = float(preu_text)
+        bloc_text = prod.find_element(By.CSS_SELECTOR, 'div.price').get_attribute('innerText')
+        match = re.search(r'\(([0-9.,]+)\s*€/(kg|l|litre)\)', bloc_text)
+        if match:
+            preu_kg_l = float(match.group(1).replace(',', '.'))
+            unitat = match.group(2)
+        else:
+            preu_kg_l = preu
+            unitat = 'u'
+        print(f"{nom:<40} {pes:<12} {preu:>8.2f} {preu_kg_l:>10.2f} {unitat:<6}")
+    except:
+        continue
 
 driver.quit()
