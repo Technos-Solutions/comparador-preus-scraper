@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
+import re
 
 def crear_driver():
     chrome_options = Options()
@@ -26,8 +27,21 @@ for i in range(5):
 noms = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
 preus = driver.find_elements(By.CSS_SELECTOR, 'span[data-test="fop-price"]')
 print(f"Productes: {len(noms)}")
-if noms:
-    print("\nHTML primer producte:")
-    print(noms[0].find_element(By.XPATH, '../..').get_attribute('innerHTML')[:2000])
+
+for i in range(min(5, len(noms))):
+    nom = noms[i].get_attribute('innerText').strip()
+    preu = preus[i].get_attribute('innerText').strip() if i < len(preus) else ''
+    # Busquem el selector de quantitat
+    contenidor = noms[i].find_element(By.XPATH, '../../../..')
+    for sel in ['[data-test="fop-weight"]', '[data-test="fop-unit-price"]',
+                'p[class*="weight"]', 'span[class*="weight"]',
+                'p[class*="unit"]', 'span[class*="unit"]']:
+        try:
+            el = contenidor.find_element(By.CSS_SELECTOR, sel)
+            print(f"  [{sel}]: {el.get_attribute('innerText').strip()}")
+        except:
+            pass
+    print(f"  Nom: {nom} | Preu: {preu}")
+    print()
 
 driver.quit()
