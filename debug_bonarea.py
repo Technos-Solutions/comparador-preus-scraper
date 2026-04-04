@@ -17,23 +17,23 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 urls = [
-    ('Lechugas', 'https://www.dia.es/verduras/lechugas-y-hojas-verdes/c/L2027'),
-    ('Tomates', 'https://www.dia.es/verduras/tomates-pimientos-y-pepinos/c/L2023'),
-    ('Limpieza (categoria gran)', 'https://www.dia.es/limpieza-y-hogar/c/L122'),
+    ('Lechugas subcategoria', 'https://www.dia.es/verduras/lechugas-y-hojas-verdes/c/L2027'),
+    ('Verduras categoria pare', 'https://www.dia.es/verduras/c/L104'),
+    ('Limpieza categoria gran', 'https://www.dia.es/limpieza-y-hogar/c/L122'),
 ]
 
 for nom, url in urls:
     driver = crear_driver()
     driver.get(url)
-    time.sleep(8)
-    # Scroll per carregar tots
+    time.sleep(10)
     anterior = 0
-    for i in range(10):
+    for i in range(15):
         driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
         time.sleep(2)
         actual = len(driver.find_elements(By.CSS_SELECTOR, '.search-product-card'))
-        if actual == anterior and i > 1:
+        print(f'  {nom} scroll {i+1}: {actual} productes')
+        if actual == anterior and i > 2:
+            print(f'  -> FI: {actual} productes')
             break
         anterior = actual
-    print(f'{nom}: {actual} productes')
     driver.quit()
