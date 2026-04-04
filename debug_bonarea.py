@@ -17,13 +17,28 @@ def crear_driver():
     return webdriver.Chrome(service=service, options=chrome_options)
 
 url_base = 'https://www.dia.es/limpieza-y-hogar/c/L122'
-for pagina in range(6):
+noms_anteriors = set()
+for pagina in range(30):
     driver = crear_driver()
     url = f'{url_base}?q=%3Arelevance&pageSize=48&currentPage={pagina}'
     driver.get(url)
     time.sleep(8)
     cards = driver.find_elements(By.CSS_SELECTOR, '.search-product-card')
-    print(f'pagina {pagina} -> {len(cards)} productes')
-    driver.quit()
     if not cards:
+        print(f'pagina {pagina} -> 0 productes, FI')
+        driver.quit()
         break
+    # Extreure noms per detectar repeticio
+    noms = set()
+    for card in cards:
+        try:
+            nom = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-name"]').get_attribute('innerText').strip()
+            noms.add(nom)
+        except:
+            pass
+    driver.quit()
+    if noms == noms_anteriors:
+        print(f'pagina {pagina} -> PAGINA REPETIDA, FI')
+        break
+    print(f'pagina {pagina} -> {len(cards)} productes')
+    noms_anteriors = noms
