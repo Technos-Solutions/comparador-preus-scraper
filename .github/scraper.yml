@@ -8,6 +8,7 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    timeout-minutes: 480
     
     steps:
       - name: Checkout code
