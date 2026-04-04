@@ -781,81 +781,127 @@ class BonPreuEsclatScraper:
 
 # EXECUTAR SCRAPERS
 if __name__ == '__main__':
-    db = GoogleSheetsDB(sheet)
+    import sys
+    part = '1'
+    for arg in sys.argv[1:]:
+        if arg.startswith('--part='):
+            part = arg.split('=')[1]
+
+    print(f"🔧 Executant PART {part}")
+
+    def desduplicar(productes):
+        vistos = set()
+        unics = []
+        for p in productes:
+            clau = (p.get('producte', '').strip().lower(), p.get('supermercat', '').strip().lower())
+            if clau not in vistos:
+                vistos.add(clau)
+                unics.append(p)
+        return unics
+
+    def guardar_a_sheet(ws, productes):
+        ws.clear()
+        ws.append_row(['id', 'producte', 'marca', 'supermercat', 'preu', 'quantitat', 'envas', 'data'])
+        data = datetime.now().strftime('%Y-%m-%d %H:%M')
+        rows = []
+        for i, p in enumerate(productes, start=1):
+            p['data'] = data
+            rows.append([
+                i,
+                p.get('producte', ''),
+                p.get('marca', ''),
+                p.get('supermercat', ''),
+                p.get('preu', 0),
+                p.get('quantitat', ''),
+                p.get('envas', ''),
+                p.get('data', '')
+            ])
+        ws.append_rows(rows)
+
+    if part == '1':
+        # PART 1: Mercadona + Bon Area + Carrefour (~2-3h)
+        print("\n" + "="*60)
+        print("PART 1: Mercadona + Bon Area + Carrefour")
+        print("="*60)
+
+        tots = []
+        scraper_mercadona = MercadonaScraper()
+        tots.extend(scraper_mercadona.scrape_all())
+
+        scraper_carrefour = CarrefourScraper()
+        tots.extend(scraper_carrefour.scrape_all(max_per_categoria=200))
+
+        scraper_bonarea = BonAreaScraper()
+        tots.extend(scraper_bonarea.scrape_all())
+
+        unics = desduplicar(tots)
+        duplicats = len(tots) - len(unics)
+        print(f"\n✅ Part 1: {len(tots)} -> {len(unics)} unics ({duplicats} duplicats eliminats)")
+
+        # Guardar a Preus_Temp_1
+        ws_temp1 = sheet.worksheet('Preus_Temp_1')
+        guardar_a_sheet(ws_temp1, unics)
+        print(f"✅ Preus_Temp_1 actualitzat amb {len(unics)} productes")
+
+        # Tambe actualitzem Preus amb el que tenim (per si la part 2 falla)
+        ws_preus = sheet.worksheet('Preus')
+        all_data = ws_temp1.get_all_values()
+        ws_preus.clear()
+        ws_preus.append_rows(all_data)
+        print(f"✅ Preus actualitzat provisionalment amb {len(unics)} productes")
+
+    elif part == '2':
+        # PART 2: Dia + Bon Preu/Esclat (~3-4h)
+        print("\n" + "="*60)
+        print("PART 2: Dia + Bon Preu/Esclat")
+        print("="*60)
+
+        tots = []
+        scraper_dia = DiaScraper()
+        tots.extend(scraper_dia.scrape_all())
+
+        scraper_bonpreuesclat = BonPreuEsclatScraper()
+        tots.extend(scraper_bonpreuesclat.scrape_all())
+
+        unics_part2 = desduplicar(tots)
+        print(f"\n✅ Part 2: {len(unics_part2)} productes unics")
+
+        # Llegir productes de la Part 1
+        print("📖 Llegint productes de la Part 1...")
+        try:
+            ws_temp1 = sheet.worksheet('Preus_Temp_1')
+            files_part1 = ws_temp1.get_all_records()
+            productes_part1 = [{
+                'producte': f['producte'],
+                'marca': f['marca'],
+                'supermercat': f['supermercat'],
+                'preu': float(f['preu']),
+                'quantitat': f['quantitat'],
+                'envas': f.get('envas', ''),
+                'data': f['data']
+            } for f in files_part1]
+            print(f"✅ {len(productes_part1)} productes de la Part 1 llegits")
+        except Exception as e:
+            print(f"❌ Error llegint Part 1: {e}")
+            productes_part1 = []
+
+        # Combinar Part 1 + Part 2
+        tots_combinats = productes_part1 + unics_part2
+        unics_finals = desduplicar(tots_combinats)
+        duplicats = len(tots_combinats) - len(unics_finals)
+        print(f"✅ Total combinat: {len(tots_combinats)} -> {len(unics_finals)} unics ({duplicats} duplicats eliminats)")
+
+        # Guardar a Preus_Temp i Preus
+        ws_temp = sheet.worksheet('Preus_Temp')
+        guardar_a_sheet(ws_temp, unics_finals)
+        print(f"✅ Preus_Temp actualitzat amb {len(unics_finals)} productes")
+
+        ws_preus = sheet.worksheet('Preus')
+        all_data = ws_temp.get_all_values()
+        ws_preus.clear()
+        ws_preus.append_rows(all_data)
+        print(f"✅ Preus actualitzat amb {len(unics_finals)} productes TOTALS")
 
     print("\n" + "="*60)
-    print("🔄 FASE 1: Extraient productes de tots els supermercats...")
-    print("="*60)
-
-    tots_productes = []
-
-    scraper_mercadona = MercadonaScraper()
-    tots_productes.extend(scraper_mercadona.scrape_all())
-
-    scraper_carrefour = CarrefourScraper()
-    tots_productes.extend(scraper_carrefour.scrape_all(max_per_categoria=200))
-
-    scraper_bonpreuesclat = BonPreuEsclatScraper()
-    tots_productes.extend(scraper_bonpreuesclat.scrape_all())
-
-    scraper_dia = DiaScraper()
-    tots_productes.extend(scraper_dia.scrape_all(max_per_categoria=100))
-
-    scraper_bonarea = BonAreaScraper()
-    tots_productes.extend(scraper_bonarea.scrape_all())
-
-    print("\n" + "="*60)
-    print(f"🔄 FASE 2: Desduplicant i omplint full temporal...")
-    print("="*60)
-
-    vistos = set()
-    tots_productes_unics = []
-    for p in tots_productes:
-        clau = (p.get('producte', '').strip().lower(), p.get('supermercat', '').strip().lower())
-        if clau not in vistos:
-            vistos.add(clau)
-            tots_productes_unics.append(p)
-
-    duplicats = len(tots_productes) - len(tots_productes_unics)
-    print(f"✅ {len(tots_productes)} productes -> {len(tots_productes_unics)} unics ({duplicats} duplicats eliminats)")
-
-    ws_temp = sheet.worksheet('Preus_Temp')
-    ws_temp.clear()
-    ws_temp.append_row(['id', 'producte', 'marca', 'supermercat', 'preu', 'quantitat', 'envas', 'data'])
-
-    for preu in tots_productes_unics:
-        preu['data'] = datetime.now().strftime('%Y-%m-%d %H:%M')
-
-    rows = []
-    for i, preu in enumerate(tots_productes_unics, start=1):
-        row = [
-            i,
-            preu.get('producte', ''),
-            preu.get('marca', ''),
-            preu.get('supermercat', ''),
-            preu.get('preu', 0),
-            preu.get('quantitat', ''),
-            preu.get('envas', ''),
-            preu.get('data', '')
-        ]
-        rows.append(row)
-
-    ws_temp.append_rows(rows)
-    print(f"✅ Full temporal omplert amb {len(tots_productes_unics)} productes")
-
-    print("\n" + "="*60)
-    print("🔄 FASE 3: Actualitzant full principal (swap atomic)...")
-    print("="*60)
-
-    ws_preus = sheet.worksheet('Preus')
-    all_data = ws_temp.get_all_values()
-    ws_preus.clear()
-    ws_preus.append_rows(all_data)
-
-    print("✅ Full 'Preus' actualitzat correctament")
-
-    print("\n" + "="*60)
-    print("✅ SCRAPERS COMPLETATS!")
-    print(f"📊 Total brut: {len(tots_productes)} | Unics: {len(tots_productes_unics)} | Duplicats eliminats: {duplicats}")
-    print("✅ App sempre amb dades disponibles")
+    print(f"✅ PART {part} COMPLETADA!")
     print("="*60)
