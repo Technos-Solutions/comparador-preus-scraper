@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
+import re
 
 def crear_driver():
     chrome_options = Options()
@@ -16,24 +17,21 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-urls = [
-    ('Lechugas subcategoria', 'https://www.dia.es/verduras/lechugas-y-hojas-verdes/c/L2027'),
-    ('Verduras categoria pare', 'https://www.dia.es/verduras/c/L104'),
-    ('Limpieza categoria gran', 'https://www.dia.es/limpieza-y-hogar/c/L122'),
+categories_grans = [
+    ('Verduras', 'https://www.dia.es/verduras/c/L104'),
+    ('Limpieza', 'https://www.dia.es/limpieza-y-hogar/c/L122'),
+    ('Charcuteria', 'https://www.dia.es/charcuteria-y-quesos/c/L101'),
 ]
 
-for nom, url in urls:
+for nom, url in categories_grans:
     driver = crear_driver()
     driver.get(url)
-    time.sleep(10)
-    anterior = 0
-    for i in range(15):
-        driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-        time.sleep(2)
-        actual = len(driver.find_elements(By.CSS_SELECTOR, '.search-product-card'))
-        print(f'  {nom} scroll {i+1}: {actual} productes')
-        if actual == anterior and i > 2:
-            print(f'  -> FI: {actual} productes')
-            break
-        anterior = actual
+    time.sleep(8)
+    links = driver.find_elements(By.TAG_NAME, 'a')
+    subcats = set()
+    for link in links:
+        href = link.get_attribute('href') or ''
+        if re.search(r'dia\.es/[^/]+/[^/]+/c/L\d+$', href):
+            subcats.add(href)
+    print(f'{nom}: {len(subcats)} subcategories')
     driver.quit()
