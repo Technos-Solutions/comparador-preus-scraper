@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
+import re
 
 def crear_driver():
     chrome_options = Options()
@@ -16,29 +17,21 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-url_base = 'https://www.dia.es/limpieza-y-hogar/c/L122'
-noms_anteriors = set()
-for pagina in range(30):
-    driver = crear_driver()
-    url = f'{url_base}?q=%3Arelevance&pageSize=48&currentPage={pagina}'
-    driver.get(url)
-    time.sleep(8)
-    cards = driver.find_elements(By.CSS_SELECTOR, '.search-product-card')
-    if not cards:
-        print(f'pagina {pagina} -> 0 productes, FI')
-        driver.quit()
-        break
-    # Extreure noms per detectar repeticio
-    noms = set()
-    for card in cards:
-        try:
-            nom = card.find_element(By.CSS_SELECTOR, '[data-test-id="search-product-card-name"]').get_attribute('innerText').strip()
-            noms.add(nom)
-        except:
-            pass
-    driver.quit()
-    if noms == noms_anteriors:
-        print(f'pagina {pagina} -> PAGINA REPETIDA, FI')
-        break
-    print(f'pagina {pagina} -> {len(cards)} productes')
-    noms_anteriors = noms
+# Carregem Verduras i trobem totes les subcategories
+driver = crear_driver()
+driver.get('https://www.dia.es/verduras/c/L104')
+time.sleep(8)
+
+print('SUBCATEGORIES DE VERDURAS:')
+links = driver.find_elements(By.TAG_NAME, 'a')
+total = 0
+for link in links:
+    href = link.get_attribute('href') or ''
+    text = link.get_attribute('innerText').strip()
+    # Subcategories segueixen el patró /categoria/subcategoria/c/LXXXXX
+    if re.search(r'dia\.es/[^/]+/[^/]+/c/L\d+$', href) and text:
+        print(f'  {text} -> {href}')
+        total += 1
+
+print(f'\nTotal subcategories: {total}')
+driver.quit()
