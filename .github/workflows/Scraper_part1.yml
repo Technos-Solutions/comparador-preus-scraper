@@ -1,4 +1,4 @@
-name: Scraper Part 1 - Mercadona + Bon Area + Carrefour
+name: Scraper Part 1 - Mercadona + Bon Area
 
 on:
   schedule:
