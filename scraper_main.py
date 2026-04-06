@@ -390,11 +390,16 @@ class BonAreaScraper:
             n010 = len(p010)
 
             # Pas 2: decidir estrategia
-            # Si _001 te molts mes productes que _010, es la vista "tots"
             if n010 == 0 or (n001 > 0 and n001 >= n010 * 3):
-                # Usar _001 directament
+                # Tornar a carregar _001 (els elements anteriors son stale)
                 print(f"    Estrategia: usar _001 ({n001} productes)")
-                extrets = self.extreure_productes(p001)
+                driver.get(url + '_001')
+                time.sleep(8)
+                for i in range(3):
+                    driver.execute_script("window.scrollBy(0, 400);")
+                    time.sleep(1)
+                p001_fresh = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
+                extrets = self.extreure_productes(p001_fresh)
                 self.productes.extend(extrets)
                 count += len(extrets)
             else:
@@ -530,16 +535,27 @@ class CarrefourScraper:
         count = 0
         offset = 0
         noms_anteriors = set()
+        reintents = 0
         while count < max_productes:
             driver = None
             try:
                 driver = self._crear_driver()
                 url = f'{self.base_url}/{nom_cat}/{codi_cat}/c?offset={offset}'
                 productes = self.scrape_pagina(driver, url)
+
                 if not productes:
-                    break
+                    if reintents < 2:
+                        reintents += 1
+                        print(f"    offset={offset} -> 0 productes, reintentant ({reintents}/2)...")
+                        time.sleep(15)
+                        continue
+                    else:
+                        print(f"    offset={offset} -> 0 productes, parant")
+                        break
+
+                reintents = 0
                 noms_actuals = set(p['producte'] for p in productes)
-                if noms_actuals == noms_anteriors:
+                if noms_actuals == noms_anteriors and offset > 0:
                     print(f"    ⚠️ Pagina repetida detectada, parant")
                     break
                 noms_anteriors = noms_actuals
@@ -556,7 +572,7 @@ class CarrefourScraper:
                         driver.quit()
                     except:
                         pass
-            time.sleep(2)
+            time.sleep(5)
         print(f"    ✅ {count} productes extrets")
 
     def scrape_all(self, max_per_categoria=100):
