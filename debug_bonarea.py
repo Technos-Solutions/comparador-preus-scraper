@@ -16,35 +16,50 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-# Testem Congelats - subcategories de nivell 2
-url_congelats = 'https://www.compraonline.bonpreuesclat.cat/categories/congelats/79a52e84-e446-47fb-b032-dfa044ecb779'
+BASE = 'https://www.compraonline.bonpreuesclat.cat'
 
-driver = crear_driver()
-driver.get(url_congelats)
-time.sleep(10)
-for i in range(3):
-    driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-    time.sleep(2)
+def descobrir_recursiu(url, nivell=0, max_nivell=3):
+    """Descobreix recursivament totes les subcategories i compta productes"""
+    prefix = '  ' * nivell
+    driver = crear_driver()
+    driver.get(url)
+    time.sleep(8)
+    for i in range(5):
+        driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+        time.sleep(2)
 
-links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
-print('SUBCATEGORIES DE CONGELATS:')
-uuids_vistos = set()
-for link in links:
-    href = link.get_attribute('href') or ''
-    text = link.get_attribute('innerText').strip()
-    uuid = href.split('/')[-1].split('?')[0]
-    if uuid in uuids_vistos or not text or len(uuid) < 10:
-        continue
-    if 'congelats' in href and '79a52e84' not in uuid:
-        uuids_vistos.add(uuid)
-        # Ara comprovem si aquesta subcategoria te productes o mes subcategories
-        driver2 = crear_driver()
-        driver2.get(href.split('?')[0])
-        time.sleep(8)
-        prods = driver2.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
-        subcats_n3 = [l for l in driver2.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
-                      if uuid[:8] in (l.get_attribute('href') or '')]
-        driver2.quit()
-        print(f'  {text}: {len(prods)} productes, {len(subcats_n3)} sub-subcategories')
+    # Productes a aquesta pagina
+    prods = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
+    n_prods = len(prods)
 
-driver.quit()
+    # Subcategories d'aquesta pagina
+    links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
+    uuid_actual = url.split('/')[-1].split('?')[0]
+    subcats = []
+    uuids_vistos = set()
+    for link in links:
+        href = link.get_attribute('href') or ''
+        text = link.get_attribute('innerText').strip()
+        uuid = href.split('/')[-1].split('?')[0]
+        # Subcategoria: ha de contenir el path de l'actual i ser diferent
+        path_actual = url.split('/categories/')[-1].split('?')[0]
+        path_link = href.split('/categories/')[-1].split('?')[0] if '/categories/' in href else ''
+        if (uuid not in uuids_vistos and text and len(uuid) > 10
+                and uuid != uuid_actual
+                and path_actual in path_link
+                and path_link != path_actual):
+            uuids_vistos.add(uuid)
+            url_neta = BASE + '/categories/' + path_link
+            subcats.append((text, url_neta))
+
+    driver.quit()
+
+    if subcats and nivell < max_nivell:
+        print(f'{prefix}[N{nivell}] {url.split("/")[-2]}: {len(subcats)} subcategories')
+        for nom, url_sub in subcats:
+            descobrir_recursiu(url_sub, nivell+1, max_nivell)
+    else:
+        print(f'{prefix}[N{nivell}] {url.split("/")[-2]}: {n_prods} productes FINALS')
+
+# Testem amb Congelats
+descobrir_recursiu('https://www.compraonline.bonpreuesclat.cat/categories/congelats/79a52e84-e446-47fb-b032-dfa044ecb779')
