@@ -172,7 +172,6 @@ class DiaScraper:
         return categories
 
     def descobrir_subcategories(self, driver, url_categoria):
-        """Descobreix subcategories d'una categoria principal"""
         import re
         driver.get(url_categoria)
         time.sleep(8)
@@ -182,14 +181,12 @@ class DiaScraper:
         for link in links:
             href = link.get_attribute('href') or ''
             text = link.get_attribute('innerText').strip().replace('\nVer todos', '').strip()
-            # Subcategories: dos segments abans de /c/LXXXXX
             if re.search(r'dia\.es/[^/]+/[^/]+/c/L\d+$', href) and href not in vistos and text:
                 vistos.add(href)
                 subcats.append((text, href))
         return subcats
 
     def scrape_subcategoria(self, driver, nom, url):
-        """Rasca una subcategoria amb scroll infinit"""
         import re
         def extreure_quantitat(nom):
             match_pack = re.search(r'(\d+)\s*x\s*(\d+[.,]?\d*)\s*(kg|g|l|ml|cl)', nom, re.IGNORECASE)
@@ -232,7 +229,6 @@ class DiaScraper:
 
     def scrape_all(self, max_per_categoria=100):
         print("\n🟣 Dia: extraient productes amb Selenium...")
-        # Descobrir categories principals
         driver_descobrir = None
         categories = []
         try:
@@ -247,10 +243,8 @@ class DiaScraper:
                 except:
                     pass
 
-        # Per cada categoria, descobrir subcategories i rasquejar-les
         for nom_cat, url_cat in categories:
             print(f"  📂 Categoria: {nom_cat}")
-            # Descobrir subcategories
             driver_sub = None
             subcats = []
             try:
@@ -283,7 +277,6 @@ class DiaScraper:
                                 pass
                     time.sleep(1)
             else:
-                # Si no hi ha subcategories, rasquejar la categoria directament
                 driver = None
                 try:
                     driver = self._crear_driver()
@@ -341,18 +334,7 @@ class BonAreaScraper:
         print(f"  ✅ {len(categories)} categories trobades")
         return categories
 
-    def comptar_productes(self, driver, url):
-        """Carrega una URL i retorna el nombre de productes trobats"""
-        driver.get(url)
-        time.sleep(8)
-        for i in range(3):
-            driver.execute_script("window.scrollBy(0, 400);")
-            time.sleep(1)
-        time.sleep(2)
-        return driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
-
     def extreure_productes(self, productes_elements):
-        """Extreu dades dels elements de producte trobats"""
         extrets = []
         for prod in productes_elements:
             try:
@@ -372,7 +354,6 @@ class BonAreaScraper:
         print(f"  📂 Categoria: {nom_cat}")
         count = 0
         try:
-            # Pas 1: comprovar _001 i _010
             driver.get(url + '_001')
             time.sleep(8)
             for i in range(3):
@@ -389,9 +370,7 @@ class BonAreaScraper:
             p010 = driver.find_elements(By.CSS_SELECTOR, 'div.block-product')
             n010 = len(p010)
 
-            # Pas 2: decidir estrategia
             if n010 == 0 or (n001 > 0 and n001 >= n010 * 3):
-                # Tornar a carregar _001 (els elements anteriors son stale)
                 print(f"    Estrategia: usar _001 ({n001} productes)")
                 driver.get(url + '_001')
                 time.sleep(8)
@@ -403,13 +382,10 @@ class BonAreaScraper:
                 self.productes.extend(extrets)
                 count += len(extrets)
             else:
-                # Iterar _010, _020, _030...
                 print(f"    Estrategia: iterar subcategories (_010, _020...)")
-                # Primer afegim els de _010 que ja tenim
                 extrets = self.extreure_productes(p010)
                 self.productes.extend(extrets)
                 count += len(extrets)
-                # Continuem amb _020, _030...
                 for n in range(2, 30):
                     suffix = f'_{n*10:03d}'
                     driver.get(url + suffix)
@@ -590,13 +566,13 @@ class BonPreuEsclatScraper:
         self.productes = []
         self.categories_valides = [
             'frescos', 'alimentaci', 'begudes', 'congelats',
-            'ctics',        # troba 'lactics' i 'lactics i ous' (amb o sense accent)
+            'ctics',        # troba 'lactics' i 'lactics i ous'
             'cura',         # troba 'cura personal'
             'neteja',       # troba 'neteja de la llar'
-            'per la llar',  # troba 'per la llar'
+            'per la llar',
             'mascotes',     # troba 'espai mascotes'
             'nadons',
-            'parafarm',     # troba 'parafarmacia' (amb o sense accent)
+            'parafarm',     # troba 'parafarmacia'
         ]
 
     def _crear_driver(self):
@@ -614,7 +590,7 @@ class BonPreuEsclatScraper:
         return webdriver.Chrome(service=service, options=chrome_options)
 
     def descobrir_categories(self, driver):
-        print("  🔍 Descobrint categories automàticament...")
+        print("  🔍 Descobrint categories principals...")
         driver.get(self.base_url)
         time.sleep(8)
         links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
@@ -635,18 +611,12 @@ class BonPreuEsclatScraper:
         print(f"  ✅ {len(categories)} categories principals trobades")
         return categories
 
-    def descobrir_subcategories(self, driver, url_categoria):
-        """Descobreix subcategories d'una categoria principal"""
-        # El slug de la categoria pare es el segon segment de la URL
-        # Ex: /categories/frescos/UUID -> slug = 'frescos'
-        parts = url_categoria.rstrip('/').split('/categories/')[1].split('/')
-        slug_pare = parts[0]  # ex: 'frescos', 'alimentaci%C3%B3'
-
-        driver.get(url_categoria)
-        time.sleep(8)
-        for i in range(3):
-            driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-            time.sleep(2)
+    def get_subcategories(self, driver, url):
+        """Retorna subcategories directes d'una URL basant-se en el nombre de segments del path"""
+        path_pare = url.split('/categories/')[-1].split('?')[0]
+        segments_pare = [s for s in path_pare.split('/') if s]
+        slug_pare = segments_pare[0]  # primer segment = nom de la categoria
+        n_segments_pare = len(segments_pare)
 
         links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
         subcats = []
@@ -654,40 +624,42 @@ class BonPreuEsclatScraper:
         for link in links:
             href = link.get_attribute('href') or ''
             text = link.get_attribute('innerText').strip()
-            uuid = href.split('/')[-1].split('?')[0]
-            if uuid in uuids_vistos or not text or len(uuid) < 10:
+            if '/categories/' not in href or not text:
                 continue
-            # Subcategoria real: conte el slug del pare + un segment extra
-            # Ex: /categories/frescos/formatges/UUID
             path = href.split('/categories/')[-1].split('?')[0]
             segments = [s for s in path.split('/') if s]
-            if len(segments) >= 3 and slug_pare in path:
+            uuid = segments[-1] if segments else ''
+            # Subcategoria directa: comenca amb el slug pare i te exactament 1 segment mes
+            if (len(segments) == n_segments_pare + 1
+                    and segments[0] == slug_pare
+                    and len(uuid) > 10
+                    and uuid not in uuids_vistos):
                 uuids_vistos.add(uuid)
                 url_neta = f"{self.base_url}/categories/{path}"
                 subcats.append((text, url_neta))
         return subcats
 
+    def convertir_pes(self, pes_text):
+        import re
+        match = re.match(r'([0-9.]+)(kg|l|g|ml)', pes_text.strip(), re.IGNORECASE)
+        if not match:
+            return pes_text
+        val = float(match.group(1))
+        unitat = match.group(2).lower()
+        if unitat == 'kg':
+            if val < 1:
+                return str(int(val*1000)) + ' g'
+            v = int(val) if val == int(val) else val
+            return str(v) + ' kg'
+        elif unitat == 'l':
+            if val < 1:
+                return str(int(val*1000)) + ' ml'
+            v = int(val) if val == int(val) else val
+            return str(v) + ' l'
+        return pes_text
+
     def extreure_productes_pagina(self, driver, url):
         """Extreu productes d'una URL amb scroll infinit"""
-        import re
-        def convertir_pes(pes_text):
-            match = re.match(r'([0-9.]+)(kg|l|g|ml)', pes_text.strip(), re.IGNORECASE)
-            if not match:
-                return pes_text
-            val = float(match.group(1))
-            unitat = match.group(2).lower()
-            if unitat == 'kg':
-                if val < 1:
-                    return str(int(val*1000)) + ' g'
-                v = int(val) if val == int(val) else val
-                return str(v) + ' kg'
-            elif unitat == 'l':
-                if val < 1:
-                    return str(int(val*1000)) + ' ml'
-                v = int(val) if val == int(val) else val
-                return str(v) + ' l'
-            return pes_text
-
         count = 0
         try:
             driver.get(url)
@@ -711,17 +683,64 @@ class BonPreuEsclatScraper:
                     try:
                         contenidor = noms[i].find_element(By.XPATH, '../../../..')
                         pes_el = contenidor.find_element(By.CSS_SELECTOR, 'span[class*="weight"]')
-                        quantitat = convertir_pes(pes_el.get_attribute('innerText').strip())
+                        quantitat = self.convertir_pes(pes_el.get_attribute('innerText').strip())
                     except:
                         quantitat = ''
                     if nom and preu > 0:
-                        self.productes.append({'producte': nom, 'marca': 'Bon Preu / Esclat', 'supermercat': 'Bon Preu / Esclat', 'preu': preu, 'quantitat': quantitat, 'envas': ''})
+                        self.productes.append({
+                            'producte': nom,
+                            'marca': 'Bon Preu / Esclat',
+                            'supermercat': 'Bon Preu / Esclat',
+                            'preu': preu,
+                            'quantitat': quantitat,
+                            'envas': ''
+                        })
                         count += 1
                 except:
                     continue
         except Exception as e:
             print(f"      ❌ Error: {e}")
         return count
+
+    def scrape_recursiu(self, url, nivell=0):
+        """Descobreix i rasca recursivament totes les subcategories"""
+        prefix = '  ' * (nivell + 2)
+        driver = None
+        try:
+            driver = self._crear_driver()
+            driver.get(url)
+            time.sleep(8)
+            for i in range(3):
+                driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+                time.sleep(2)
+
+            subcats = self.get_subcategories(driver, url)
+            driver.quit()
+            driver = None
+
+            if subcats:
+                nom_cat = url.split('/')[-2]
+                print(f"{prefix}📂 {nom_cat}: {len(subcats)} subcategories")
+                for nom_sub, url_sub in subcats:
+                    self.scrape_recursiu(url_sub, nivell + 1)
+                    time.sleep(1)
+            else:
+                # Categoria final — extreure productes
+                driver2 = self._crear_driver()
+                count = self.extreure_productes_pagina(driver2, url)
+                driver2.quit()
+                nom_cat = url.split('/')[-2]
+                print(f"{prefix}└ {nom_cat}: {count} productes")
+
+        except Exception as e:
+            nom_cat = url.split('/')[-2]
+            print(f"{prefix}❌ Error {nom_cat}: {e}")
+        finally:
+            if driver:
+                try:
+                    driver.quit()
+                except:
+                    pass
 
     def scrape_all(self):
         print(f"\n🟡 Bon Preu / Esclat: extraient productes amb Selenium...")
@@ -740,55 +759,10 @@ class BonPreuEsclatScraper:
                 except:
                     pass
 
+        # Rasquejar cada categoria recursivament
         for nom_cat, url_cat in categories:
-            print(f"  📂 Categoria: {nom_cat}")
-            # Descobrir subcategories
-            driver_sub = None
-            subcats = []
-            try:
-                driver_sub = self._crear_driver()
-                subcats = self.descobrir_subcategories(driver_sub, url_cat)
-            except Exception as e:
-                print(f"    ❌ Error descobrint subcategories: {e}")
-            finally:
-                if driver_sub:
-                    try:
-                        driver_sub.quit()
-                    except:
-                        pass
-
-            if subcats:
-                print(f"    {len(subcats)} subcategories trobades")
-                for nom_sub, url_sub in subcats:
-                    driver = None
-                    try:
-                        driver = self._crear_driver()
-                        count = self.extreure_productes_pagina(driver, url_sub)
-                        print(f"      └ {nom_sub}: {count} productes")
-                    except Exception as e:
-                        print(f"      └ ❌ Error {nom_sub}: {e}")
-                    finally:
-                        if driver:
-                            try:
-                                driver.quit()
-                            except:
-                                pass
-                    time.sleep(1)
-            else:
-                # Si no hi ha subcategories, rasquejar la categoria directament
-                driver = None
-                try:
-                    driver = self._crear_driver()
-                    count = self.extreure_productes_pagina(driver, url_cat)
-                    print(f"    ✅ {count} productes extrets")
-                except Exception as e:
-                    print(f"    ❌ Error: {e}")
-                finally:
-                    if driver:
-                        try:
-                            driver.quit()
-                        except:
-                            pass
+            print(f"  📂 Categoria principal: {nom_cat}")
+            self.scrape_recursiu(url_cat, nivell=0)
             time.sleep(2)
 
         print(f"✅ Bon Preu / Esclat: {len(self.productes)} productes extrets")
@@ -835,7 +809,6 @@ if __name__ == '__main__':
         ws.append_rows(rows)
 
     if part == '1':
-        # PART 1: Mercadona + Bon Area (~2h)
         print("\n" + "="*60)
         print("PART 1: Mercadona + Bon Area")
         print("="*60)
@@ -851,12 +824,10 @@ if __name__ == '__main__':
         duplicats = len(tots) - len(unics)
         print(f"\n✅ Part 1: {len(tots)} -> {len(unics)} unics ({duplicats} duplicats eliminats)")
 
-        # Guardar a Preus_Temp_1
         ws_temp1 = sheet.worksheet('Preus_Temp_1')
         guardar_a_sheet(ws_temp1, unics)
         print(f"✅ Preus_Temp_1 actualitzat amb {len(unics)} productes")
 
-        # Actualitzem Preus provisionalment
         ws_preus = sheet.worksheet('Preus')
         all_data = ws_temp1.get_all_values()
         ws_preus.clear()
@@ -864,7 +835,6 @@ if __name__ == '__main__':
         print(f"✅ Preus actualitzat provisionalment amb {len(unics)} productes")
 
     elif part == '2':
-        # PART 2: Dia + Bon Preu/Esclat (~3-4h)
         print("\n" + "="*60)
         print("PART 2: Dia + Bon Preu/Esclat")
         print("="*60)
@@ -879,7 +849,6 @@ if __name__ == '__main__':
         unics_part2 = desduplicar(tots)
         print(f"\n✅ Part 2: {len(unics_part2)} productes unics")
 
-        # Llegir productes de la Part 1
         print("📖 Llegint productes de la Part 1...")
         try:
             ws_temp1 = sheet.worksheet('Preus_Temp_1')
@@ -898,18 +867,15 @@ if __name__ == '__main__':
             print(f"❌ Error llegint Part 1: {e}")
             productes_part1 = []
 
-        # Combinar Part 1 + Part 2
         tots_combinats = productes_part1 + unics_part2
         unics_finals = desduplicar(tots_combinats)
         duplicats = len(tots_combinats) - len(unics_finals)
         print(f"✅ Total combinat: {len(tots_combinats)} -> {len(unics_finals)} unics ({duplicats} duplicats eliminats)")
 
-        # Guardar a Preus_Temp_2
         ws_temp2 = sheet.worksheet('Preus_Temp_2')
         guardar_a_sheet(ws_temp2, unics_finals)
         print(f"✅ Preus_Temp_2 actualitzat amb {len(unics_finals)} productes")
 
-        # Actualitzem Preus provisionalment
         ws_preus = sheet.worksheet('Preus')
         all_data = ws_temp2.get_all_values()
         ws_preus.clear()
@@ -917,7 +883,6 @@ if __name__ == '__main__':
         print(f"✅ Preus actualitzat provisionalment amb {len(unics_finals)} productes")
 
     elif part == '3':
-        # PART 3: Carrefour sense limit (~3-4h)
         print("\n" + "="*60)
         print("PART 3: Carrefour (sense limit)")
         print("="*60)
@@ -929,7 +894,6 @@ if __name__ == '__main__':
         unics_part3 = desduplicar(tots)
         print(f"\n✅ Part 3: {len(unics_part3)} productes unics de Carrefour")
 
-        # Llegir productes de la Part 2 (que ja te Part 1 + Part 2)
         print("📖 Llegint productes de les Parts 1+2...")
         try:
             ws_temp2 = sheet.worksheet('Preus_Temp_2')
@@ -948,13 +912,11 @@ if __name__ == '__main__':
             print(f"❌ Error llegint Parts 1+2: {e}")
             productes_parts12 = []
 
-        # Combinar Parts 1+2 + Part 3
         tots_combinats = productes_parts12 + unics_part3
         unics_finals = desduplicar(tots_combinats)
         duplicats = len(tots_combinats) - len(unics_finals)
         print(f"✅ Total final: {len(tots_combinats)} -> {len(unics_finals)} unics ({duplicats} duplicats eliminats)")
 
-        # Guardar a Preus_Temp i Preus
         ws_temp = sheet.worksheet('Preus_Temp')
         guardar_a_sheet(ws_temp, unics_finals)
         print(f"✅ Preus_Temp actualitzat amb {len(unics_finals)} productes")
