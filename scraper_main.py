@@ -663,11 +663,11 @@ class BonPreuEsclatScraper:
         count = 0
         try:
             driver.get(url)
-            time.sleep(10)
+            time.sleep(6)
             anterior = 0
-            for i in range(10):
+            for i in range(8):
                 driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-                time.sleep(2)
+                time.sleep(1.5)
                 actual = len(driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]'))
                 if actual == anterior and i > 2:
                     break
@@ -702,41 +702,38 @@ class BonPreuEsclatScraper:
             print(f"      ❌ Error: {e}")
         return count
 
-    def scrape_recursiu(self, url, nivell=0):
-        """Descobreix i rasca recursivament totes les subcategories"""
+    def scrape_recursiu(self, url, nivell=0, driver=None):
+        """Descobreix i rasca recursivament totes les subcategories reutilitzant el driver"""
         prefix = '  ' * (nivell + 2)
-        driver = None
+        driver_propi = driver is None
         try:
-            driver = self._crear_driver()
+            if driver_propi:
+                driver = self._crear_driver()
+
             driver.get(url)
-            time.sleep(8)
-            for i in range(3):
+            time.sleep(5)
+            for i in range(2):
                 driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
                 time.sleep(2)
 
             subcats = self.get_subcategories(driver, url)
-            driver.quit()
-            driver = None
+            nom_cat = url.split('/')[-2]
 
             if subcats:
-                nom_cat = url.split('/')[-2]
                 print(f"{prefix}📂 {nom_cat}: {len(subcats)} subcategories")
                 for nom_sub, url_sub in subcats:
-                    self.scrape_recursiu(url_sub, nivell + 1)
-                    time.sleep(1)
+                    self.scrape_recursiu(url_sub, nivell + 1, driver=driver)
+                    time.sleep(0.5)
             else:
-                # Categoria final — extreure productes
-                driver2 = self._crear_driver()
-                count = self.extreure_productes_pagina(driver2, url)
-                driver2.quit()
-                nom_cat = url.split('/')[-2]
+                # Categoria final — extreure productes amb el mateix driver
+                count = self.extreure_productes_pagina(driver, url)
                 print(f"{prefix}└ {nom_cat}: {count} productes")
 
         except Exception as e:
             nom_cat = url.split('/')[-2]
             print(f"{prefix}❌ Error {nom_cat}: {e}")
         finally:
-            if driver:
+            if driver_propi and driver:
                 try:
                     driver.quit()
                 except:
