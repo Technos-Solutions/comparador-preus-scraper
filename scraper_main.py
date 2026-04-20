@@ -833,18 +833,15 @@ if __name__ == '__main__':
 
     elif part == '2':
         print("\n" + "="*60)
-        print("PART 2: Dia + Bon Preu/Esclat")
+        print("PART 2: Dia")
         print("="*60)
 
         tots = []
         scraper_dia = DiaScraper()
         tots.extend(scraper_dia.scrape_all())
 
-        scraper_bonpreuesclat = BonPreuEsclatScraper()
-        tots.extend(scraper_bonpreuesclat.scrape_all())
-
         unics_part2 = desduplicar(tots)
-        print(f"\n✅ Part 2: {len(unics_part2)} productes unics")
+        print(f"\n✅ Part 2: {len(unics_part2)} productes unics de Dia")
 
         print("📖 Llegint productes de la Part 1...")
         try:
@@ -881,15 +878,15 @@ if __name__ == '__main__':
 
     elif part == '3':
         print("\n" + "="*60)
-        print("PART 3: Carrefour (sense limit)")
+        print("PART 3: Bon Preu/Esclat")
         print("="*60)
 
         tots = []
-        scraper_carrefour = CarrefourScraper()
-        tots.extend(scraper_carrefour.scrape_all(max_per_categoria=9999))
+        scraper_bonpreuesclat = BonPreuEsclatScraper()
+        tots.extend(scraper_bonpreuesclat.scrape_all())
 
         unics_part3 = desduplicar(tots)
-        print(f"\n✅ Part 3: {len(unics_part3)} productes unics de Carrefour")
+        print(f"\n✅ Part 3: {len(unics_part3)} productes unics de Bon Preu/Esclat")
 
         print("📖 Llegint productes de les Parts 1+2...")
         try:
@@ -912,7 +909,7 @@ if __name__ == '__main__':
         tots_combinats = productes_parts12 + unics_part3
         unics_finals = desduplicar(tots_combinats)
         duplicats = len(tots_combinats) - len(unics_finals)
-        print(f"✅ Total final: {len(tots_combinats)} -> {len(unics_finals)} unics ({duplicats} duplicats eliminats)")
+        print(f"✅ Total combinat: {len(tots_combinats)} -> {len(unics_finals)} unics ({duplicats} duplicats eliminats)")
 
         ws_temp = sheet.worksheet('Preus_Temp')
         guardar_a_sheet(ws_temp, unics_finals)
@@ -920,6 +917,51 @@ if __name__ == '__main__':
 
         ws_preus = sheet.worksheet('Preus')
         all_data = ws_temp.get_all_values()
+        ws_preus.clear()
+        ws_preus.append_rows(all_data)
+        print(f"✅ Preus actualitzat provisionalment amb {len(unics_finals)} productes")
+
+    elif part == '4':
+        print("\n" + "="*60)
+        print("PART 4: Carrefour (sense limit)")
+        print("="*60)
+
+        tots = []
+        scraper_carrefour = CarrefourScraper()
+        tots.extend(scraper_carrefour.scrape_all(max_per_categoria=9999))
+
+        unics_part4 = desduplicar(tots)
+        print(f"\n✅ Part 4: {len(unics_part4)} productes unics de Carrefour")
+
+        print("📖 Llegint productes de les Parts 1+2+3...")
+        try:
+            ws_temp = sheet.worksheet('Preus_Temp')
+            files_prev = ws_temp.get_all_records()
+            productes_prev = [{
+                'producte': f['producte'],
+                'marca': f['marca'],
+                'supermercat': f['supermercat'],
+                'preu': float(f['preu']),
+                'quantitat': f['quantitat'],
+                'envas': f.get('envas', ''),
+                'data': f['data']
+            } for f in files_prev]
+            print(f"✅ {len(productes_prev)} productes de Parts 1+2+3 llegits")
+        except Exception as e:
+            print(f"❌ Error llegint Parts anteriors: {e}")
+            productes_prev = []
+
+        tots_combinats = productes_prev + unics_part4
+        unics_finals = desduplicar(tots_combinats)
+        duplicats = len(tots_combinats) - len(unics_finals)
+        print(f"✅ Total final: {len(tots_combinats)} -> {len(unics_finals)} unics ({duplicats} duplicats eliminats)")
+
+        ws_temp_final = sheet.worksheet('Preus_Temp')
+        guardar_a_sheet(ws_temp_final, unics_finals)
+        print(f"✅ Preus_Temp actualitzat amb {len(unics_finals)} productes")
+
+        ws_preus = sheet.worksheet('Preus')
+        all_data = ws_temp_final.get_all_values()
         ws_preus.clear()
         ws_preus.append_rows(all_data)
         print(f"✅ Preus actualitzat amb {len(unics_finals)} productes TOTALS")
