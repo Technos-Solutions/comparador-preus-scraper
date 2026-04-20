@@ -1,8 +1,8 @@
-name: Scraper Part 2 - Dia + Bon Preu/Esclat
+name: Scraper Part 2 - Dia
 
 on:
   schedule:
-    - cron: '0 8 * * 1'  # Dilluns a les 8:00 AM (3h despres de la Part 1)
+    - cron: '0 6 * * 1'  # Dilluns a les 8:00 GMT+2 (6:00 UTC)
   workflow_dispatch:
 
 jobs:
