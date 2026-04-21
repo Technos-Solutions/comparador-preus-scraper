@@ -1,34 +1,25 @@
-name: Scraper Part 4 - Carrefour
+name: Scraper Part 4 - Bon Preu Congelats+Lactics+Cura+Neteja+Llar+Mascotes+Nadons+Parafarmacia
 
 on:
   schedule:
-    - cron: '0 13 * * 1'  # Dilluns a les 15:00 GMT+2 (13:00 UTC)
+    - cron: '0 13 * * 1'  # Dilluns 15:00 GMT+2
   workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-
       - name: Install Chrome
         run: |
           sudo apt-get update
           sudo apt-get install -y chromium-browser chromium-chromedriver
-
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-
+        run: pip install -r requirements.txt
       - name: Run scraper Part 4
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: |
-          python scraper_main.py --part=4
+        run: python scraper_main.py --part=4
