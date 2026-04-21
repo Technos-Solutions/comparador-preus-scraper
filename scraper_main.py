@@ -561,19 +561,23 @@ class CarrefourScraper:
 
 
 class BonPreuEsclatScraper:
-    def __init__(self):
+    def __init__(self, categories_filtre=None):
         self.base_url = 'https://www.compraonline.bonpreuesclat.cat'
         self.productes = []
-        self.categories_valides = [
-            'frescos', 'alimentaci', 'begudes', 'congelats',
-            'ctics',        # troba 'lactics' i 'lactics i ous'
-            'cura',         # troba 'cura personal'
-            'neteja',       # troba 'neteja de la llar'
-            'per la llar',
-            'mascotes',     # troba 'espai mascotes'
-            'nadons',
-            'parafarm',     # troba 'parafarmacia'
-        ]
+        # Si no s'especifica filtre, usar totes les categories
+        if categories_filtre:
+            self.categories_valides = categories_filtre
+        else:
+            self.categories_valides = [
+                'frescos', 'alimentaci', 'begudes', 'congelats',
+                'ctics',        # troba 'lactics' i 'lactics i ous'
+                'cura',         # troba 'cura personal'
+                'neteja',       # troba 'neteja de la llar'
+                'per la llar',
+                'mascotes',     # troba 'espai mascotes'
+                'nadons',
+                'parafarm',     # troba 'parafarmacia'
+            ]
 
     def _crear_driver(self):
         chrome_options = Options()
@@ -877,15 +881,17 @@ if __name__ == '__main__':
 
     elif part == '3':
         print("\n" + "="*60)
-        print("PART 3: Bon Preu/Esclat")
+        print("PART 3: Bon Preu/Esclat - Frescos + Alimentació + Begudes")
         print("="*60)
 
         tots = []
-        scraper_bonpreuesclat = BonPreuEsclatScraper()
-        tots.extend(scraper_bonpreuesclat.scrape_all())
+        scraper_bp = BonPreuEsclatScraper(categories_filtre=[
+            'frescos', 'alimentaci', 'begudes'
+        ])
+        tots.extend(scraper_bp.scrape_all())
 
         unics_part3 = desduplicar(tots)
-        print(f"\n✅ Part 3: {len(unics_part3)} productes unics de Bon Preu/Esclat")
+        print(f"\n✅ Part 3: {len(unics_part3)} productes unics")
 
         print("📖 Llegint productes de les Parts 1+2...")
         try:
@@ -907,8 +913,7 @@ if __name__ == '__main__':
 
         tots_combinats = productes_parts12 + unics_part3
         unics_finals = desduplicar(tots_combinats)
-        duplicats = len(tots_combinats) - len(unics_finals)
-        print(f"✅ Total combinat: {len(tots_combinats)} -> {len(unics_finals)} unics ({duplicats} duplicats eliminats)")
+        print(f"✅ Total: {len(unics_finals)} productes")
 
         ws_temp = sheet.worksheet('Preus_Temp')
         guardar_a_sheet(ws_temp, unics_finals)
@@ -922,15 +927,18 @@ if __name__ == '__main__':
 
     elif part == '4':
         print("\n" + "="*60)
-        print("PART 4: Carrefour (sense limit)")
+        print("PART 4: Bon Preu/Esclat - Congelats + Làctics + Cura + Neteja + Per la llar + Mascotes + Nadons + Parafarmàcia")
         print("="*60)
 
         tots = []
-        scraper_carrefour = CarrefourScraper()
-        tots.extend(scraper_carrefour.scrape_all(max_per_categoria=9999))
+        scraper_bp = BonPreuEsclatScraper(categories_filtre=[
+            'congelats', 'ctics', 'cura', 'neteja',
+            'per la llar', 'mascotes', 'nadons', 'parafarm'
+        ])
+        tots.extend(scraper_bp.scrape_all())
 
         unics_part4 = desduplicar(tots)
-        print(f"\n✅ Part 4: {len(unics_part4)} productes unics de Carrefour")
+        print(f"\n✅ Part 4: {len(unics_part4)} productes unics")
 
         print("📖 Llegint productes de les Parts 1+2+3...")
         try:
@@ -945,19 +953,62 @@ if __name__ == '__main__':
                 'envas': f.get('envas', ''),
                 'data': f['data']
             } for f in files_prev]
-            print(f"✅ {len(productes_prev)} productes de Parts 1+2+3 llegits")
+            print(f"✅ {len(productes_prev)} productes llegits")
         except Exception as e:
-            print(f"❌ Error llegint Parts anteriors: {e}")
+            print(f"❌ Error llegint parts anteriors: {e}")
             productes_prev = []
 
         tots_combinats = productes_prev + unics_part4
+        unics_finals = desduplicar(tots_combinats)
+        print(f"✅ Total: {len(unics_finals)} productes")
+
+        ws_temp = sheet.worksheet('Preus_Temp')
+        guardar_a_sheet(ws_temp, unics_finals)
+        print(f"✅ Preus_Temp actualitzat amb {len(unics_finals)} productes")
+
+        ws_preus = sheet.worksheet('Preus')
+        all_data = ws_temp.get_all_values()
+        ws_preus.clear()
+        ws_preus.append_rows(all_data)
+        print(f"✅ Preus actualitzat provisionalment amb {len(unics_finals)} productes")
+
+    elif part == '5':
+        print("\n" + "="*60)
+        print("PART 5: Carrefour (sense limit)")
+        print("="*60)
+
+        tots = []
+        scraper_carrefour = CarrefourScraper()
+        tots.extend(scraper_carrefour.scrape_all(max_per_categoria=9999))
+
+        unics_part5 = desduplicar(tots)
+        print(f"\n✅ Part 5: {len(unics_part5)} productes unics de Carrefour")
+
+        print("📖 Llegint productes de les Parts 1+2+3+4...")
+        try:
+            ws_temp = sheet.worksheet('Preus_Temp')
+            files_prev = ws_temp.get_all_records()
+            productes_prev = [{
+                'producte': f['producte'],
+                'marca': f['marca'],
+                'supermercat': f['supermercat'],
+                'preu': float(f['preu']),
+                'quantitat': f['quantitat'],
+                'envas': f.get('envas', ''),
+                'data': f['data']
+            } for f in files_prev]
+            print(f"✅ {len(productes_prev)} productes llegits")
+        except Exception as e:
+            print(f"❌ Error llegint parts anteriors: {e}")
+            productes_prev = []
+
+        tots_combinats = productes_prev + unics_part5
         unics_finals = desduplicar(tots_combinats)
         duplicats = len(tots_combinats) - len(unics_finals)
         print(f"✅ Total final: {len(tots_combinats)} -> {len(unics_finals)} unics ({duplicats} duplicats eliminats)")
 
         ws_temp_final = sheet.worksheet('Preus_Temp')
         guardar_a_sheet(ws_temp_final, unics_finals)
-        print(f"✅ Preus_Temp actualitzat amb {len(unics_finals)} productes")
 
         ws_preus = sheet.worksheet('Preus')
         all_data = ws_temp_final.get_all_values()
