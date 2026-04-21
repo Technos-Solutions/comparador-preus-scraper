@@ -16,29 +16,25 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-# Testem "Tot en X" per les 3 categories grans
-categories = [
-    ('Frescos', 'https://www.compraonline.bonpreuesclat.cat/categories/frescos/c95cfbf2-501d-433f-bae3-10fcef330b11'),
-    ('Alimentació', 'https://www.compraonline.bonpreuesclat.cat/categories/alimentaci%C3%B3/c49d1ef2-bf51-44a7-b631-4a35474a21ac'),
-    ('Begudes', 'https://www.compraonline.bonpreuesclat.cat/categories/begudes/3660db45-baa3-4c9f-9bb1-7cba443b3c9f'),
-]
+driver = crear_driver()
+driver.get('https://www.compraonline.bonpreuesclat.cat/categories/frescos/c95cfbf2-501d-433f-bae3-10fcef330b11')
+time.sleep(5)
 
-for nom, url in categories:
-    inici = time.time()
-    driver = crear_driver()
-    driver.get(url)
-    time.sleep(5)
-
-    anterior = 0
-    for i in range(30):
-        driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-        time.sleep(2)
-        actual = len(driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]'))
-        print(f'  {nom} scroll {i+1}: {actual} productes')
-        if actual == anterior and i > 2:
-            break
+anterior = 0
+passos_sense_canvi = 0
+for i in range(200):
+    # Scroll gradual de 500px cada vegada
+    driver.execute_script('window.scrollBy(0, 500)')
+    time.sleep(0.5)
+    actual = len(driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]'))
+    if actual != anterior:
+        print(f'  scroll {i+1}: {actual} productes')
         anterior = actual
+        passos_sense_canvi = 0
+    else:
+        passos_sense_canvi += 1
+        if passos_sense_canvi > 10:
+            print(f'  -> FI: {actual} productes')
+            break
 
-    elapsed = time.time() - inici
-    print(f'✅ {nom}: {actual} productes en {elapsed:.0f}s ({elapsed/60:.1f} min)\n')
-    driver.quit()
+driver.quit()
