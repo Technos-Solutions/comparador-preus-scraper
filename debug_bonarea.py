@@ -16,68 +16,29 @@ def crear_driver():
     service = Service('/usr/bin/chromedriver')
     return webdriver.Chrome(service=service, options=chrome_options)
 
-def get_subcategories(driver, url):
-    path_pare = url.split('/categories/')[-1].split('?')[0]
-    segments_pare = [s for s in path_pare.split('/') if s]
-    slug_pare = segments_pare[0]
-    n_segments_pare = len(segments_pare)
-    links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
-    subcats = []
-    uuids_vistos = set()
-    for link in links:
-        href = link.get_attribute('href') or ''
-        text = link.get_attribute('innerText').strip()
-        if '/categories/' not in href or not text:
-            continue
-        path = href.split('/categories/')[-1].split('?')[0]
-        segments = [s for s in path.split('/') if s]
-        uuid = segments[-1] if segments else ''
-        if (len(segments) == n_segments_pare + 1
-                and segments[0] == slug_pare
-                and len(uuid) > 10
-                and uuid not in uuids_vistos):
-            uuids_vistos.add(uuid)
-            subcats.append((text, f"https://www.compraonline.bonpreuesclat.cat/categories/{path}"))
-    return subcats
+# Testem "Tot en X" per les 3 categories grans
+categories = [
+    ('Frescos', 'https://www.compraonline.bonpreuesclat.cat/categories/frescos/c95cfbf2-501d-433f-bae3-10fcef330b11'),
+    ('Alimentació', 'https://www.compraonline.bonpreuesclat.cat/categories/alimentaci%C3%B3/c49d1ef2-bf51-44a7-b631-4a35474a21ac'),
+    ('Begudes', 'https://www.compraonline.bonpreuesclat.cat/categories/begudes/3660db45-baa3-4c9f-9bb1-7cba443b3c9f'),
+]
 
-# Mesurem NOMÉS la categoria Congelats
-inici = time.time()
-nodes_visitats = [0]
-productes_totals = [0]
-
-def scrape_recursiu(url, driver, nivell=0):
-    nodes_visitats[0] += 1
+for nom, url in categories:
+    inici = time.time()
+    driver = crear_driver()
     driver.get(url)
     time.sleep(5)
-    for i in range(2):
+
+    anterior = 0
+    for i in range(30):
         driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
         time.sleep(2)
-    subcats = get_subcategories(driver, url)
-    nom = url.split('/')[-2]
-    if subcats:
-        print(f"{'  '*nivell}📂 {nom}: {len(subcats)} subcats")
-        for _, url_sub in subcats:
-            scrape_recursiu(url_sub, driver, nivell+1)
-    else:
-        driver.get(url)
-        time.sleep(4)
-        for i in range(5):
-            driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-            time.sleep(1)
-            prods = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
-            if len(prods) == productes_totals[0] and i > 1:
-                break
-        prods = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
-        productes_totals[0] += len(prods)
-        print(f"{'  '*nivell}└ {nom}: {len(prods)} productes")
+        actual = len(driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]'))
+        print(f'  {nom} scroll {i+1}: {actual} productes')
+        if actual == anterior and i > 2:
+            break
+        anterior = actual
 
-driver = crear_driver()
-scrape_recursiu('https://www.compraonline.bonpreuesclat.cat/categories/congelats/79a52e84-e446-47fb-b032-dfa044ecb779', driver)
-driver.quit()
-
-elapsed = time.time() - inici
-print(f'\n⏱️ Congelats: {elapsed:.0f}s ({elapsed/60:.1f} min)')
-print(f'📦 Nodes visitats: {nodes_visitats[0]}')
-print(f'🛒 Productes: {productes_totals[0]}')
-print(f'⏱️ Temps per node: {elapsed/nodes_visitats[0]:.1f}s')
-print(f'\n📊 Estimació 11 categories: {elapsed/60*11:.0f} min ({elapsed/60*11/60:.1f}h)')
+    elapsed = time.time() - inici
+    print(f'✅ {nom}: {actual} productes en {elapsed:.0f}s ({elapsed/60:.1f} min)\n')
+    driver.quit()
