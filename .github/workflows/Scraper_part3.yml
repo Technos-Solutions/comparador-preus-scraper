@@ -2,7 +2,7 @@ name: Scraper Part 3 - Bon Preu Frescos+Alimentació+Begudes
 
 on:
   schedule:
-    - cron: '0 8 * * 1'  # Dilluns 10:00 GMT+2
+    - cron: '0 8 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -27,9 +27,11 @@ jobs:
   trigger_part4:
     needs: scrape
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Trigger Part 4
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
