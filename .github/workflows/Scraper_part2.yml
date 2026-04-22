@@ -2,33 +2,40 @@ name: Scraper Part 2 - Dia
 
 on:
   schedule:
-    - cron: '0 6 * * 1'  # Dilluns a les 8:00 GMT+2 (6:00 UTC)
+    - cron: '0 6 * * 1'  # Dilluns 8:00 GMT+2
   workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-
       - name: Install Chrome
         run: |
           sudo apt-get update
           sudo apt-get install -y chromium-browser chromium-chromedriver
-
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-
+        run: pip install -r requirements.txt
       - name: Run scraper Part 2
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: |
-          python scraper_main.py --part=2
+        run: python scraper_main.py --part=2
+
+  trigger_part3:
+    needs: scrape
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Part 3
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'Scraper_part3.yml',
+              ref: 'master'
+            })
