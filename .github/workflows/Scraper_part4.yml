@@ -23,3 +23,19 @@ jobs:
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: python scraper_main.py --part=4
+
+  trigger_part5:
+    needs: scrape
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Part 5
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'Scraper_part5.yml',
+              ref: 'master'
+            })
