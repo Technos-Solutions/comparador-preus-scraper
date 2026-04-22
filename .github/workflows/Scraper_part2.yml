@@ -2,7 +2,7 @@ name: Scraper Part 2 - Dia
 
 on:
   schedule:
-    - cron: '0 6 * * 1'  # Dilluns 8:00 GMT+2
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -27,9 +27,11 @@ jobs:
   trigger_part3:
     needs: scrape
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Trigger Part 3
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
