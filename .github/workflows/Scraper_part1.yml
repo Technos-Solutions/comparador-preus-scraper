@@ -2,7 +2,7 @@ name: Scraper Part 1 - Mercadona + Bon Area
 
 on:
   schedule:
-    - cron: '0 4 * * 1'  # Dilluns 6:00 GMT+2
+    - cron: '0 4 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -27,9 +27,11 @@ jobs:
   trigger_part2:
     needs: scrape
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Trigger Part 2
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
