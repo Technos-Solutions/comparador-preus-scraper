@@ -1,40 +1,70 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-import time
+import requests
+import json
+import os
 
-def crear_driver():
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--window-size=1920,1080')
-    chrome_options.add_argument('user-agent=Mozilla/5.0')
-    chrome_options.binary_location = '/usr/bin/chromium-browser'
-    from selenium.webdriver.chrome.service import Service
-    service = Service('/usr/bin/chromedriver')
-    return webdriver.Chrome(service=service, options=chrome_options)
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 
-driver = crear_driver()
-driver.get('https://www.compraonline.bonpreuesclat.cat/categories/frescos/c95cfbf2-501d-433f-bae3-10fcef330b11')
-time.sleep(5)
+# Productes d'exemple d'arròs de diferents supermercats
+productes = [
+    {"id": 0, "supermercat": "Mercadona", "producte": "Arroz redondo Hacendado", "quantitat": "1 kg", "preu": 1.30},
+    {"id": 1, "supermercat": "Mercadona", "producte": "Arroz largo Hacendado", "quantitat": "1 kg", "preu": 1.25},
+    {"id": 2, "supermercat": "Dia", "producte": "Arroz redondo Dia", "quantitat": "1 kg", "preu": 1.19},
+    {"id": 3, "supermercat": "Carrefour", "producte": "Arroz redondo Carrefour", "quantitat": "1 kg", "preu": 1.15},
+    {"id": 4, "supermercat": "Bon Àrea", "producte": "Arros rodó", "quantitat": "1 kg", "preu": 1.22},
+    {"id": 5, "supermercat": "Bon Preu / Esclat", "producte": "Arròs rodó", "quantitat": "1 kg", "preu": 1.18},
+    {"id": 6, "supermercat": "Mercadona", "producte": "Arroz largo Hacendado", "quantitat": "500 g", "preu": 0.75},
+    {"id": 7, "supermercat": "Dia", "producte": "Arroz largo Dia", "quantitat": "1 kg", "preu": 1.15},
+]
 
-anterior = 0
-passos_sense_canvi = 0
-for i in range(200):
-    # Scroll gradual de 500px cada vegada
-    driver.execute_script('window.scrollBy(0, 500)')
-    time.sleep(0.5)
-    actual = len(driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]'))
-    if actual != anterior:
-        print(f'  scroll {i+1}: {actual} productes')
-        anterior = actual
-        passos_sense_canvi = 0
-    else:
-        passos_sense_canvi += 1
-        if passos_sense_canvi > 10:
-            print(f'  -> FI: {actual} productes')
-            break
+productes_text = "\n".join([
+    f"{p['id']}. [{p['supermercat']}] {p['producte']} {p['quantitat']} — {p['preu']}€"
+    for p in productes
+])
 
-driver.quit()
+prompt = f"""Tens aquesta llista de productes de diferents supermercats:
+
+{productes_text}
+
+Agrupa els productes que són el MATEIX article (mateix tipus i mateixa quantitat aproximada).
+No agruppis productes de mides diferents (1kg vs 500g són grups separats).
+
+Respon NOMÉS en JSON sense cap text addicional:
+{{
+  "grups": [
+    {{
+      "nom_normalitzat": "Arròs rodó 1kg",
+      "ids": [0, 2, 3, 4, 5]
+    }}
+  ]
+}}"""
+
+response = requests.post(
+    'https://api.groq.com/openai/v1/chat/completions',
+    headers={
+        'Authorization': f'Bearer {GROQ_API_KEY}',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'model': 'llama-3.3-70b-versatile',
+        'messages': [{'role': 'user', 'content': prompt}],
+        'temperature': 0.1,
+        'max_tokens': 1000
+    }
+)
+
+resultat = response.json()
+contingut = resultat['choices'][0]['message']['content']
+print("=== RESPOSTA GROQ ===")
+print(contingut)
+
+# Parsejar i mostrar resultat
+try:
+    dades = json.loads(contingut)
+    print("\n=== GRUPS DETECTATS ===")
+    for grup in dades['grups']:
+        print(f"\n📦 {grup['nom_normalitzat']}")
+        for id_prod in grup['ids']:
+            p = productes[id_prod]
+            print(f"   [{p['supermercat']}] {p['producte']} {p['quantitat']} — {p['preu']}€")
+except:
+    print("Error parsejant JSON")
