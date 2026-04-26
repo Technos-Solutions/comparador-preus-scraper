@@ -1,39 +1,43 @@
 import requests
 import json
 import os
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
+# Connectar Google Sheets
+creds_json = os.environ.get('GOOGLE_CREDENTIALS')
+creds_dict = json.loads(creds_json)
+scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+from oauth2client.service_account import ServiceAccountCredentials
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+client = gspread.authorize(creds)
+sheet = client.open('Comparador_Preus_DB')
+ws = sheet.worksheet('Preus')
+
+# Llegir primers 100 productes
+print("📖 Llegint productes del Google Sheets...")
+files = ws.get_all_records()
+productes = files[:100]
+print(f"✅ {len(productes)} productes llegits")
+
+# Enviar a Groq per categoritzar
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 
-# Productes d'exemple d'arròs de diferents supermercats
-productes = [
-    {"id": 0, "supermercat": "Mercadona", "producte": "Arroz redondo Hacendado", "quantitat": "1 kg", "preu": 1.30},
-    {"id": 1, "supermercat": "Mercadona", "producte": "Arroz largo Hacendado", "quantitat": "1 kg", "preu": 1.25},
-    {"id": 2, "supermercat": "Dia", "producte": "Arroz redondo Dia", "quantitat": "1 kg", "preu": 1.19},
-    {"id": 3, "supermercat": "Carrefour", "producte": "Arroz redondo Carrefour", "quantitat": "1 kg", "preu": 1.15},
-    {"id": 4, "supermercat": "Bon Àrea", "producte": "Arros rodó", "quantitat": "1 kg", "preu": 1.22},
-    {"id": 5, "supermercat": "Bon Preu / Esclat", "producte": "Arròs rodó", "quantitat": "1 kg", "preu": 1.18},
-    {"id": 6, "supermercat": "Mercadona", "producte": "Arroz largo Hacendado", "quantitat": "500 g", "preu": 0.75},
-    {"id": 7, "supermercat": "Dia", "producte": "Arroz largo Dia", "quantitat": "1 kg", "preu": 1.15},
-]
-
 productes_text = "\n".join([
-    f"{p['id']}. [{p['supermercat']}] {p['producte']} {p['quantitat']} — {p['preu']}€"
-    for p in productes
+    f"{i}. {p['producte']} ({p['supermercat']})"
+    for i, p in enumerate(productes)
 ])
 
-prompt = f"""Tens aquesta llista de productes de diferents supermercats:
+prompt = f"""Categoritza aquests productes de supermercat en categories generals.
 
 {productes_text}
 
-Agrupa els productes que són el MATEIX article (mateix tipus i mateixa quantitat aproximada).
-No agruppis productes de mides diferents (1kg vs 500g són grups separats).
-
-Respon NOMÉS en JSON sense cap text addicional:
+Respon NOMÉS en JSON:
 {{
-  "grups": [
+  "categories": [
     {{
-      "nom_normalitzat": "Arròs rodó 1kg",
-      "ids": [0, 2, 3, 4, 5]
+      "categoria": "Arròs i pasta",
+      "ids": [0, 5, 12]
     }}
   ]
 }}"""
@@ -48,23 +52,23 @@ response = requests.post(
         'model': 'llama-3.3-70b-versatile',
         'messages': [{'role': 'user', 'content': prompt}],
         'temperature': 0.1,
-        'max_tokens': 1000
+        'max_tokens': 2000
     }
 )
 
 resultat = response.json()
 contingut = resultat['choices'][0]['message']['content']
-print("=== RESPOSTA GROQ ===")
-print(contingut)
 
-# Parsejar i mostrar resultat
 try:
     dades = json.loads(contingut)
-    print("\n=== GRUPS DETECTATS ===")
-    for grup in dades['grups']:
-        print(f"\n📦 {grup['nom_normalitzat']}")
-        for id_prod in grup['ids']:
+    print(f"\n=== {len(dades['categories'])} CATEGORIES DETECTADES ===")
+    for cat in dades['categories']:
+        print(f"\n📦 {cat['categoria']} ({len(cat['ids'])} productes)")
+        for id_prod in cat['ids'][:3]:
             p = productes[id_prod]
-            print(f"   [{p['supermercat']}] {p['producte']} {p['quantitat']} — {p['preu']}€")
-except:
-    print("Error parsejant JSON")
+            print(f"   [{p['supermercat']}] {p['producte']}")
+        if len(cat['ids']) > 3:
+            print(f"   ... i {len(cat['ids'])-3} més")
+except Exception as e:
+    print(f"Error: {e}")
+    print(contingut)
