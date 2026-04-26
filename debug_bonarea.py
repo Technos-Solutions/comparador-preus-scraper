@@ -60,7 +60,8 @@ resultat = response.json()
 contingut = resultat['choices'][0]['message']['content']
 
 try:
-    dades = json.loads(contingut)
+contingut_net = contingut.replace('```json', '').replace('```', '').strip()
+dades = json.loads(contingut_net)
     print(f"\n=== {len(dades['categories'])} CATEGORIES DETECTADES ===")
     for cat in dades['categories']:
         print(f"\n📦 {cat['categoria']} ({len(cat['ids'])} productes)")
