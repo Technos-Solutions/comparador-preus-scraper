@@ -103,3 +103,19 @@ for cat, productes in sorted(grups.items(), key=lambda x: -len(x[1])):
     print(f"  {cat}: {len(productes)} productes ({len(supermercats)} supermercats)")
     for p in productes[:2]:
         print(f"    [{p['supermercat']}] {p['producte']} - {p['preu']} EUR")
+        # Analitzar quants productes tenim per supermercat al total
+print("\nPRODUCTES PER SUPERMERCAT (total):")
+supermercats_total = defaultdict(int)
+for p in files:
+    supermercats_total[p['supermercat']] += 1
+for sup, count in sorted(supermercats_total.items(), key=lambda x: -x[1]):
+    print(f"  {sup}: {count} productes")
+
+# Analitzar quants productes tenim per supermercat a cada categoria
+print("\nPRODUCTES PER SUPERMERCAT A CATEGORIA 'llet':")
+for p in grups.get('llet', []):
+    print(f"  [{p['supermercat']}] {p['producte']}")
+
+print("\nPRODUCTES PER SUPERMERCAT A CATEGORIA 'arros':")
+for p in grups.get('arros', []):
+    print(f"  [{p['supermercat']}] {p['producte']}")
