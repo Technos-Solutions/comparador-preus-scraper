@@ -102,4 +102,4 @@ for cat, productes in sorted(grups.items(), key=lambda x: -len(x[1])):
     supermercats = set(p['supermercat'] for p in productes)
     print(f"  {cat}: {len(productes)} productes ({len(supermercats)} supermercats)")
     for p in productes[:2]:
-        print(f"    [{p['
+        print(f"    [{p['supermercat']}] {p['producte']} - {p['preu']} EUR")
