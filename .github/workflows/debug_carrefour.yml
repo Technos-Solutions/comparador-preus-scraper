@@ -12,7 +12,7 @@ jobs:
         with:
           python-version: '3.10'
       - name: Install dependencies
-        run: pip install requests gspread oauth2client
+        run: pip install requests gspread oauth2client rapidfuzz
       - name: Run debug
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
