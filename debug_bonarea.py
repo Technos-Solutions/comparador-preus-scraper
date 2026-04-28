@@ -1,10 +1,11 @@
-import re
-from collections import defaultdict
 import json
 import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from rapidfuzz import fuzz, process
 import unicodedata
+import re
+from collections import defaultdict
 
 creds_json = os.environ.get('GOOGLE_CREDENTIALS')
 creds_dict = json.loads(creds_json)
@@ -21,101 +22,61 @@ print(f"{len(files)} productes llegits")
 def normalitzar_text(text):
     text = text.lower()
     text = ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+    # Eliminar marques comercials i informació extra
+    text = re.sub(r'\b(hacendado|dia|carrefour|bonpreu|bon area|esclat)\b', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-INICI_PRODUCTE = {
-    'llet ': 'llet',
-    'leche ': 'llet',
-    'iogurt': 'iogurt',
-    'yogur': 'iogurt',
-    'arroz': 'arros',
-    'arros': 'arros',
-    'cerveza': 'cervesa',
-    'cervesa': 'cervesa',
-    'vino tinto': 'vi',
-    'vino blanco': 'vi',
-    'vino rosado': 'vi',
-    'vi negre': 'vi',
-    'vi blanc': 'vi',
-    'vi rosat': 'vi',
-    'cava ': 'cava',
-    'atun': 'tonyina',
-    'tonyina': 'tonyina',
-    'aceite de oliva': 'oli oliva',
-    'aceite de girasol': 'oli girasol',
-    'huevos': 'ous',
-    'ous ': 'ous',
-    'pan de molde': 'pa motlle',
-    'pa de motlle': 'pa motlle',
-    'mantequilla': 'mantega',
-    'mantega': 'mantega',
-    'azucar': 'sucre',
-    'sucre': 'sucre',
-    'detergente': 'detergent',
-    'detergent ': 'detergent',
-    'lejia': 'lleixiu',
-    'lleixiu': 'lleixiu',
-    'agua mineral': 'aigua',
-    'agua con gas': 'aigua',
-    'agua sin gas': 'aigua',
-    'galletas': 'galetes',
-    'galetes': 'galetes',
-    'chocolate': 'xocolata',
-    'xocolata': 'xocolata',
-    'patatas fritas': 'patates',
-    'patates fregides': 'patates',
-    'tomate frito': 'tomaquet',
-    'tomaquet fregit': 'tomaquet',
-    'cafe en': 'cafe',
-    'cafe molt': 'cafe',
-    'macarrones': 'pasta',
-    'macarrons': 'pasta',
-    'espaguetis': 'pasta',
-    'fideos ': 'pasta',
-    'fideus ': 'pasta',
-    'lasana': 'pasta',
-    'lasanya': 'pasta',
-}
-
-def trobar_categoria(nom_producte):
-    nom_norm = normalitzar_text(nom_producte)
-    for inici, categoria in INICI_PRODUCTE.items():
-        if nom_norm.startswith(normalitzar_text(inici)):
-            return categoria
-    return None
-
-grups = defaultdict(list)
-sense_categoria = 0
-
+# Filtrar només llet per la prova
+print("\nFiltrant productes de llet...")
+llets = []
 for p in files:
-    cat = trobar_categoria(p['producte'])
-    if cat:
-        grups[cat].append(p)
-    else:
-        sense_categoria += 1
+    nom = normalitzar_text(p['producte'])
+    if nom.startswith('llet ') or nom.startswith('leche '):
+        llets.append({
+            'original': p['producte'],
+            'normalitzat': nom,
+            'supermercat': p['supermercat'],
+            'preu': p['preu'],
+            'quantitat': p['quantitat']
+        })
 
-print(f"\nRESULTATS:")
-print(f"  Productes categoritzats: {len(files) - sense_categoria}")
-print(f"  Productes sense categoria: {sense_categoria}")
-print(f"\nCATEGORIES:")
-for cat, productes in sorted(grups.items(), key=lambda x: -len(x[1])):
-    supermercats = set(p['supermercat'] for p in productes)
-    print(f"  {cat}: {len(productes)} productes ({len(supermercats)} supermercats)")
-    for p in productes[:2]:
-        print(f"    [{p['supermercat']}] {p['producte']} - {p['preu']} EUR")
-        # Analitzar quants productes tenim per supermercat al total
-print("\nPRODUCTES PER SUPERMERCAT (total):")
-supermercats_total = defaultdict(int)
-for p in files:
-    supermercats_total[p['supermercat']] += 1
-for sup, count in sorted(supermercats_total.items(), key=lambda x: -x[1]):
-    print(f"  {sup}: {count} productes")
+print(f"{len(llets)} productes de llet trobats")
 
-# Analitzar quants productes tenim per supermercat a cada categoria
-print("\nPRODUCTES PER SUPERMERCAT A CATEGORIA 'llet':")
-for p in grups.get('llet', []):
-    print(f"  [{p['supermercat']}] {p['producte']}")
+# Agrupar per similitud
+print("\nAgrupant per similitud...")
+grups = []
+processats = set()
 
-print("\nPRODUCTES PER SUPERMERCAT A CATEGORIA 'arros':")
-for p in grups.get('arros', []):
-    print(f"  [{p['supermercat']}] {p['producte']}")
+for i, p1 in enumerate(llets):
+    if i in processats:
+        continue
+    
+    grup = [p1]
+    processats.add(i)
+    
+    for j, p2 in enumerate(llets):
+        if j in processats or i == j:
+            continue
+        
+        similitud = fuzz.token_sort_ratio(p1['normalitzat'], p2['normalitzat'])
+        if similitud >= 75:
+            grup.append(p2)
+            processats.add(j)
+    
+    grups.append(grup)
+
+# Mostrar grups amb més d'un supermercat
+print(f"\nTotal grups: {len(grups)}")
+print("\nGRUPS AMB MES D'UN SUPERMERCAT:")
+grups_comparables = 0
+for grup in sorted(grups, key=lambda x: -len(x)):
+    supermercats = set(p['supermercat'] for p in grup)
+    if len(supermercats) > 1:
+        grups_comparables += 1
+        preus = sorted(grup, key=lambda x: float(x['preu']) if x['preu'] else 999)
+        print(f"\n--- {grup[0]['original']} ---")
+        for p in preus:
+            print(f"  [{p['supermercat']}] {p['original']} - {p['preu']} EUR")
+
+print(f"\nTotal grups comparables: {grups_comparables}")
