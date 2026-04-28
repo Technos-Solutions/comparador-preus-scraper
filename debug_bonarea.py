@@ -192,3 +192,9 @@ for grup in sorted(grups, key=lambda x: -len(x)):
             print(f"  [{p['supermercat']}] {p['producte']} ({traduit}) - {p['preu']} EUR")
 
 print(f"\nTotal grups comparables: {grups_comparables}")
+print("\nPRODUCTES DE BON PREU AMB 'llet' o 'leche':")
+for p in files:
+    sup = p['supermercat']
+    nom = normalitzar_text(p['producte'])
+    if sup == 'Bon Preu / Esclat' and ('llet' in nom or 'leche' in nom):
+        print(f"  {p['producte']}")
