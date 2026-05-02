@@ -1,4 +1,4 @@
-import gspread
+﻿import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 import os
@@ -596,6 +596,12 @@ class BonPreuEsclatScraper:
     def descobrir_categories(self, driver):
         print("  🔍 Descobrint categories principals...")
         driver.get(self.base_url)
+        driver.add_cookie({
+            "name": "language",
+            "value": "es-ES",
+            "domain": "www.compraonline.bonpreuesclat.cat"
+        })
+        driver.refresh()
         time.sleep(8)
         links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
         categories = []
@@ -1019,3 +1025,4 @@ if __name__ == '__main__':
     print("\n" + "="*60)
     print(f"✅ PART {part} COMPLETADA!")
     print("="*60)
+
