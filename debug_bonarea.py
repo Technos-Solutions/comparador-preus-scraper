@@ -17,9 +17,7 @@ def crear_driver():
     chrome_options.add_argument('--disable-gpu')
     chrome_options.add_argument('--window-size=1920,1080')
     chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
-    chrome_options.binary_location = '/usr/bin/chromium-browser'
-    service = Service('/usr/bin/chromedriver')
-    return webdriver.Chrome(service=service, options=chrome_options)
+    return webdriver.Chrome(options=chrome_options)
 
 print("=" * 60)
 print("DEBUG: Cookie language=es-ES a BonPreuEsclat")
@@ -44,7 +42,7 @@ try:
     time.sleep(8)
 
     # 3. Anar a una categoria de prova (frescos)
-    print("3. Navegant a categoria 'frescos'...")
+    print("3. Descobrint categories...")
     links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
     url_prova = None
     for link in links:
