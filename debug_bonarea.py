@@ -1,4 +1,4 @@
-﻿# Debug Normalitzador Mòdul 1 - Filtre v5
+# Debug Normalitzador Mòdul 1 - Filtre v6
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
@@ -47,7 +47,7 @@ EXCLOU = [
     'almirón', 'nativa', 'nestlé junior', 'blemil', 'nidina', 'blédina',
     'llibre', 'barcanova', 'bullet ', 'vi rosat',
     'càpsula', 'cápsula', 'dolce gusto',
-    'folic', 'nous',  # begudes funcionals
+    'folic', 'nous',
 ]
 
 productes = []
@@ -60,23 +60,36 @@ for f in files:
 
 print(f"Total llets per beure: {len(productes)}\n")
 
+# ── Marques ordenades de més llarga a més curta (evita solapaments) ──────────
 MARQUES = sorted([
-    'central lechera asturiana', 'asturiana', 'pascual calci', 'pascual',
+    'central lechera asturiana', 'asturiana',
+    'pascual calci', 'pascual',
     'puleva omega3', 'puleva omega 3', 'puleva max', 'puleva',
-    'kaiku s/lactosa', 'kaiku', 'ato natura', 'ato', 'letona', 'lauki',
-    'celta', 'covap', 'president', 'président', 'rio', 'río', 'madriz',
-    'bonpreu', 'verntallat', 'llet nostra', 'terra i tast', 'latorre',
-    'la torre', 'el castillo', 'castillo', 'dia láctea', 'hacendado',
+    'kaiku s/lactosa', 'kaiku',
+    'ato natura', 'ato',
+    'letona', 'lauki', 'celta', 'covap',
+    'president', 'président',
+    'rio', 'río', 'madriz',
+    'bonpreu', 'verntallat', 'llet nostra', 'terra i tast',
+    'latorre', 'la torre', 'el castillo', 'castillo',
+    'dia láctea', 'dia lactea',
+    'hacendado',
     'gaza', 'la cántara',
+    # marques pròpies supermercat
+    'ifa',
+    'carrefour bio', 'carrefour',
+    'el buen pastor',
 ], key=len, reverse=True)
 
 def extreure_marca(nom):
     nom_lower = nom.lower().strip()
+    # BonPreu: prefix en MAJÚSCULES seguit d'una paraula en minúscules
     match = re.match(r'^([A-ZÀÁÈÉÍÏÒÓÚÜÇ][A-ZÀÁÈÉÍÏÒÓÚÜÇ0-9/\s\-\.]+?)\s+[a-z]', nom)
     if match:
         marca = match.group(1).strip().title()
         nom_net = nom[len(match.group(1)):].strip()
         return marca, nom_net
+    # Resta de supermercats: buscar marca coneguda al nom
     for marca in MARQUES:
         if marca in nom_lower:
             nom_net = re.sub(re.escape(marca), '', nom_lower, flags=re.IGNORECASE).strip()
@@ -84,24 +97,55 @@ def extreure_marca(nom):
             return marca.title(), nom_net
     return '', nom.lower()
 
+# ── Normalització ─────────────────────────────────────────────────────────────
+# Mapa català → castellà per unificar tipus de llet
+TRADUCCIONS = {
+    'llet': 'leche',
+    'sencera': 'entera',
+    'desnatada': 'desnatada',
+    'semidesnatada': 'semidesnatada',
+    'sense lactosa': 'sin lactosa',
+    'ecològica': 'ecológica',
+    'proteïna': 'proteina',
+    'calci': 'calcio',
+    'fresca': 'fresca',
+    'barista': 'barista',
+}
+
 def normalitzar_nom(nom):
     nom = nom.lower()
-    nom = re.sub(r'\b(brik|botella|ampolla|cartró|cartro|pack|en cartró|en ampolla|uht)\b', '', nom)
+    # Treure informació de conservació entre parèntesis
+    nom = re.sub(r'\(.*?\)', '', nom)
+    # Treure format de pack: "3 u de", "de 6 brics de", "6 briks de", etc.
+    nom = re.sub(r'\d+\s*u\s*(de\s*)?', '', nom)
+    nom = re.sub(r'de\s+\d+\s*(bric|brik|brick)s?\s*(de\s*)?', '', nom, flags=re.IGNORECASE)
+    # Treure envasos i formats
+    nom = re.sub(r'\b(brik|bric|brick|botella|ampolla|cartró|cartro|pack|en cartró|en ampolla|uht)\b', '', nom)
+    # Treure mides/quantitats (1l, 1.5l, 200ml, 6x1l, etc.)
     nom = re.sub(r'\d+[\s,.]?\d*\s*(x\s*)?\d*[\s,.]?\d*\s*(l|ml|kg|g|cl)\b\.?', '', nom)
-    nom = re.sub(r'\b(bric|brick|format|viatge|paq|paq\.|paquet|km0|km)\b', '', nom)
-    nom = re.sub(r'[.,;:]', '', nom)
+    # Treure altres paraules de format
+    nom = re.sub(r'\b(bric|brick|format|viatge|paq\.?|paquet|km0|km|a2)\b', '', nom)
+    # Treure "de" sobrant al final
+    nom = re.sub(r'\bde\b\s*$', '', nom)
+    nom = re.sub(r'[.,;:()\[\]]', '', nom)
+    nom = re.sub(r'\s+', ' ', nom).strip()
+    # Traduir català → castellà per unificar
+    for cat, cas in TRADUCCIONS.items():
+        nom = re.sub(r'\b' + re.escape(cat) + r'\b', cas, nom)
     nom = re.sub(r'\s+', ' ', nom).strip()
     return nom
 
-print("=" * 90)
-print(f"{'SUPERMERCAT':<20} {'MARCA':<25} {'NOM NORMALITZAT':<35} {'PREU':>6} {'QUANT':>10}")
-print("=" * 90)
+# ── Imprimir resultats ────────────────────────────────────────────────────────
+print("=" * 100)
+print(f"{'SUPERMERCAT':<20} {'MARCA':<28} {'NOM NORMALITZAT':<40} {'PREU':>6} {'QUANT':>12}")
+print("=" * 100)
 
 for p in productes:
     nom_original = p.get('producte', '')
     sup = p.get('supermercat', '')
     preu = p.get('preu', '')
     quant = p.get('quantitat', '')
+    envas = p.get('envas', '')
     marca, nom_net = extreure_marca(nom_original)
     nom_normalitzat = normalitzar_nom(nom_net)
-    print(f"{sup:<20} {marca:<25} {nom_normalitzat:<35} {str(preu):>6}€ {str(quant):>10}")
+    print(f"{sup:<20} {marca:<28} {nom_normalitzat:<40} {str(preu):>6}€ {str(quant)+' '+str(envas):>12}")
