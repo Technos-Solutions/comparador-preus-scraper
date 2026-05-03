@@ -87,6 +87,7 @@ ALIAS_MARCA = {
     'dia láctea': 'Dia Láctea',
     'danone activia': 'Activia',
     'activia': 'Activia',
+    'danone natural': 'Danone',  # Bon Àrea posa "Danone Natural" com a marca
 }
 
 def extreure_marca(nom):
@@ -107,20 +108,44 @@ def extreure_marca(nom):
     return '', nom.lower()
 
 TRADUCCIONS = {
-    'iogurt': 'yogur',
-    'iogur': 'yogur',
-    'desnatat': 'desnatado',
-    'grec': 'griego',
-    'natural': 'natural',
+    # tipus de iogurt
+    'iogurt': 'yogur', 'iogur': 'yogur',
+    'grec': 'griego', 'griego': 'griego',
+    'desnatat': 'desnatado', 'descremat': 'desnatado',
+    'semidesnatat': 'semidesnatado',
+    'ensucrat': 'azucarado', 'edulcorat': 'edulcorado',
+    'cremós': 'cremoso', 'cremos': 'cremoso',
+    'lleuger': 'ligero',
+    'líquid': 'líquido',
     'sense lactosa': 'sin lactosa',
     'ecològic': 'ecológico',
     'proteïna': 'proteina',
-    'fruita': 'fruta',
-    'maduixa': 'fresa',
-    'plàtan': 'plátano',
-    'llimona': 'limón',
-    'líquid': 'líquido',
     'per beure': 'para beber',
+    # connectors
+    'amb': 'con', 'i ': 'y ',
+    'gust de': 'sabor', 'gust': 'sabor',
+    # fruites
+    'maduixa': 'fresa', 'maduixes': 'fresas',
+    'préssec': 'melocotón',
+    'poma': 'manzana',
+    'plàtan': 'plátano',
+    'llimona': 'limón', 'llima': 'lima',
+    'taronja': 'naranja',
+    'gerds': 'frambuesas',
+    'nabius': 'arándanos',
+    'fruits silvestres': 'frutos silvestres',
+    'fruits del bosc': 'frutos del bosque',
+    'fruits vermells': 'frutos rojos',
+    'fruita': 'fruta',
+    # llavors i fruits secs
+    'civada': 'avena', 'xia': 'chía',
+    'nous': 'nueces', 'ametlles': 'almendras',
+    'prunes': 'ciruelas', 'canyella': 'canela',
+    # llet origen
+    "d'ovella": 'de oveja',
+    # altres
+    'natural': 'natural',
+    'ecològic': 'ecológico',
 }
 
 def normalitzar_nom(nom):
@@ -136,11 +161,14 @@ def normalitzar_nom(nom):
     nom = re.sub(r'\s+', ' ', nom).strip()
     for cat, cas in TRADUCCIONS.items():
         nom = re.sub(r'\b' + re.escape(cat) + r'\b', cas, nom)
-    # Treure etiquetes de botiga que contaminen el nom (Carrefour, BonPreu)
+    # Treure etiquetes de botiga i atributs inconsistents
     nom = re.sub(r'\bde nidades\b|\bnidades\b', '', nom)
     nom = re.sub(r"\bextra\b|\bclassic[\'´`]?\b|\bel mercado\b", '', nom)
     nom = re.sub(r'\bkm0\b|\bartesà\b|\bartesanal\b|\bartesano\b', '', nom)
-    nom = re.sub(r'\bsensation\b|\boikos\b', '', nom)  # sub-marques ja extretes
+    nom = re.sub(r'\bsensation\b|\boikos\b', '', nom)
+    nom = re.sub(r'\bsin gluten\b', '', nom)  # inconsistent entre supermercats
+    nom = re.sub(r'\bfidias\b|\btarrina\b|\bestilo\b', '', nom)  # etiquetes Dia
+    nom = re.sub(r"[\'´`]+", '', nom)  # apòstrofs sobrants
     nom = re.sub(r'\s+', ' ', nom).strip()
     return nom
 
