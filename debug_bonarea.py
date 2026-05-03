@@ -175,47 +175,49 @@ for p in productes:
         'litres': litres, 'preu_per_l': preu_per_l,
     })
 
-# Agrupar per (marca, nom)
+# Agrupar per (marca, nom, litres_arrodonits) — mateixa presentació
+def arrodonir_litres(l):
+    """Arrodoneix a 1 decimal per agrupar presentacions estàndard."""
+    if l is None:
+        return None
+    return round(l, 1)
+
 grups = defaultdict(list)
 for t in taula:
-    grups[(t['marca'], t['nom'])].append(t)
+    litres_clau = arrodonir_litres(t['litres'])
+    if litres_clau is not None:
+        grups[(t['marca'], t['nom'], litres_clau)].append(t)
 
 # ── Mostrar comparació: grups presents a ≥2 supermercats ─────────────────────
 print("\n" + "=" * 90)
-print("MÒDUL 3 — COMPARACIÓ DE PREUS PER LITRE (grups amb ≥2 supermercats)")
+print("MÒDUL 3 — COMPARACIÓ DE PREUS (mateixa marca + tipus + presentació)")
 print("=" * 90)
 
-# Seleccionar entrades de format 1 litre (o el més proper) per comparar
-def millor_entrada_per_sup(entrades):
-    """Per cada supermercat, agafa l'entrada de ~1l si existeix, si no la de menys litres."""
+grups_multi = 0
+for (marca, nom, litres), entrades in sorted(grups.items()):
+    # Un producte per supermercat (si n'hi ha més d'un, agafem el més barat)
     per_sup = defaultdict(list)
     for e in entrades:
-        if e['preu_per_l']:
-            per_sup[e['supermercat']].append(e)
-    resultat = {}
-    for sup, llista in per_sup.items():
-        # Prioritzar la de ~1l; si no, qualsevol amb preu_per_l
-        candidats_1l = [e for e in llista if e['litres'] and 0.8 <= e['litres'] <= 1.2]
-        resultat[sup] = sorted(candidats_1l or llista, key=lambda x: x['preu_per_l'])[0]
-    return resultat
+        per_sup[e['supermercat']].append(e)
+    per_sup_unic = {sup: min(llista, key=lambda x: x['preu']) for sup, llista in per_sup.items()}
 
-grups_multi = 0
-for (marca, nom), entrades in sorted(grups.items()):
-    per_sup = millor_entrada_per_sup(entrades)
-    if len(per_sup) < 2:
+    if len(per_sup_unic) < 2:
         continue
     grups_multi += 1
-    print(f"\n  {'─'*86}")
+
     etiqueta = f"{marca} — {nom}" if marca else f"(sense marca) — {nom}"
-    print(f"  {etiqueta}")
-    entrades_ord = sorted(per_sup.values(), key=lambda x: x['preu_per_l'])
-    min_preu = entrades_ord[0]['preu_per_l']
+    mida = f"{litres:.1f}l"
+    print(f"\n  {'─'*86}")
+    print(f"  {etiqueta}  [{mida}]")
+
+    entrades_ord = sorted(per_sup_unic.values(), key=lambda x: x['preu'])
+    min_preu = entrades_ord[0]['preu']
     for e in entrades_ord:
-        diferencia = f"  (+{e['preu_per_l']-min_preu:.2f}€/l)" if e['preu_per_l'] > min_preu else ''
-        estrella = '★' if e['preu_per_l'] == min_preu else ' '
-        print(f"  {estrella} {e['supermercat']:<22} {e['preu_per_l']:.2f}€/l"
-              f"   ({e['preu']:.2f}€ / {e['litres']:.1f}l){diferencia}")
+        diferencia = f"  (+{e['preu']-min_preu:.2f}€)" if e['preu'] > min_preu else ''
+        estrella = '★' if e['preu'] == min_preu else ' '
+        ppl = f"  ({e['preu_per_l']:.2f}€/l)" if e['preu_per_l'] else ''
+        print(f"  {estrella} {e['supermercat']:<22} {e['preu']:.2f}€{ppl}{diferencia}")
 
 print(f"\n{'='*90}")
-print(f"Total grups únics (marca+tipus): {len(grups)}")
+print(f"Total grups únics (marca+tipus+mida): {len(grups)}")
 print(f"Grups presents a ≥2 supermercats: {grups_multi}")
