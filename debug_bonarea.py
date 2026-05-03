@@ -1,41 +1,32 @@
 ﻿# Debug Normalitzador - Buscar "leche desnatada" a tots els supermercats
-# Executa via GitHub Actions per tenir accés a GOOGLE_CREDENTIALS
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 import os
 
-# Connexió a Google Sheets
+# Connexió a Google Sheets (igual que els scrapers)
 creds_json = os.environ.get('GOOGLE_CREDENTIALS')
 creds_dict = json.loads(creds_json)
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
-SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
-sheet = client.open_by_key(SPREADSHEET_ID)
+sheet = client.open('Comparador_Preus_DB')
 ws = sheet.worksheet('Preus')
 
 print("✅ Connectat a Google Sheets")
-print("🔍 Buscant 'leche desnatada' / 'llet desnatada'...\n")
+print("🔍 Buscant 'desnat'...\n")
 
-# Llegir totes les dades
 files = ws.get_all_records()
 print(f"Total productes: {len(files)}")
 
 # Filtrar productes que continguin 'desnat' al nom
-paraules_clau = ['desnat', 'descrema']
-resultats = []
-for f in files:
-    nom = str(f.get('producte', '')).lower()
-    if any(p in nom for p in paraules_clau):
-        resultats.append(f)
-
+resultats = [f for f in files if 'desnat' in str(f.get('producte', '')).lower()]
 print(f"Productes trobats: {len(resultats)}\n")
 print("=" * 80)
 
-# Mostrar resultats agrupats per supermercat
+# Mostrar agrupats per supermercat
 supermercats = {}
 for r in resultats:
     sup = r.get('supermercat', 'Desconegut')
