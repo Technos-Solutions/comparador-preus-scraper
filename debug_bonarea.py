@@ -1,4 +1,4 @@
-﻿# Debug Normalitzador Mòdul 1 - Filtre millorat per llet per beure
+﻿# Debug Normalitzador Mòdul 1 - Filtre millorat v3
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
@@ -21,18 +21,33 @@ INCLOU = ['leche ', 'llet ']
 
 # Paraules que exclouen el producte
 EXCLOU = [
+    # Làctics que no són llet
     'yogur', 'iogurt', 'bífidus', 'bifidus', 'queso', 'formatge',
     'bebida', 'condensada', 'polvo', 'pols', 'fermentada', 'kéfir', 'quefir',
+    # Dolços i snacks
     'chocolate', 'xocolata', 'café', 'cafè', 'cacao', 'cacau',
-    'solar', 'corporal', 'facial', 'limpiadora', 'netejadora', 'aftersun',
-    'infantil', 'lactant', 'creixement', 'crecimiento', 'materna',
     'galleta', 'barrita', 'cereal', 'arroz', 'arròs', 'natilla',
-    'helado', 'gelat', 'mousse', 'flan', 'flam',
-    'gel', 'jabón', 'sabó', 'dentífric', 'champú', 'xampú',
-    'salchicha', 'puré', 'pan ', 'pa ', 'bollería', 'bizcocho',
-    'fruta', 'fruita', 'zumo', 'suc amb llet',
-    'dulce de leche', 'dolç de llet',
-    'nata', 'evaporada', 'crema al cacao',
+    'helado', 'gelat', 'mousse', 'flan', 'flam', 'dulce de leche', 'dolç de llet',
+    'bollería', 'bizcocho', 'pan ', 'pa ', 'pastel', 'brownie',
+    # Cosmètica i higiene
+    'solar', 'corporal', 'facial', 'limpiadora', 'netejadora', 'aftersun',
+    'fps', 'spf', 'protector', 'protectora', 'hidratant', 'hidratante',
+    'gel ', 'jabón', 'sabó', 'dentífric', 'champú', 'xampú', 'paper ',
+    'scottex', 'desenredant', 'reafirmant', 'senobell', 'nuxe',
+    # Animals
+    'gat', 'gos', 'felí', 'canin', 'felix ', 'youwup', 'yowup',
+    # Begudes vegetals
+    'ametll', 'coco', 'avena', 'civada', 'soja', 'vegetal',
+    # Altres aliments
+    'nata', 'evaporada', 'crema ', 'rotllet', 'farcellet', 'suc amb llet',
+    'zumo', 'fruta', 'fruita', 'puré',
+    # Infantil i farmàcia
+    'infantil', 'lactant', 'creixement', 'crecimiento', 'materna',
+    'almirón', 'nativa', 'nestlé junior', 'blemil', 'nidina', 'blédina',
+    # Llibres i altres
+    'llibre', 'barcanova', 'ed ', 'bullet ', 'vi rosat',
+    # Càpsules
+    'càpsula', 'cápsula', 'dolce gusto',
 ]
 
 productes = []
@@ -46,12 +61,13 @@ print(f"Total llets per beure: {len(productes)}\n")
 
 # Marques conegudes
 MARQUES = sorted([
-    'central lechera asturiana', 'asturiana', 'pascual', 'puleva omega3',
-    'puleva omega 3', 'puleva', 'kaiku s/lactosa', 'kaiku', 'ato natura',
-    'ato', 'letona', 'lauki', 'celta', 'covap', 'president', 'président',
-    'rio', 'río', 'madriz', 'bonpreu', 'verntallat', 'llet nostra',
-    'terra i tast', 'latorre', 'la torre', 'el castillo', 'castillo',
-    'dia láctea', 'hacendado', 'gaza', 'la cántara', 'celta'
+    'central lechera asturiana', 'asturiana', 'pascual calci', 'pascual',
+    'puleva omega3', 'puleva omega 3', 'puleva', 'kaiku s/lactosa', 'kaiku',
+    'ato natura', 'ato', 'letona', 'lauki', 'celta', 'covap',
+    'president', 'président', 'rio', 'río', 'madriz', 'bonpreu',
+    'verntallat', 'llet nostra', 'terra i tast', 'latorre', 'la torre',
+    'el castillo', 'castillo', 'dia láctea', 'hacendado', 'gaza',
+    'la cántara', 'puleva max',
 ], key=len, reverse=True)
 
 def extreure_marca(nom):
