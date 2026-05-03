@@ -1,4 +1,4 @@
-# Debug Normalitzador — Mòdul 3: comparació de preus per litre
+# Debug Normalitzador — Iogurts: filtre + comparació de preus
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json, os, re
@@ -15,75 +15,67 @@ ws = sheet.worksheet('Preus')
 print("✅ Connectat a Google Sheets")
 files = ws.get_all_records()
 
-# ── Filtre: llet per beure ────────────────────────────────────────────────────
-INCLOU = ['leche ', 'llet ']
-TIPUS_LLET = ['entera', 'sencera', 'desnat', 'semidenat', 'semidesnat',
-              'fresca', 'sense lactosa', 'sin lactosa', 'calcio', 'calci',
-              'omega 3', 'ecològica', 'ecológica', 'barista', 'proteina', 'proteïna']
+# ── Filtre: iogurts ───────────────────────────────────────────────────────────
+INCLOU = ['yogur', 'iogurt', 'iogur']
+
+TIPUS_IOGURT = [
+    'natural', 'grec', 'griego', 'desnatat', 'desnatado', 'desnat',
+    'bífidus', 'bifidus', 'fruita', 'fruta', 'maduixa', 'fresa',
+    'plàtan', 'plátano', 'vainilla', 'llimona', 'limón', 'coco',
+    'líquid', 'líquido', 'per beure', 'para beber',
+    'sense lactosa', 'sin lactosa', 'ecològic', 'ecológico',
+    'proteïna', 'proteina', 'skyr',
+]
+
 EXCLOU = [
-    'yogur', 'iogurt', 'bífidus', 'bifidus', 'queso', 'formatge',
-    'bebida', 'condensada', 'polvo', 'pols', 'fermentada', 'kéfir', 'quefir',
-    'chocolate', 'xocolata', 'café', 'cafè', 'cacao', 'cacau',
-    'galleta', 'barrita', 'cereal', 'arroz', 'arròs', 'natilla',
-    'helado', 'gelat', 'mousse', 'flan', 'flam', 'dulce de leche', 'dolç de llet',
-    'bollería', 'bizcocho', 'pan ', 'pa ', 'pastel', 'brownie',
-    'frita', 'frito', 'panes', 'bollito', 'phoskito', 'salchicha', 'campof',
-    'solar', 'corporal', 'facial', 'limpiadora', 'netejadora', 'aftersun',
-    'fps', 'spf', 'fp-', 'protector', 'protectora', 'hidratant', 'hidratante',
-    'gel ', 'jabón', 'sabó', 'dentífric', 'champú', 'xampú', 'paper ',
-    'scottex', 'desenredant', 'reafirmant', 'delial', 'denenes', 'nivea', 'ecran',
-    'bronceja', 'bronzeja',
-    'gat', 'gos', 'felí', 'canin', 'felix ', 'youwup', 'yowup',
-    'ametll', 'coco', 'avena', 'civada', 'soja', 'vegetal',
-    'suc amb llet', 'suc de fruites', 'zumo', 'fruta ', 'fruita ',
-    'nata', 'evaporada', 'crema ', 'rotllet', 'farcellet',
-    'puré', 'batut', 'batido',
-    'infantil', 'lactant', 'creixement', 'crecimiento', 'materna',
-    'almirón', 'nativa', 'nestlé junior', 'blemil', 'nidina', 'blédina',
-    'llibre', 'barcanova', 'bullet ', 'vi rosat',
-    'càpsula', 'cápsula', 'dolce gusto', 'folic', 'nous',
+    # no és iogurt
+    'helado', 'gelat', 'polo', 'bombón',
+    'galleta', 'barrita', 'cereal', 'muesli',
+    'bebida', 'batut', 'batido',
+    'postre', 'natilla', 'mousse', 'flan', 'flam',
+    'queso', 'formatge',
+    # cosmètica
+    'corporal', 'facial', 'hidratant', 'hidratante', 'crema ',
+    'gel ', 'champú', 'xampú', 'cabell', 'cabello',
+    # animals
+    'gat', 'gos', 'felí', 'canin',
 ]
 
 productes = []
 for f in files:
     nom = str(f.get('producte', '')).lower()
     if any(p in nom for p in INCLOU):
-        if any(t in nom for t in TIPUS_LLET):
-            if not any(e in nom for e in EXCLOU):
-                productes.append(f)
+        if not any(e in nom for e in EXCLOU):
+            productes.append(f)
 
-print(f"Total llets per beure: {len(productes)}\n")
+print(f"Total iogurts: {len(productes)}\n")
 
 # ── Marques ───────────────────────────────────────────────────────────────────
 MARQUES = sorted([
-    'central lechera asturiana', 'asturiana',
-    'pascual calci', 'pascual',
-    'puleva omega3', 'puleva omega 3', 'puleva max', 'puleva',
-    'kaiku s/lactosa', 'kaiku',
-    'ato natura', 'ato',
-    'letona', 'lauki', 'celta', 'covap',
-    'president', 'président',
-    'rio', 'río', 'madriz',
-    'bonpreu', 'verntallat', 'llet nostra', 'terra i tast',
-    'latorre', 'la torre', 'el castillo', 'castillo',
-    'dia láctea', 'dia lactea', 'hacendado',
-    'gaza', 'la cántara',
-    'ifa', 'carrefour bio', 'carrefour', 'el buen pastor',
+    # marques nacionals
+    'danone activia', 'danone natural', 'danone', 'activia',
+    'yoplait', 'chobani',
+    'pascual', 'kaiku', 'eroski',
+    'nestlé griego', 'nestlé',
+    'oikos', 'fage',
+    'vitalinea', 'sveltesse',
+    # marques pròpies
+    'hacendado', 'dia láctea', 'dia lactea',
+    'bonpreu', 'ifa',
+    'carrefour bio', 'carrefour',
+    'el castillo', 'castillo',
+    'verntallat', 'llet nostra', 'terra i tast',
+    # altres
+    'alpro', 'silk',
 ], key=len, reverse=True)
 
 ALIAS_MARCA = {
-    'latorre': 'La Torre',
-    'la torre': 'La Torre',
     'castillo': 'El Castillo',
     'el castillo': 'El Castillo',
-    'asturiana': 'Central Lechera Asturiana',
-    'central lechera asturiana': 'Central Lechera Asturiana',
-    'president': 'Président',
-    'président': 'Président',
     'dia lactea': 'Dia Láctea',
     'dia láctea': 'Dia Láctea',
-    'puleva omega3': 'Puleva Omega 3',
-    'puleva omega 3': 'Puleva Omega 3',
+    'danone activia': 'Activia',
+    'activia': 'Activia',
 }
 
 def extreure_marca(nom):
@@ -95,7 +87,6 @@ def extreure_marca(nom):
         nom_net = nom[len(marca_raw):].strip()
         marca_canon = ALIAS_MARCA.get(marca_raw.lower(), marca_raw.title())
         return marca_canon, nom_net
-    # Resta: buscar marca coneguda
     for marca in MARQUES:
         if marca in nom_lower:
             nom_net = re.sub(re.escape(marca), '', nom_lower, flags=re.IGNORECASE).strip()
@@ -105,57 +96,58 @@ def extreure_marca(nom):
     return '', nom.lower()
 
 TRADUCCIONS = {
-    'llet': 'leche', 'sencera': 'entera', 'desnatada': 'desnatada',
-    'semidesnatada': 'semidesnatada', 'sense lactosa': 'sin lactosa',
-    'ecològica': 'ecológica', 'proteïna': 'proteina',
-    'calci': 'calcio', 'fresca': 'fresca', 'barista': 'barista',
+    'iogurt': 'yogur',
+    'iogur': 'yogur',
+    'desnatat': 'desnatado',
+    'grec': 'griego',
+    'natural': 'natural',
+    'sense lactosa': 'sin lactosa',
+    'ecològic': 'ecológico',
+    'proteïna': 'proteina',
+    'fruita': 'fruta',
+    'maduixa': 'fresa',
+    'plàtan': 'plátano',
+    'llimona': 'limón',
+    'líquid': 'líquido',
+    'per beure': 'para beber',
 }
 
 def normalitzar_nom(nom):
     nom = nom.lower()
     nom = re.sub(r'\(.*?\)', '', nom)
     nom = re.sub(r'\d+\s*u\s*(de\s*)?', '', nom)
-    nom = re.sub(r'de\s+\d+\s*(bric|brik|brick)s?\s*(de\s*)?', '', nom, flags=re.IGNORECASE)
-    nom = re.sub(r'\b(brik|bric|brick|botella|ampolla|cartró|cartro|pack|en cartró|en ampolla|uht)\b', '', nom)
-    nom = re.sub(r'\d+[\s,.]?\d*\s*(x\s*)?\d*[\s,.]?\d*\s*(l|ml|kg|g|cl)\b\.?', '', nom)
-    nom = re.sub(r'\b(format|viatge|paq\.?|paquet|km0|km|a2|pasteuritzada|pasteurizada|pasteurisée)\b', '', nom)
-    nom = re.sub(r'\b(de|con)\b\s*$', '', nom)
+    nom = re.sub(r'de\s+\d+\s*(u|uni|unitats|unidades)\s*(de\s*)?', '', nom, flags=re.IGNORECASE)
+    nom = re.sub(r'\b(pack|format|paq\.?|paquet|envàs|envase)\b', '', nom)
+    nom = re.sub(r'\d+[\s,.]?\d*\s*(x\s*)?\d*[\s,.]?\d*\s*(g|kg|ml|l|cl)\b\.?', '', nom)
+    nom = re.sub(r'\b(bric|brick|pot|tarro|got|vaso|sobre|bolsa)\b', '', nom)
+    nom = re.sub(r'\b(de|con|amb|y|i)\b\s*$', '', nom)
     nom = re.sub(r'[.,;:()\[\]+]', '', nom)
     nom = re.sub(r'\s+', ' ', nom).strip()
     for cat, cas in TRADUCCIONS.items():
         nom = re.sub(r'\b' + re.escape(cat) + r'\b', cas, nom)
     nom = re.sub(r'\s+', ' ', nom).strip()
-    # Ordre estàndard: leche [tipus] [qualitat]
-    nom = re.sub(r'^(leche)\s+(sin lactosa|con calcio|fresca|ecológica)\s+(entera|semidesnatada|desnatada)',
-                 r'\1 \3 \2', nom)
-    nom = re.sub(r'\s+', ' ', nom).strip()
     return nom
 
-# ── Mòdul 3: Preu per litre i comparació ─────────────────────────────────────
-def parse_litres(quantitat, envas):
-    """Converteix quantitat + envas a litres totals. Accepta unitats dins del camp quantitat."""
+# ── Parse pes/volum ───────────────────────────────────────────────────────────
+def parse_grams(quantitat, envas):
+    """Retorna grams totals del producte. Per iogurts la unitat base és g."""
     try:
         q_str = str(quantitat).strip()
         envas_str = str(envas).lower().strip()
 
-        # Detectar unitat: primer al camp envas, després dins quantitat
-        if 'ml' in envas_str:
-            unit = 'ml'
-        elif envas_str in ('l', 'botella', 'brik', 'ampolla', 'pack-6', 'pack', 'pack6'):
-            unit = 'l'
-        elif re.search(r'\d\s*ml', q_str, re.IGNORECASE):
-            unit = 'ml'
-        elif re.search(r'\d\s*l', q_str, re.IGNORECASE):
-            # "6 x 1L", "1.5L", "0.2L", "1 l", etc.
+        if 'kg' in envas_str or re.search(r'\d\s*kg', q_str, re.IGNORECASE):
+            unit = 'kg'
+        elif 'ml' in envas_str or re.search(r'\d\s*ml', q_str, re.IGNORECASE):
+            unit = 'ml'  # ml ≈ g per iogurts
+        elif 'g' in envas_str or re.search(r'\d\s*g\b', q_str, re.IGNORECASE):
+            unit = 'g'
+        elif 'l' in envas_str or re.search(r'\d\s*l\b', q_str, re.IGNORECASE):
             unit = 'l'
         else:
             return None
 
-        # Netejar q_str: treure lletres i signes excepte dígits, coma, punt, x, espai
-        q_net = re.sub(r'[^\d.,x ]', '', q_str, flags=re.IGNORECASE).strip()
+        q_net = re.sub(r'[^\d.,x ]', '', q_str).strip()
         q_net = re.sub(r'\s+', ' ', q_net).strip()
-
-        # Format "N x M" → N * M
         m = re.match(r'(\d+[.,]?\d*)\s*x\s*(\d+[.,]?\d*)', q_net)
         if m:
             total = float(m.group(1).replace(',', '.')) * float(m.group(2).replace(',', '.'))
@@ -165,11 +157,22 @@ def parse_litres(quantitat, envas):
                 return None
             total = float(num.group(1).replace(',', '.'))
 
-        return total / 1000 if unit == 'ml' else total
+        if unit == 'kg':
+            return total * 1000
+        elif unit == 'l':
+            return total * 1000
+        else:
+            return total  # g o ml
     except Exception:
         return None
 
-# Construïm la taula normalitzada
+def arrodonir_grams(g):
+    if g is None:
+        return None
+    # Arrodoneix a múltiples de 25g per agrupar presentacions estàndard
+    return round(g / 25) * 25
+
+# ── Construir taula normalitzada ──────────────────────────────────────────────
 taula = []
 for p in productes:
     nom_original = p.get('producte', '')
@@ -182,65 +185,61 @@ for p in productes:
     envas = p.get('envas', '')
     marca, nom_net = extreure_marca(nom_original)
     nom_norm = normalitzar_nom(nom_net)
-    litres = parse_litres(quantitat, envas)
-    preu_per_l = round(preu / litres, 2) if (preu and litres) else None
+    grams = parse_grams(quantitat, envas)
+    grams_clau = arrodonir_grams(grams)
+    preu_per_100g = round(preu / grams * 100, 2) if (preu and grams) else None
     taula.append({
         'supermercat': sup, 'marca': marca, 'nom': nom_norm,
         'preu': preu, 'quantitat': quantitat, 'envas': envas,
-        'litres': litres, 'preu_per_l': preu_per_l,
+        'grams': grams, 'grams_clau': grams_clau, 'preu_per_100g': preu_per_100g,
     })
 
-# ── Debug parse litres ────────────────────────────────────────────────────────
-no_parsejats = [t for t in taula if t['litres'] is None]
+# ── Imprimir llista normalitzada ──────────────────────────────────────────────
+print("=" * 100)
+print(f"{'SUPERMERCAT':<20} {'MARCA':<22} {'NOM NORMALITZAT':<38} {'PREU':>6} {'QUANT':>10}")
+print("=" * 100)
+for t in taula:
+    print(f"{t['supermercat']:<20} {t['marca']:<22} {t['nom']:<38} "
+          f"{str(t['preu']):>6}€ {str(t['quantitat'])+' '+str(t['envas']):>10}")
+
+# ── Debug no parsejats ────────────────────────────────────────────────────────
+no_parsejats = [t for t in taula if t['grams'] is None]
 if no_parsejats:
-    print(f"⚠️  {len(no_parsejats)} productes sense litres parsejats:")
+    print(f"\n⚠️  {len(no_parsejats)} productes sense grams parsejats:")
     for t in no_parsejats:
-        print(f"   {t['supermercat']:<20} quant={repr(t['quantitat']):<15} envas={repr(t['envas']):<15} → {t['nom']}")
-print()
+        print(f"   {t['supermercat']:<20} quant={repr(t['quantitat']):<15} envas={repr(t['envas']):<10} → {t['nom']}")
 
-# Agrupar per (marca, nom, litres_arrodonits) — mateixa presentació
-def arrodonir_litres(l):
-    """Arrodoneix a 1 decimal per agrupar presentacions estàndard."""
-    if l is None:
-        return None
-    return round(l, 1)
-
+# ── Mòdul 3: Comparació ───────────────────────────────────────────────────────
 grups = defaultdict(list)
 for t in taula:
-    litres_clau = arrodonir_litres(t['litres'])
-    if litres_clau is not None:
-        grups[(t['marca'], t['nom'], litres_clau)].append(t)
+    if t['grams_clau'] is not None:
+        grups[(t['marca'], t['nom'], t['grams_clau'])].append(t)
 
-# ── Mostrar comparació: grups presents a ≥2 supermercats ─────────────────────
-print("\n" + "=" * 90)
-print("MÒDUL 3 — COMPARACIÓ DE PREUS (mateixa marca + tipus + presentació)")
-print("=" * 90)
+print(f"\n\n{'='*90}")
+print("MÒDUL 3 — COMPARACIÓ IOGURTS (mateixa marca + tipus + pes)")
+print(f"{'='*90}")
 
 grups_multi = 0
-for (marca, nom, litres), entrades in sorted(grups.items()):
-    # Un producte per supermercat (si n'hi ha més d'un, agafem el més barat)
+for (marca, nom, grams), entrades in sorted(grups.items()):
     per_sup = defaultdict(list)
     for e in entrades:
         per_sup[e['supermercat']].append(e)
-    per_sup_unic = {sup: min(llista, key=lambda x: x['preu']) for sup, llista in per_sup.items()}
-
+    per_sup_unic = {sup: min(ll, key=lambda x: x['preu']) for sup, ll in per_sup.items()}
     if len(per_sup_unic) < 2:
         continue
     grups_multi += 1
-
     etiqueta = f"{marca} — {nom}" if marca else f"(sense marca) — {nom}"
-    mida = f"{litres:.1f}l"
+    mida = f"{int(grams)}g" if grams == int(grams) else f"{grams}g"
     print(f"\n  {'─'*86}")
     print(f"  {etiqueta}  [{mida}]")
-
     entrades_ord = sorted(per_sup_unic.values(), key=lambda x: x['preu'])
     min_preu = entrades_ord[0]['preu']
     for e in entrades_ord:
         diferencia = f"  (+{e['preu']-min_preu:.2f}€)" if e['preu'] > min_preu else ''
         estrella = '★' if e['preu'] == min_preu else ' '
-        ppl = f"  ({e['preu_per_l']:.2f}€/l)" if e['preu_per_l'] else ''
-        print(f"  {estrella} {e['supermercat']:<22} {e['preu']:.2f}€{ppl}{diferencia}")
+        p100 = f"  ({e['preu_per_100g']:.2f}€/100g)" if e['preu_per_100g'] else ''
+        print(f"  {estrella} {e['supermercat']:<22} {e['preu']:.2f}€{p100}{diferencia}")
 
 print(f"\n{'='*90}")
-print(f"Total grups únics (marca+tipus+mida): {len(grups)}")
+print(f"Total grups únics (marca+tipus+pes): {len(grups)}")
 print(f"Grups presents a ≥2 supermercats: {grups_multi}")
