@@ -28,17 +28,28 @@ TIPUS_IOGURT = [
 ]
 
 EXCLOU = [
-    # no és iogurt
-    'helado', 'gelat', 'polo', 'bombón',
-    'galleta', 'barrita', 'cereal', 'muesli',
-    'bebida', 'batut', 'batido',
-    'postre', 'natilla', 'mousse', 'flan', 'flam',
+    # brioixeria i galetes
+    'bizcocho', 'bescuit', 'bizco', 'tortita', 'coqueta', 'barqueta',
+    'galleta', 'barrita', 'cereal', 'muesli', 'sandwich', 'snack',
+    # salses i condiments
+    'salsa', 'tzatziki',
+    # gelats i postres
+    'helado', 'gelat', 'polo', 'bombón', 'mousse', 'flan', 'flam',
+    'natilla', 'postre', 'pastís', 'pastis', 'pastís', 'lingot',
+    # lactis no iogurt
     'queso', 'formatge',
-    # cosmètica
-    'corporal', 'facial', 'hidratant', 'hidratante', 'crema ',
-    'gel ', 'champú', 'xampú', 'cabell', 'cabello',
+    # begudes
+    'batut', 'batido',
+    # infantil (purés, bolsites, tarritos)
+    'papilla', 'puré', 'bolsita', 'tarrito', 'tarritos', 'danonino',
+    'baby', 'bebé', 'nadó', 'nado', '6 meses', '8 meses', '9 meses',
+    '12 meses', 'hero baby', 'smileat',
+    # cosmètica i neteja
+    'corporal', 'facial', 'hidratant', 'hidratante',
+    'gel ', 'jabón', 'sabó', 'champú', 'xampú', 'cabell', 'cabello',
+    'dosificador', 'dicora',
     # animals
-    'gat', 'gos', 'felí', 'canin',
+    'gat', 'gos', 'felí', 'canin', 'rosegador', 'vitakraft',
 ]
 
 productes = []
@@ -125,6 +136,11 @@ def normalitzar_nom(nom):
     nom = re.sub(r'\s+', ' ', nom).strip()
     for cat, cas in TRADUCCIONS.items():
         nom = re.sub(r'\b' + re.escape(cat) + r'\b', cas, nom)
+    # Treure etiquetes de botiga que contaminen el nom (Carrefour, BonPreu)
+    nom = re.sub(r'\bde nidades\b|\bnidades\b', '', nom)
+    nom = re.sub(r"\bextra\b|\bclassic[\'´`]?\b|\bel mercado\b", '', nom)
+    nom = re.sub(r'\bkm0\b|\bartesà\b|\bartesanal\b|\bartesano\b', '', nom)
+    nom = re.sub(r'\bsensation\b|\boikos\b', '', nom)  # sub-marques ja extretes
     nom = re.sub(r'\s+', ' ', nom).strip()
     return nom
 
