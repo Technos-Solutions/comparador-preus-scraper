@@ -1,4 +1,4 @@
-# Debug Normalitzador Mòdul 1 - Filtre v6
+# Debug Normalitzador Mòdul 1+3 - Filtre v7 + agrupació per rapidfuzz
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
@@ -81,6 +81,22 @@ MARQUES = sorted([
     'el buen pastor',
 ], key=len, reverse=True)
 
+# Alias de marques: normalitza variants al mateix nom canònic
+ALIAS_MARCA = {
+    'latorre': 'La Torre',
+    'la torre': 'La Torre',
+    'castillo': 'El Castillo',
+    'el castillo': 'El Castillo',
+    'asturiana': 'Central Lechera Asturiana',
+    'central lechera asturiana': 'Central Lechera Asturiana',
+    'president': 'Président',
+    'président': 'Président',
+    'dia lactea': 'Dia Láctea',
+    'dia láctea': 'Dia Láctea',
+    'puleva omega3': 'Puleva Omega 3',
+    'puleva omega 3': 'Puleva Omega 3',
+}
+
 def extreure_marca(nom):
     nom_lower = nom.lower().strip()
     # BonPreu: prefix en MAJÚSCULES seguit d'una paraula en minúscules
@@ -94,8 +110,13 @@ def extreure_marca(nom):
         if marca in nom_lower:
             nom_net = re.sub(re.escape(marca), '', nom_lower, flags=re.IGNORECASE).strip()
             nom_net = re.sub(r'\s+', ' ', nom_net).strip()
-            return marca.title(), nom_net
+            marca_canon = ALIAS_MARCA.get(marca.lower(), marca.title())
+            return marca_canon, nom_net
     return '', nom.lower()
+
+def normalitzar_marca(marca):
+    """Aplica alias per unificar noms de marca."""
+    return ALIAS_MARCA.get(marca.lower(), marca)
 
 # ── Normalització ─────────────────────────────────────────────────────────────
 # Mapa català → castellà per unificar tipus de llet
@@ -123,15 +144,21 @@ def normalitzar_nom(nom):
     nom = re.sub(r'\b(brik|bric|brick|botella|ampolla|cartró|cartro|pack|en cartró|en ampolla|uht)\b', '', nom)
     # Treure mides/quantitats (1l, 1.5l, 200ml, 6x1l, etc.)
     nom = re.sub(r'\d+[\s,.]?\d*\s*(x\s*)?\d*[\s,.]?\d*\s*(l|ml|kg|g|cl)\b\.?', '', nom)
-    # Treure altres paraules de format
-    nom = re.sub(r'\b(bric|brick|format|viatge|paq\.?|paquet|km0|km|a2)\b', '', nom)
-    # Treure "de" sobrant al final
-    nom = re.sub(r'\bde\b\s*$', '', nom)
-    nom = re.sub(r'[.,;:()\[\]]', '', nom)
+    # Treure altres paraules de format i tècniques sense valor de comparació
+    nom = re.sub(r'\b(bric|brick|format|viatge|paq\.?|paquet|km0|km|a2|pasteuritzada|pasteurizada|pasteurisée)\b', '', nom)
+    # Treure "de" / "con" sobrant al final
+    nom = re.sub(r'\b(de|con)\b\s*$', '', nom)
+    nom = re.sub(r'[.,;:()\[\]+]', '', nom)
     nom = re.sub(r'\s+', ' ', nom).strip()
     # Traduir català → castellà per unificar
     for cat, cas in TRADUCCIONS.items():
         nom = re.sub(r'\b' + re.escape(cat) + r'\b', cas, nom)
+    nom = re.sub(r'\s+', ' ', nom).strip()
+    # Normalitzar ordre: "leche [tipo] [qualitat]"
+    # Mou "sin lactosa" / "con calcio" / "fresca" / "ecológica" al lloc estàndard
+    # Patró: leche [mod] entera → leche entera [mod]
+    nom = re.sub(r'^(leche)\s+(sin lactosa|con calcio|fresca|ecológica)\s+(entera|semidesnatada|desnatada)',
+                 r'\1 \3 \2', nom)
     nom = re.sub(r'\s+', ' ', nom).strip()
     return nom
 
