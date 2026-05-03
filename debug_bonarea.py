@@ -137,10 +137,19 @@ def parse_litres(quantitat, envas):
     try:
         q_str = str(quantitat).strip()
         envas_str = str(envas).lower().strip()
-        combined = (q_str + ' ' + envas_str).lower()
 
-        # Detectar unitat (ml o l) en qualsevol dels dos camps
-        unit = 'ml' if 'ml' in combined else ('l' if re.search(r'\bl\b', combined) else None)
+        # Detectar unitat: primer al camp envas, després dins quantitat
+        if 'ml' in envas_str:
+            unit = 'ml'
+        elif envas_str in ('l', 'botella', 'brik', 'ampolla', 'pack-6', 'pack', 'pack6'):
+            unit = 'l'
+        elif re.search(r'\d\s*ml', q_str, re.IGNORECASE):
+            unit = 'ml'
+        elif re.search(r'\d\s*l', q_str, re.IGNORECASE):
+            # "6 x 1L", "1.5L", "0.2L", "1 l", etc.
+            unit = 'l'
+        else:
+            return None
 
         # Netejar q_str: treure lletres i signes excepte dígits, coma, punt, x, espai
         q_net = re.sub(r'[^\d.,x ]', '', q_str, flags=re.IGNORECASE).strip()
@@ -156,12 +165,7 @@ def parse_litres(quantitat, envas):
                 return None
             total = float(num.group(1).replace(',', '.'))
 
-        if unit == 'ml':
-            return total / 1000
-        elif unit == 'l':
-            return total
-        else:
-            return None
+        return total / 1000 if unit == 'ml' else total
     except Exception:
         return None
 
