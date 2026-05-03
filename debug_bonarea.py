@@ -1,4 +1,4 @@
-﻿# Debug Normalitzador Mòdul 1 - Filtre millorat v3
+﻿# Debug Normalitzador Mòdul 1 - Filtre v4
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
@@ -16,10 +16,8 @@ ws = sheet.worksheet('Preus')
 print("✅ Connectat a Google Sheets")
 files = ws.get_all_records()
 
-# Paraules que han d'estar al nom
 INCLOU = ['leche ', 'llet ']
 
-# Paraules que exclouen el producte
 EXCLOU = [
     # Làctics que no són llet
     'yogur', 'iogurt', 'bífidus', 'bifidus', 'queso', 'formatge',
@@ -29,24 +27,29 @@ EXCLOU = [
     'galleta', 'barrita', 'cereal', 'arroz', 'arròs', 'natilla',
     'helado', 'gelat', 'mousse', 'flan', 'flam', 'dulce de leche', 'dolç de llet',
     'bollería', 'bizcocho', 'pan ', 'pa ', 'pastel', 'brownie',
+    'frita', 'frito', 'panes', 'bollito', 'phoskito',
+    # Embotit
+    'salchicha', 'salchichon', 'campof',
     # Cosmètica i higiene
     'solar', 'corporal', 'facial', 'limpiadora', 'netejadora', 'aftersun',
-    'fps', 'spf', 'protector', 'protectora', 'hidratant', 'hidratante',
+    'fps', 'spf', 'fp-', 'protector', 'protectora', 'hidratant', 'hidratante',
     'gel ', 'jabón', 'sabó', 'dentífric', 'champú', 'xampú', 'paper ',
-    'scottex', 'desenredant', 'reafirmant', 'senobell', 'nuxe',
+    'scottex', 'desenredant', 'reafirmant', 'senobell', 'nuxe', 'delial',
+    'denenes', 'nivea', 'ecran', 'bronceja', 'bronzeja',
     # Animals
     'gat', 'gos', 'felí', 'canin', 'felix ', 'youwup', 'yowup',
-    # Begudes vegetals
+    # Begudes vegetals i sucs
     'ametll', 'coco', 'avena', 'civada', 'soja', 'vegetal',
+    'suc amb llet', 'suc de fruites', 'zumo', 'fruta', 'fruita',
     # Altres aliments
-    'nata', 'evaporada', 'crema ', 'rotllet', 'farcellet', 'suc amb llet',
-    'zumo', 'fruta', 'fruita', 'puré',
+    'nata', 'evaporada', 'crema ', 'rotllet', 'farcellet',
+    'puré', 'batut', 'batido',
     # Infantil i farmàcia
     'infantil', 'lactant', 'creixement', 'crecimiento', 'materna',
     'almirón', 'nativa', 'nestlé junior', 'blemil', 'nidina', 'blédina',
     # Llibres i altres
     'llibre', 'barcanova', 'ed ', 'bullet ', 'vi rosat',
-    # Càpsules
+    # Càpsules i altres begudes
     'càpsula', 'cápsula', 'dolce gusto',
 ]
 
@@ -62,23 +65,21 @@ print(f"Total llets per beure: {len(productes)}\n")
 # Marques conegudes
 MARQUES = sorted([
     'central lechera asturiana', 'asturiana', 'pascual calci', 'pascual',
-    'puleva omega3', 'puleva omega 3', 'puleva', 'kaiku s/lactosa', 'kaiku',
-    'ato natura', 'ato', 'letona', 'lauki', 'celta', 'covap',
-    'president', 'président', 'rio', 'río', 'madriz', 'bonpreu',
-    'verntallat', 'llet nostra', 'terra i tast', 'latorre', 'la torre',
-    'el castillo', 'castillo', 'dia láctea', 'hacendado', 'gaza',
-    'la cántara', 'puleva max',
+    'puleva omega3', 'puleva omega 3', 'puleva max', 'puleva', 
+    'kaiku s/lactosa', 'kaiku', 'ato natura', 'ato', 'letona', 'lauki', 
+    'celta', 'covap', 'president', 'président', 'rio', 'río', 'madriz', 
+    'bonpreu', 'verntallat', 'llet nostra', 'terra i tast', 'latorre', 
+    'la torre', 'el castillo', 'castillo', 'dia láctea', 'hacendado', 
+    'gaza', 'la cántara',
 ], key=len, reverse=True)
 
 def extreure_marca(nom):
     nom_lower = nom.lower().strip()
-    # BonPreu: MAJÚSCULES al davant
     match = re.match(r'^([A-ZÀÁÈÉÍÏÒÓÚÜÇ][A-ZÀÁÈÉÍÏÒÓÚÜÇ0-9/\s\-\.]+?)\s+[a-z]', nom)
     if match:
         marca = match.group(1).strip().title()
         nom_net = nom[len(match.group(1)):].strip()
         return marca, nom_net
-    # Altres: buscar marca coneguda
     for marca in MARQUES:
         if marca in nom_lower:
             nom_net = re.sub(re.escape(marca), '', nom_lower, flags=re.IGNORECASE).strip()
@@ -90,12 +91,11 @@ def normalitzar_nom(nom):
     nom = nom.lower()
     nom = re.sub(r'\b(brik|botella|ampolla|cartró|cartro|pack|en cartró|en ampolla|uht)\b', '', nom)
     nom = re.sub(r'\d+[\s,.]?\d*\s*(x\s*)?\d*[\s,.]?\d*\s*(l|ml|kg|g|cl)\b\.?', '', nom)
-    nom = re.sub(r'\b(bric|brick|format|viatge|paq|paq\.|paquet)\b', '', nom)
+    nom = re.sub(r'\b(bric|brick|format|viatge|paq|paq\.|paquet|km0|km)\b', '', nom)
     nom = re.sub(r'[.,;:]', '', nom)
     nom = re.sub(r'\s+', ' ', nom).strip()
     return nom
 
-# Mostrar resultats
 print("=" * 90)
 print(f"{'SUPERMERCAT':<20} {'MARCA':<25} {'NOM NORMALITZAT':<35} {'PREU':>6} {'QUANT':>10}")
 print("=" * 90)
