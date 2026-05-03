@@ -133,21 +133,32 @@ def normalitzar_nom(nom):
 
 # ── Mòdul 3: Preu per litre i comparació ─────────────────────────────────────
 def parse_litres(quantitat, envas):
-    """Converteix quantitat + envas a litres totals del producte. None si no es pot."""
+    """Converteix quantitat + envas a litres totals. Accepta unitats dins del camp quantitat."""
     try:
-        q_str = str(quantitat).replace(',', '.').strip()
+        q_str = str(quantitat).strip()
         envas_str = str(envas).lower().strip()
-        # Format "NxM" ex: "6 x 0.2" → 6 * 0.2 = 1.2
-        m = re.match(r'(\d+[\.,]?\d*)\s*x\s*(\d+[\.,]?\d*)', q_str)
+        combined = (q_str + ' ' + envas_str).lower()
+
+        # Detectar unitat (ml o l) en qualsevol dels dos camps
+        unit = 'ml' if 'ml' in combined else ('l' if re.search(r'\bl\b', combined) else None)
+
+        # Netejar q_str: treure lletres i signes excepte dígits, coma, punt, x, espai
+        q_net = re.sub(r'[^\d.,x ]', '', q_str, flags=re.IGNORECASE).strip()
+        q_net = re.sub(r'\s+', ' ', q_net).strip()
+
+        # Format "N x M" → N * M
+        m = re.match(r'(\d+[.,]?\d*)\s*x\s*(\d+[.,]?\d*)', q_net)
         if m:
             total = float(m.group(1).replace(',', '.')) * float(m.group(2).replace(',', '.'))
         else:
-            total = float(q_str)
-        if 'ml' in envas_str:
+            num = re.match(r'(\d+[.,]?\d*)', q_net)
+            if not num:
+                return None
+            total = float(num.group(1).replace(',', '.'))
+
+        if unit == 'ml':
             return total / 1000
-        elif envas_str in ('l', 'botella', 'brik', 'ampolla', 'pack-6', 'pack', ''):
-            return total
-        elif envas_str.startswith('l') or 'litre' in envas_str:
+        elif unit == 'l':
             return total
         else:
             return None
@@ -174,6 +185,14 @@ for p in productes:
         'preu': preu, 'quantitat': quantitat, 'envas': envas,
         'litres': litres, 'preu_per_l': preu_per_l,
     })
+
+# ── Debug parse litres ────────────────────────────────────────────────────────
+no_parsejats = [t for t in taula if t['litres'] is None]
+if no_parsejats:
+    print(f"⚠️  {len(no_parsejats)} productes sense litres parsejats:")
+    for t in no_parsejats:
+        print(f"   {t['supermercat']:<20} quant={repr(t['quantitat']):<15} envas={repr(t['envas']):<15} → {t['nom']}")
+print()
 
 # Agrupar per (marca, nom, litres_arrodonits) — mateixa presentació
 def arrodonir_litres(l):
