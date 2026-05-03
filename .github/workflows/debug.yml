@@ -1,0 +1,19 @@
+﻿name: Debug Normalitzador
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Instal·lar dependències
+        run: pip install gspread oauth2client
+
+      - name: Executar debug
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+        run: python debug_bonarea.py
