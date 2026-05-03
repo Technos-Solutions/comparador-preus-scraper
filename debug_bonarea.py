@@ -1,4 +1,4 @@
-﻿# Debug Normalitzador Mòdul 1 - Filtre v4
+﻿# Debug Normalitzador Mòdul 1 - Filtre v5
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
@@ -16,60 +16,57 @@ ws = sheet.worksheet('Preus')
 print("✅ Connectat a Google Sheets")
 files = ws.get_all_records()
 
+# Ha de contenir una d'aquestes paraules
 INCLOU = ['leche ', 'llet ']
 
+# I una d'aquestes per ser llet de debò
+TIPUS_LLET = ['entera', 'sencera', 'desnat', 'semidenat', 'semidesnat',
+              'fresca', 'sense lactosa', 'sin lactosa', 'calcio', 'calci',
+              'omega 3', 'ecològica', 'ecológica', 'barista', 'proteina', 'proteïna']
+
 EXCLOU = [
-    # Làctics que no són llet
     'yogur', 'iogurt', 'bífidus', 'bifidus', 'queso', 'formatge',
     'bebida', 'condensada', 'polvo', 'pols', 'fermentada', 'kéfir', 'quefir',
-    # Dolços i snacks
     'chocolate', 'xocolata', 'café', 'cafè', 'cacao', 'cacau',
     'galleta', 'barrita', 'cereal', 'arroz', 'arròs', 'natilla',
     'helado', 'gelat', 'mousse', 'flan', 'flam', 'dulce de leche', 'dolç de llet',
     'bollería', 'bizcocho', 'pan ', 'pa ', 'pastel', 'brownie',
     'frita', 'frito', 'panes', 'bollito', 'phoskito',
-    # Embotit
-    'salchicha', 'salchichon', 'campof',
-    # Cosmètica i higiene
+    'salchicha', 'campof',
     'solar', 'corporal', 'facial', 'limpiadora', 'netejadora', 'aftersun',
     'fps', 'spf', 'fp-', 'protector', 'protectora', 'hidratant', 'hidratante',
     'gel ', 'jabón', 'sabó', 'dentífric', 'champú', 'xampú', 'paper ',
-    'scottex', 'desenredant', 'reafirmant', 'senobell', 'nuxe', 'delial',
-    'denenes', 'nivea', 'ecran', 'bronceja', 'bronzeja',
-    # Animals
+    'scottex', 'desenredant', 'reafirmant', 'delial', 'denenes', 'nivea', 'ecran',
+    'bronceja', 'bronzeja',
     'gat', 'gos', 'felí', 'canin', 'felix ', 'youwup', 'yowup',
-    # Begudes vegetals i sucs
     'ametll', 'coco', 'avena', 'civada', 'soja', 'vegetal',
-    'suc amb llet', 'suc de fruites', 'zumo', 'fruta', 'fruita',
-    # Altres aliments
+    'suc amb llet', 'suc de fruites', 'zumo', 'fruta ', 'fruita ',
     'nata', 'evaporada', 'crema ', 'rotllet', 'farcellet',
     'puré', 'batut', 'batido',
-    # Infantil i farmàcia
     'infantil', 'lactant', 'creixement', 'crecimiento', 'materna',
     'almirón', 'nativa', 'nestlé junior', 'blemil', 'nidina', 'blédina',
-    # Llibres i altres
-    'llibre', 'barcanova', 'ed ', 'bullet ', 'vi rosat',
-    # Càpsules i altres begudes
+    'llibre', 'barcanova', 'bullet ', 'vi rosat',
     'càpsula', 'cápsula', 'dolce gusto',
+    'folic', 'nous',  # begudes funcionals
 ]
 
 productes = []
 for f in files:
     nom = str(f.get('producte', '')).lower()
     if any(p in nom for p in INCLOU):
-        if not any(e in nom for e in EXCLOU):
-            productes.append(f)
+        if any(t in nom for t in TIPUS_LLET):
+            if not any(e in nom for e in EXCLOU):
+                productes.append(f)
 
 print(f"Total llets per beure: {len(productes)}\n")
 
-# Marques conegudes
 MARQUES = sorted([
     'central lechera asturiana', 'asturiana', 'pascual calci', 'pascual',
-    'puleva omega3', 'puleva omega 3', 'puleva max', 'puleva', 
-    'kaiku s/lactosa', 'kaiku', 'ato natura', 'ato', 'letona', 'lauki', 
-    'celta', 'covap', 'president', 'président', 'rio', 'río', 'madriz', 
-    'bonpreu', 'verntallat', 'llet nostra', 'terra i tast', 'latorre', 
-    'la torre', 'el castillo', 'castillo', 'dia láctea', 'hacendado', 
+    'puleva omega3', 'puleva omega 3', 'puleva max', 'puleva',
+    'kaiku s/lactosa', 'kaiku', 'ato natura', 'ato', 'letona', 'lauki',
+    'celta', 'covap', 'president', 'président', 'rio', 'río', 'madriz',
+    'bonpreu', 'verntallat', 'llet nostra', 'terra i tast', 'latorre',
+    'la torre', 'el castillo', 'castillo', 'dia láctea', 'hacendado',
     'gaza', 'la cántara',
 ], key=len, reverse=True)
 
