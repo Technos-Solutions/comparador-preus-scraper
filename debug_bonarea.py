@@ -154,7 +154,7 @@ def normalitzar_nom(nom):
     nom = re.sub(r'\d+\s*u\s*(de\s*)?', '', nom)
     nom = re.sub(r'de\s+\d+\s*(u|uni|unitats|unidades)\s*(de\s*)?', '', nom, flags=re.IGNORECASE)
     nom = re.sub(r'\b(pack|format|paq\.?|paquet|envàs|envase)\b', '', nom)
-    nom = re.sub(r'\d+[\s,.]?\d*\s*(x\s*)?\d*[\s,.]?\d*\s*(g|kg|ml|l|cl)\b\.?', '', nom)
+    nom = re.sub(r'\d+[\s,.]?\d*\s*(x\s*)?\d*[\s,.]?\d*\s*(g|gr|kg|ml|l|cl)\b\.?', '', nom)
     nom = re.sub(r'\b(bric|brick|pot|tarro|got|vaso|sobre|bolsa)\b', '', nom)
     nom = re.sub(r'\b(de|con|amb|y|i)\b\s*$', '', nom)
     nom = re.sub(r'[.,;:()\[\]+]', '', nom)
@@ -169,6 +169,8 @@ def normalitzar_nom(nom):
     nom = re.sub(r'\bsin gluten\b', '', nom)  # inconsistent entre supermercats
     nom = re.sub(r'\bfidias\b|\btarrina\b|\bestilo\b', '', nom)  # etiquetes Dia
     nom = re.sub(r"[\'´`]+", '', nom)  # apòstrofs sobrants
+    nom = re.sub(r'\bla da de( de)?\b', '', nom)   # soroll scraper Bon Àrea (Fage)
+    nom = re.sub(r'\bmuffin\b', '', nom)  # falsos positius
     nom = re.sub(r'\s+', ' ', nom).strip()
     return nom
 
@@ -253,37 +255,39 @@ if no_parsejats:
     for t in no_parsejats:
         print(f"   {t['supermercat']:<20} quant={repr(t['quantitat']):<15} envas={repr(t['envas']):<10} → {t['nom']}")
 
-# ── Mòdul 3: Comparació ───────────────────────────────────────────────────────
+# ── Mòdul 3: Comparació per €/100g (independentment de la mida del pack) ─────
+# Els supermercats juguen amb els formats per dificultar la comparació directa.
+# Agrupem per (marca, nom) i comparem el millor €/100g disponible a cada supermercat.
 grups = defaultdict(list)
 for t in taula:
-    if t['grams_clau'] is not None:
-        grups[(t['marca'], t['nom'], t['grams_clau'])].append(t)
+    if t['preu_per_100g'] is not None:
+        grups[(t['marca'], t['nom'])].append(t)
 
 print(f"\n\n{'='*90}")
-print("MÒDUL 3 — COMPARACIÓ IOGURTS (mateixa marca + tipus + pes)")
+print("MÒDUL 3 — COMPARACIÓ IOGURTS per €/100g (mateixa marca + tipus)")
 print(f"{'='*90}")
 
 grups_multi = 0
-for (marca, nom, grams), entrades in sorted(grups.items()):
+for (marca, nom), entrades in sorted(grups.items()):
     per_sup = defaultdict(list)
     for e in entrades:
         per_sup[e['supermercat']].append(e)
-    per_sup_unic = {sup: min(ll, key=lambda x: x['preu']) for sup, ll in per_sup.items()}
-    if len(per_sup_unic) < 2:
+    # Per cada supermercat, millor €/100g disponible (pot ser pack diferent)
+    millors = {sup: min(ll, key=lambda x: x['preu_per_100g']) for sup, ll in per_sup.items()}
+    if len(millors) < 2:
         continue
     grups_multi += 1
     etiqueta = f"{marca} — {nom}" if marca else f"(sense marca) — {nom}"
-    mida = f"{int(grams)}g" if grams == int(grams) else f"{grams}g"
     print(f"\n  {'─'*86}")
-    print(f"  {etiqueta}  [{mida}]")
-    entrades_ord = sorted(per_sup_unic.values(), key=lambda x: x['preu'])
-    min_preu = entrades_ord[0]['preu']
+    print(f"  {etiqueta}")
+    entrades_ord = sorted(millors.values(), key=lambda x: x['preu_per_100g'])
+    min_p100 = entrades_ord[0]['preu_per_100g']
     for e in entrades_ord:
-        diferencia = f"  (+{e['preu']-min_preu:.2f}€)" if e['preu'] > min_preu else ''
-        estrella = '★' if e['preu'] == min_preu else ' '
-        p100 = f"  ({e['preu_per_100g']:.2f}€/100g)" if e['preu_per_100g'] else ''
-        print(f"  {estrella} {e['supermercat']:<22} {e['preu']:.2f}€{p100}{diferencia}")
+        diferencia = f"  (+{e['preu_per_100g']-min_p100:.2f}€/100g)" if e['preu_per_100g'] > min_p100 else ''
+        estrella = '★' if e['preu_per_100g'] == min_p100 else ' '
+        mida_info = f"{e['grams']}g/{e['preu']:.2f}€" if e['grams'] else ''
+        print(f"  {estrella} {e['supermercat']:<22} {e['preu_per_100g']:.2f}€/100g  [{mida_info}]{diferencia}")
 
 print(f"\n{'='*90}")
-print(f"Total grups únics (marca+tipus+pes): {len(grups)}")
+print(f"Total grups únics (marca+tipus): {len(grups)}")
 print(f"Grups presents a ≥2 supermercats: {grups_multi}")

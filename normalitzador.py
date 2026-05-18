@@ -48,7 +48,7 @@ CATEGORIES = {
         'inclou': ['yogur', 'iogurt', 'iogur'],
         'tipus': [],
         'exclou': ['bizcocho', 'bescuit', 'tortita', 'coqueta', 'barqueta',
-                   'galleta', 'barrita', 'sandwich', 'snack', 'salsa',
+                   'galleta', 'barrita', 'sandwich', 'snack', 'salsa', 'muffin',
                    'tzatziki', 'helado', 'gelat', 'polo', 'mousse', 'flan',
                    'natilla', 'pastís', 'pastis', 'lingot', 'queso', 'formatge',
                    'papilla', 'puré', 'bolsita', 'tarrito', 'danonino',
@@ -193,7 +193,7 @@ def normalitzar_nom(nom):
     nom = re.sub(r'\d+\s*u\s*(de\s*)?', '', nom)
     nom = re.sub(r'de\s+\d+\s*(bric|brik|brick)s?\s*(de\s*)?', '', nom, flags=re.IGNORECASE)
     nom = re.sub(r'\b(brik|bric|brick|botella|ampolla|cartró|cartro|pack|uht)\b', '', nom)
-    nom = re.sub(r'\d+[\s,.]?\d*\s*(x\s*)?\d*[\s,.]?\d*\s*(l|ml|kg|g|cl)\b\.?', '', nom)
+    nom = re.sub(r'\d+[\s,.]?\d*\s*(x\s*)?\d*[\s,.]?\d*\s*(l|ml|kg|g|gr|cl)\b\.?', '', nom)
     nom = re.sub(r'\b(format|viatge|paq\.?|paquet|km0|a2|pasteuritzada|pasteurizada)\b', '', nom)
     nom = re.sub(r'\b(de|con|amb|y)\b\s*$', '', nom)
     nom = re.sub(r'[.,;:()\[\]+]', '', nom)
@@ -205,6 +205,7 @@ def normalitzar_nom(nom):
     nom = re.sub(r'\bkm0\b|\bartesà\b|\bartesanal\b|\bartesano\b', '', nom)
     nom = re.sub(r'\bsensation\b|\bsin gluten\b|\bestilo\b', '', nom)
     nom = re.sub(r"[\'´`]+", '', nom)
+    nom = re.sub(r'\bla da de( de)?\b', '', nom)   # soroll scraper Bon Àrea (Fage)
     nom = re.sub(r'\s+', ' ', nom).strip()
     return nom
 
@@ -307,39 +308,43 @@ print(f"Productes classificats: {len(taula)}")
 for cat, n in sorted(comptador.items()):
     print(f"  {cat:<25} {n:>5}")
 
-# ── Agrupar i comparar ────────────────────────────────────────────────────────
+# ── Agrupar i comparar per €/unitat (independentment de la mida del pack) ─────
+# Els supermercats sovint venen la mateixa referència en packs de mida diferent
+# per dificultar la comparació. Agrupem per (categoria, marca, nom) i comparem
+# pel preu per unitat (€/100g, €/l, €/u) del pack més econòmic disponible.
 print("\nAgrupant i comparant...")
 grups = defaultdict(list)
 for t in taula:
-    if t['mida_clau'] is not None:
-        grups[(t['categoria'], t['marca'], t['nom'], t['mida_clau'])].append(t)
+    if t['preu_per_u'] is not None:
+        grups[(t['categoria'], t['marca'], t['nom'])].append(t)
 
 files_comp = []
-for (cat, marca, nom, mida_clau), entrades in sorted(grups.items()):
+for (cat, marca, nom), entrades in sorted(grups.items()):
     per_sup = defaultdict(list)
     for e in entrades:
         per_sup[e['supermercat']].append(e)
-    millors = {s: min(ll, key=lambda x: x['preu']) for s, ll in per_sup.items()}
+    # Per cada supermercat, queda el pack amb millor preu per unitat
+    millors = {s: min(ll, key=lambda x: x['preu_per_u']) for s, ll in per_sup.items()}
 
     if len(millors) < 2:
         continue
 
-    preus = {s: e['preu'] for s, e in millors.items()}
-    preu_min  = min(preus.values())
-    preu_max  = max(preus.values())
-    sup_barat = min(preus, key=preus.get)
-    estalvi   = round(preu_max - preu_min, 2)
-    estalvi_pct = round((preu_max - preu_min) / preu_max * 100, 1) if preu_max else 0
+    preus_u = {s: e['preu_per_u'] for s, e in millors.items()}
+    min_pu    = min(preus_u.values())
+    max_pu    = max(preus_u.values())
+    sup_barat = min(preus_u, key=preus_u.get)
+    estalvi   = round(max_pu - min_pu, 3)
+    estalvi_pct = round((max_pu - min_pu) / max_pu * 100, 1) if max_pu else 0
 
     unitat = list(millors.values())[0]['unitat']
-    if unitat == 'l':   mida_str = f"{mida_clau:.1f}l"
-    elif unitat == 'g': mida_str = f"{int(mida_clau)}g"
-    else:               mida_str = f"{int(mida_clau)}u"
+    if unitat == 'g':   u_label = '€/100g'
+    elif unitat == 'l': u_label = '€/l'
+    else:               u_label = '€/u'
 
-    fila = [cat, marca or '(marca pròpia)', nom, mida_str]
+    fila = [cat, marca or '(marca pròpia)', nom, u_label]
     for sup in SUPERMERCATS:
-        fila.append(millors[sup]['preu'] if sup in millors else '')
-    fila += [preu_min, sup_barat, estalvi, f"{estalvi_pct}%", str(date.today())]
+        fila.append(round(millors[sup]['preu_per_u'], 3) if sup in millors else '')
+    fila += [round(min_pu, 3), sup_barat, estalvi, f"{estalvi_pct}%", str(date.today())]
     files_comp.append(fila)
 
 print(f"Comparacions trobades (≥2 supermercats): {len(files_comp)}")
@@ -349,9 +354,9 @@ for cat, n in sorted(cats_count.items()):
 
 # ── Guardar a Google Sheets ───────────────────────────────────────────────────
 print("\nGuardant a Google Sheets...")
-CAPÇALERA = (['Categoria', 'Marca', 'Producte normalitzat', 'Mida'] +
+CAPÇALERA = (['Categoria', 'Marca', 'Producte normalitzat', 'Unitat'] +
              SUPERMERCATS +
-             ['Preu mínim (€)', 'Supermercat més barat', 'Estalvi (€)',
+             ['Preu mínim', 'Supermercat més barat', 'Estalvi',
               'Estalvi (%)', 'Data actualització'])
 
 try:
