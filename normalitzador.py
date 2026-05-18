@@ -1,232 +1,372 @@
+# normalitzador.py — Compara preus de productes entre supermercats
+# Llegeix de 'Preus' i escriu comparacions a 'Comparacions' (Google Sheets)
+
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import json
-import os
-import requests
-import time
-from datetime import datetime
+import json, os, re
+from collections import defaultdict, Counter
+from datetime import date
 
-print("="*60)
-print(f"🚀 NORMALITZADOR INICIAT - {datetime.now()}")
-print("="*60)
+# ── Connexió Google Sheets ────────────────────────────────────────────────────
+creds_json = os.environ.get('GOOGLE_CREDENTIALS')
+creds_dict = json.loads(creds_json)
+scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+client = gspread.authorize(creds)
+sheet = client.open('Comparador_Preus_DB')
+ws_preus = sheet.worksheet('Preus')
 
-# Connectar Google Sheets
-try:
-    creds_json = os.environ.get('GOOGLE_CREDENTIALS')
-    creds_dict = json.loads(creds_json)
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    client = gspread.authorize(creds)
-    sheet = client.open('Comparador_Preus_DB')
-    print("✅ Connectat a Google Sheets")
-except Exception as e:
-    print(f"❌ Error connectant: {e}")
-    exit(1)
+print("✅ Connectat a Google Sheets")
+files = ws_preus.get_all_records()
+print(f"   {len(files)} productes llegits\n")
 
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+SUPERMERCATS = ['Mercadona', 'Bon Àrea', 'Dia', 'Bon Preu / Esclat', 'Carrefour']
 
-def cridar_groq(prompt, max_intents=3):
-    """Crida a Groq amb reintents"""
-    for intent in range(max_intents):
-        try:
-            response = requests.post(
-                'https://api.groq.com/openai/v1/chat/completions',
-                headers={
-                    'Authorization': f'Bearer {GROQ_API_KEY}',
-                    'Content-Type': 'application/json'
-                },
-                json={
-                    'model': 'llama-3.3-70b-versatile',
-                    'messages': [{'role': 'user', 'content': prompt}],
-                    'temperature': 0.1,
-                    'max_tokens': 2000
-                },
-                timeout=30
-            )
-            resultat = response.json()
-            if 'choices' not in resultat:
-                print(f"  ⚠️ Resposta inesperada: {resultat}")
-                time.sleep(10)
-                continue
-            contingut = resultat['choices'][0]['message']['content']
-            contingut_net = contingut.replace('```json', '').replace('```', '').strip()
-            return json.loads(contingut_net)
-        except Exception as e:
-            print(f"  ⚠️ Error intent {intent+1}: {e}")
-            time.sleep(15)
+# ── Definició de categories ───────────────────────────────────────────────────
+CATEGORIES = {
+    'llet': {
+        'unitat': 'l',
+        'inclou': ['leche ', 'llet '],
+        'tipus': ['entera', 'sencera', 'desnat', 'semidenat', 'semidesnat',
+                  'fresca', 'sense lactosa', 'sin lactosa', 'calcio', 'calci',
+                  'omega 3', 'ecològica', 'ecológica', 'barista', 'proteina'],
+        'exclou': ['yogur', 'iogurt', 'bífidus', 'bifidus', 'queso', 'formatge',
+                   'bebida', 'condensada', 'polvo', 'pols', 'fermentada', 'kéfir',
+                   'chocolate', 'xocolata', 'café', 'cafè', 'cacao', 'galleta',
+                   'barrita', 'cereal', 'arroz', 'arròs', 'natilla', 'helado',
+                   'gelat', 'dulce de leche', 'dolç de llet', 'bollería',
+                   'bizcocho', 'pan ', 'pa ', 'pastel', 'brownie', 'salchicha',
+                   'solar', 'corporal', 'facial', 'fps', 'spf', 'gel ', 'jabón',
+                   'sabó', 'dentífric', 'champú', 'gat', 'gos', 'felix ',
+                   'ametll', 'coco', 'avena', 'civada', 'soja', 'vegetal',
+                   'nata', 'evaporada', 'crema ', 'puré', 'batut', 'batido',
+                   'infantil', 'lactant', 'creixement', 'crecimiento', 'materna',
+                   'folic', 'nous'],
+    },
+    'iogurt': {
+        'unitat': 'g',
+        'inclou': ['yogur', 'iogurt', 'iogur'],
+        'tipus': [],
+        'exclou': ['bizcocho', 'bescuit', 'tortita', 'coqueta', 'barqueta',
+                   'galleta', 'barrita', 'sandwich', 'snack', 'salsa',
+                   'tzatziki', 'helado', 'gelat', 'polo', 'mousse', 'flan',
+                   'natilla', 'pastís', 'pastis', 'lingot', 'queso', 'formatge',
+                   'papilla', 'puré', 'bolsita', 'tarrito', 'danonino',
+                   'baby ', 'bebé', '6 meses', '8 meses', '12 meses', 'smileat',
+                   'corporal', 'facial', 'gel ', 'jabón', 'sabó', 'champú',
+                   'dosificador', 'gat', 'gos', 'rosegador', 'vitakraft'],
+    },
+    'pasta': {
+        'unitat': 'g',
+        'inclou': ['espagueti', 'spaghetti', 'macarró', 'macarron', 'tallarí',
+                   'tallarin', 'penne', 'fusill', 'rigatoni', 'farfalle',
+                   'linguine', 'fideu', 'fideos', 'lasaña', 'lasanya',
+                   'canelons', 'canelones'],
+        'tipus': [],
+        'exclou': ['salsa', 'sopa', 'plato preparat', 'conserva', 'llauna',
+                   'brou', 'caldo'],
+    },
+    'arros': {
+        'unitat': 'g',
+        'inclou': ['arroz ', 'arròs '],
+        'tipus': [],
+        'exclou': ['llet', 'leche', 'postre', 'pastís', 'galeta', 'galleta',
+                   'cereal', 'barretes', 'tortita', 'coqueta', 'sopa', 'caldo',
+                   'brou', 'plato preparat'],
+    },
+    'oli': {
+        'unitat': 'l',
+        'inclou': ['aceite ', 'oli '],
+        'tipus': ['oliva', 'girasol', 'gira-sol', 'vegetal'],
+        'exclou': ['pescado', 'peix', 'càpsula', 'capsula', 'cosmètic',
+                   'corporal', 'capilar', 'essencial', 'esencial'],
+    },
+    'tomaquet_conserva': {
+        'unitat': 'g',
+        'inclou': ['tomate triturado', 'tomate pelado', 'tomate frito',
+                   'tomàquet triturat', 'tomàquet pelat', 'tomàquet fregit',
+                   'passata'],
+        'tipus': [],
+        'exclou': ['ketchup', 'pizza', 'gazpacho', 'zumo', 'suc ',
+                   'crema de tomate', 'crema de tomàquet'],
+    },
+    'sucre': {
+        'unitat': 'g',
+        'inclou': ['azúcar ', 'sucre '],
+        'tipus': [],
+        'exclou': ['edulcorant', 'edulcorante', 'sacarina', 'stevia',
+                   'galleta', 'pastís', 'cacau', 'xocolata', 'mermelada'],
+    },
+    'farina': {
+        'unitat': 'g',
+        'inclou': ['harina ', 'farina '],
+        'tipus': [],
+        'exclou': ['tortita', 'buñuelo', 'galleta', 'pastís', 'rebozar',
+                   'tempura', 'empanada'],
+    },
+    'mantequilla': {
+        'unitat': 'g',
+        'inclou': ['mantequilla ', 'mantega '],
+        'tipus': [],
+        'exclou': ['cacahuete', 'cacahuet', 'ametlla', 'almendra',
+                   'hidratant', 'corporal'],
+    },
+    'ous': {
+        'unitat': 'u',
+        'inclou': ['huevos ', 'ous ', 'huevo '],
+        'tipus': [],
+        'exclou': ['tortilla', 'truita', 'mayonesa', 'maionesa',
+                   'rebozado', 'arrebossat', 'plato'],
+    },
+}
+
+# ── Marques ───────────────────────────────────────────────────────────────────
+MARQUES = sorted([
+    'central lechera asturiana', 'asturiana', 'pascual', 'puleva omega 3',
+    'puleva max', 'puleva', 'kaiku', 'ato', 'letona', 'lauki', 'celta',
+    'covap', 'président', 'madriz', 'bonpreu', 'verntallat', 'llet nostra',
+    'terra i tast', 'la torre', 'el castillo', 'castillo', 'dia láctea',
+    'dia lactea', 'hacendado', 'la cántara', 'ifa', 'carrefour bio',
+    'carrefour', 'el buen pastor',
+    'danone', 'activia', 'oikos', 'fage', 'vitalinea', 'nestlé', 'chobani',
+    'barilla', 'gallo', 'la molisana', 'garofalo',
+    'carbonell', 'borges', 'la española', 'hojiblanca',
+    'azucarera',
+], key=len, reverse=True)
+
+ALIAS_MARCA = {
+    'la torre': 'La Torre', 'latorre': 'La Torre',
+    'castillo': 'El Castillo', 'el castillo': 'El Castillo',
+    'asturiana': 'Central Lechera Asturiana',
+    'central lechera asturiana': 'Central Lechera Asturiana',
+    'président': 'Président', 'president': 'Président',
+    'dia lactea': 'Dia Láctea', 'dia láctea': 'Dia Láctea',
+    'puleva omega 3': 'Puleva Omega 3',
+    'danone activia': 'Activia', 'activia': 'Activia',
+    'danone natural': 'Danone',
+}
+
+def extreure_marca(nom):
+    nom_lower = nom.lower().strip()
+    match = re.match(r'^([A-ZÀÁÈÉÍÏÒÓÚÜÇ][A-ZÀÁÈÉÍÏÒÓÚÜÇ0-9/\s\-\.]+?)\s+[a-z]', nom)
+    if match:
+        marca_raw = match.group(1).strip()
+        nom_net = nom[len(marca_raw):].strip()
+        return ALIAS_MARCA.get(marca_raw.lower(), marca_raw.title()), nom_net
+    for marca in MARQUES:
+        if marca in nom_lower:
+            nom_net = re.sub(re.escape(marca), '', nom_lower, flags=re.IGNORECASE).strip()
+            nom_net = re.sub(r'\s+', ' ', nom_net).strip()
+            return ALIAS_MARCA.get(marca.lower(), marca.title()), nom_net
+    return '', nom.lower()
+
+# ── Traduccions català → castellà ─────────────────────────────────────────────
+TRADUCCIONS = sorted({
+    'llet': 'leche', 'sencera': 'entera', 'sense lactosa': 'sin lactosa',
+    'ecològica': 'ecológica', 'ecològic': 'ecológico', 'calci': 'calcio',
+    'iogurt': 'yogur', 'iogur': 'yogur', 'grec': 'griego',
+    'desnatat': 'desnatado', 'descremat': 'desnatado',
+    'semidesnatat': 'semidesnatado', 'ensucrat': 'azucarado',
+    'edulcorat': 'edulcorado', 'cremós': 'cremoso', 'lleuger': 'ligero',
+    'per beure': 'para beber',
+    'arròs': 'arroz', 'macarrons': 'macarrones', 'fideus': 'fideos',
+    'oli': 'aceite', 'verge extra': 'virgen extra', 'gira-sol': 'girasol',
+    'sucre': 'azúcar', 'blanc': 'blanco', 'morè': 'moreno',
+    'farina': 'harina', 'blat': 'trigo', 'força': 'fuerza',
+    'rebosteria': 'repostería', 'mantega': 'mantequilla',
+    'ous': 'huevos', 'camperes': 'camperas',
+    'maduixa': 'fresa', 'maduixes': 'fresas', 'préssec': 'melocotón',
+    'poma': 'manzana', 'plàtan': 'plátano', 'llimona': 'limón',
+    'llima': 'lima', 'taronja': 'naranja', 'gerds': 'frambuesas',
+    'nabius': 'arándanos', 'prunes': 'ciruelas',
+    'fruits silvestres': 'frutos silvestres',
+    'fruits del bosc': 'frutos del bosque',
+    'fruits vermells': 'frutos rojos',
+    'civada': 'avena', 'xia': 'chía', 'nous': 'nueces',
+    'ametlles': 'almendras', 'canyella': 'canela',
+    'amb': 'con', "d'ovella": 'de oveja',
+}.items(), key=lambda x: -len(x[0]))
+
+def normalitzar_nom(nom):
+    nom = nom.lower()
+    nom = re.sub(r'\(.*?\)', '', nom)
+    nom = re.sub(r'\d+\s*u\s*(de\s*)?', '', nom)
+    nom = re.sub(r'de\s+\d+\s*(bric|brik|brick)s?\s*(de\s*)?', '', nom, flags=re.IGNORECASE)
+    nom = re.sub(r'\b(brik|bric|brick|botella|ampolla|cartró|cartro|pack|uht)\b', '', nom)
+    nom = re.sub(r'\d+[\s,.]?\d*\s*(x\s*)?\d*[\s,.]?\d*\s*(l|ml|kg|g|cl)\b\.?', '', nom)
+    nom = re.sub(r'\b(format|viatge|paq\.?|paquet|km0|a2|pasteuritzada|pasteurizada)\b', '', nom)
+    nom = re.sub(r'\b(de|con|amb|y)\b\s*$', '', nom)
+    nom = re.sub(r'[.,;:()\[\]+]', '', nom)
+    nom = re.sub(r'\s+', ' ', nom).strip()
+    for cat, cas in TRADUCCIONS:
+        nom = re.sub(r'\b' + re.escape(cat) + r'\b', cas, nom, flags=re.IGNORECASE)
+    nom = re.sub(r'\bde nidades\b|\bnidades\b|\bextra\b', '', nom)
+    nom = re.sub(r"\bclassic[\'´`]?\b|\bel mercado\b|\bfidias\b|\btarrina\b", '', nom)
+    nom = re.sub(r'\bkm0\b|\bartesà\b|\bartesanal\b|\bartesano\b', '', nom)
+    nom = re.sub(r'\bsensation\b|\bsin gluten\b|\bestilo\b', '', nom)
+    nom = re.sub(r"[\'´`]+", '', nom)
+    nom = re.sub(r'\s+', ' ', nom).strip()
+    return nom
+
+# ── Parse quantitat ───────────────────────────────────────────────────────────
+def parse_quantitat(quantitat, envas, unitat_cat):
+    try:
+        q_str = str(quantitat).strip()
+        envas_str = str(envas).lower().strip()
+        if 'kg' in envas_str or re.search(r'\d\s*kg', q_str, re.I):
+            unit = 'kg'
+        elif 'ml' in envas_str or re.search(r'\d\s*ml', q_str, re.I):
+            unit = 'ml'
+        elif 'g' in envas_str or re.search(r'\d\s*g\b', q_str, re.I):
+            unit = 'g'
+        elif 'l' in envas_str or re.search(r'\d\s*l', q_str, re.I):
+            unit = 'l'
+        elif any(x in envas_str for x in ('u', 'unitat', 'unidad', 'und')):
+            unit = 'u'
+        else:
+            return None
+        q_net = re.sub(r'[^\d.,x ]', '', q_str).strip()
+        q_net = re.sub(r'\s+', ' ', q_net).strip()
+        m = re.match(r'(\d+[.,]?\d*)\s*x\s*(\d+[.,]?\d*)', q_net)
+        if m:
+            total = float(m.group(1).replace(',', '.')) * float(m.group(2).replace(',', '.'))
+        else:
+            num = re.match(r'(\d+[.,]?\d*)', q_net)
+            if not num:
+                return None
+            total = float(num.group(1).replace(',', '.'))
+        if unitat_cat == 'l':
+            if unit == 'ml': return total / 1000
+            if unit == 'l':  return total
+        elif unitat_cat == 'g':
+            if unit in ('g', 'ml'): return total
+            if unit == 'kg':        return total * 1000
+            if unit == 'l':         return total * 1000
+        elif unitat_cat == 'u':
+            if unit == 'u': return total
+        return None
+    except Exception:
+        return None
+
+def arrodonir_mida(val, unitat):
+    if val is None: return None
+    if unitat == 'l': return round(val, 1)
+    if unitat == 'g': return round(val / 25) * 25
+    if unitat == 'u': return int(round(val))
+    return round(val, 1)
+
+# ── Classificar productes ─────────────────────────────────────────────────────
+def classificar(nom_lower):
+    for cat_nom, cat in CATEGORIES.items():
+        if not any(p in nom_lower for p in cat['inclou']):
+            continue
+        if cat['tipus'] and not any(t in nom_lower for t in cat['tipus']):
+            continue
+        if any(e in nom_lower for e in cat['exclou']):
+            continue
+        return cat_nom
     return None
 
-def categoritzar_lot(productes):
-    """Categoritza un lot de productes amb Groq"""
-    productes_text = "\n".join([
-        f"{i}. {p['producte']} ({p['supermercat']}) {p['quantitat']}"
-        for i, p in enumerate(productes)
-    ])
+# ── Processar tots els productes ──────────────────────────────────────────────
+print("Classificant productes...")
+taula = []
+comptador = defaultdict(int)
 
-    prompt = f"""Categoritza aquests productes de supermercat en categories generals en català.
-
-{productes_text}
-
-Utilitza categories com: Arròs i pasta, Llet i derivats, Iogurts, Olis, Vinagres, 
-Conserves de peix, Conserves vegetals, Cereals i galetes, Xocolates, Cafè i infusions,
-Begudes refrescants, Cerveses, Vins, Carns, Peixos, Fruites, Verdures, Congelats,
-Neteja llar, Higiene personal, Mascotes, etc.
-
-Respon NOMÉS en JSON sense cap text addicional:
-{{
-  "categories": [
-    {{
-      "categoria": "Arròs i pasta",
-      "ids": [0, 5, 12]
-    }}
-  ]
-}}"""
-
-    return cridar_groq(prompt)
-
-def agrupar_equivalents(productes, categoria):
-    """Agrupa productes equivalents dins una categoria"""
-    productes_text = "\n".join([
-        f"{i}. [{p['supermercat']}] {p['producte']} {p['quantitat']} — {p['preu']}€"
-        for i, p in enumerate(productes)
-    ])
-
-    prompt = f"""Tens productes de la categoria "{categoria}" de diferents supermercats:
-
-{productes_text}
-
-Agrupa els productes que són EXACTAMENT el mateix article (mateix tipus i mateixa quantitat aproximada).
-No agruppis productes de mides molt diferents (ex: 1kg vs 500g són grups separats).
-Productes de marca diferent però equivalents (ex: Hacendado vs Dia vs marca blanca) SÍ es poden agrupar.
-
-Respon NOMÉS en JSON:
-{{
-  "grups": [
-    {{
-      "nom_normalitzat": "Arròs rodó 1kg",
-      "ids": [0, 2, 3, 4]
-    }}
-  ]
-}}"""
-
-    return cridar_groq(prompt)
-
-# FASE 1: Llegir tots els productes
-print("\n📖 Llegint productes del Google Sheets...")
-ws_preus = sheet.worksheet('Preus')
-files = ws_preus.get_all_records()
-print(f"✅ {len(files)} productes llegits")
-
-# FASE 2: Categoritzar en lots de 50
-print("\n🔍 Categoritzant productes amb Groq...")
-mapa_categories = {}  # {index_producte: categoria}
-
-mida_lot = 50
-total_lots = (len(files) + mida_lot - 1) // mida_lot
-print(f"  Total lots: {total_lots} (de {mida_lot} productes cada un)")
-
-for i in range(0, len(files), mida_lot):
-    lot = files[i:i+mida_lot]
-    num_lot = i // mida_lot + 1
-    print(f"  Lot {num_lot}/{total_lots}...")
-
-    resultat = categoritzar_lot(lot)
-    if resultat:
-        for cat_info in resultat.get('categories', []):
-            categoria = cat_info['categoria']
-            for id_rel in cat_info.get('ids', []):
-                id_abs = i + id_rel
-                if id_abs < len(files):
-                    mapa_categories[id_abs] = categoria
-
-    # Pausa per no superar el límit de tokens
-    time.sleep(12)
-
-print(f"✅ {len(mapa_categories)} productes categoritzats")
-
-# Recompte per categoria
-categories_count = {}
-for cat in mapa_categories.values():
-    categories_count[cat] = categories_count.get(cat, 0) + 1
-
-print("\n📊 Categories trobades:")
-for cat, count in sorted(categories_count.items(), key=lambda x: -x[1]):
-    print(f"  {cat}: {count} productes")
-
-# FASE 3: Agrupar equivalents per categoria
-print("\n🔗 Agrupant productes equivalents per categoria...")
-tots_grups = []
-
-categories_unicas = list(set(mapa_categories.values()))
-for num_cat, categoria in enumerate(categories_unicas, 1):
-    # Agafar productes d'aquesta categoria
-    productes_cat = [
-        {**files[idx], 'idx_original': idx}
-        for idx, cat in mapa_categories.items()
-        if cat == categoria
-    ]
-
-    print(f"  [{num_cat}/{len(categories_unicas)}] {categoria}: {len(productes_cat)} productes")
-
-    if len(productes_cat) == 0:
+for f in files:
+    nom_orig = str(f.get('producte', ''))
+    sup = f.get('supermercat', '')
+    try:
+        preu = float(str(f.get('preu', '')).replace(',', '.'))
+    except Exception:
         continue
 
-    # Processar en sublots de 40
-    for j in range(0, len(productes_cat), 40):
-        sublot = productes_cat[j:j+40]
-        resultat = agrupar_equivalents(sublot, categoria)
+    cat = classificar(nom_orig.lower())
+    if not cat:
+        continue
 
-        if resultat:
-            for grup in resultat.get('grups', []):
-                nom = grup['nom_normalitzat']
-                membres = []
-                for id_rel in grup.get('ids', []):
-                    if id_rel < len(sublot):
-                        p = sublot[id_rel]
-                        membres.append({
-                            'nom_normalitzat': nom,
-                            'categoria': categoria,
-                            'supermercat': p['supermercat'],
-                            'producte_original': p['producte'],
-                            'preu': p['preu'],
-                            'quantitat': p['quantitat'],
-                        })
-                if membres:
-                    tots_grups.extend(membres)
+    unitat = CATEGORIES[cat]['unitat']
+    marca, nom_net = extreure_marca(nom_orig)
+    nom_norm = normalitzar_nom(nom_net)
+    mida = parse_quantitat(f.get('quantitat', ''), f.get('envas', ''), unitat)
+    mida_clau = arrodonir_mida(mida, unitat)
 
-        time.sleep(12)
+    preu_per_u = None
+    if preu and mida:
+        if unitat == 'g':   preu_per_u = round(preu / mida * 100, 2)
+        elif unitat == 'l': preu_per_u = round(preu / mida, 2)
+        elif unitat == 'u': preu_per_u = round(preu / mida, 3)
 
-print(f"✅ {len(tots_grups)} productes agrupats en {len(categories_unicas)} categories")
+    comptador[cat] += 1
+    taula.append({
+        'categoria': cat, 'supermercat': sup, 'marca': marca,
+        'nom': nom_norm, 'preu': preu, 'mida': mida,
+        'mida_clau': mida_clau, 'preu_per_u': preu_per_u, 'unitat': unitat,
+    })
 
-# FASE 4: Guardar al Google Sheets
-print("\n💾 Guardant al Google Sheets...")
+print(f"Productes classificats: {len(taula)}")
+for cat, n in sorted(comptador.items()):
+    print(f"  {cat:<25} {n:>5}")
+
+# ── Agrupar i comparar ────────────────────────────────────────────────────────
+print("\nAgrupant i comparant...")
+grups = defaultdict(list)
+for t in taula:
+    if t['mida_clau'] is not None:
+        grups[(t['categoria'], t['marca'], t['nom'], t['mida_clau'])].append(t)
+
+files_comp = []
+for (cat, marca, nom, mida_clau), entrades in sorted(grups.items()):
+    per_sup = defaultdict(list)
+    for e in entrades:
+        per_sup[e['supermercat']].append(e)
+    millors = {s: min(ll, key=lambda x: x['preu']) for s, ll in per_sup.items()}
+
+    if len(millors) < 2:
+        continue
+
+    preus = {s: e['preu'] for s, e in millors.items()}
+    preu_min  = min(preus.values())
+    preu_max  = max(preus.values())
+    sup_barat = min(preus, key=preus.get)
+    estalvi   = round(preu_max - preu_min, 2)
+    estalvi_pct = round((preu_max - preu_min) / preu_max * 100, 1) if preu_max else 0
+
+    unitat = list(millors.values())[0]['unitat']
+    if unitat == 'l':   mida_str = f"{mida_clau:.1f}l"
+    elif unitat == 'g': mida_str = f"{int(mida_clau)}g"
+    else:               mida_str = f"{int(mida_clau)}u"
+
+    fila = [cat, marca or '(marca pròpia)', nom, mida_str]
+    for sup in SUPERMERCATS:
+        fila.append(millors[sup]['preu'] if sup in millors else '')
+    fila += [preu_min, sup_barat, estalvi, f"{estalvi_pct}%", str(date.today())]
+    files_comp.append(fila)
+
+print(f"Comparacions trobades (≥2 supermercats): {len(files_comp)}")
+cats_count = Counter(f[0] for f in files_comp)
+for cat, n in sorted(cats_count.items()):
+    print(f"  {cat:<25} {n:>4}")
+
+# ── Guardar a Google Sheets ───────────────────────────────────────────────────
+print("\nGuardant a Google Sheets...")
+CAPÇALERA = (['Categoria', 'Marca', 'Producte normalitzat', 'Mida'] +
+             SUPERMERCATS +
+             ['Preu mínim (€)', 'Supermercat més barat', 'Estalvi (€)',
+              'Estalvi (%)', 'Data actualització'])
+
 try:
-    ws_norm = sheet.worksheet('Productes_Normalitzats')
-    ws_norm.clear()
-except:
-    ws_norm = sheet.add_worksheet('Productes_Normalitzats', rows=50000, cols=10)
+    ws_comp = sheet.worksheet('Comparacions')
+    ws_comp.clear()
+    print("  Pestanya 'Comparacions' esborrada")
+except gspread.WorksheetNotFound:
+    ws_comp = sheet.add_worksheet(title='Comparacions', rows=10000, cols=len(CAPÇALERA))
+    print("  Pestanya 'Comparacions' creada")
 
-ws_norm.append_row(['nom_normalitzat', 'categoria', 'supermercat', 'producte_original', 'preu', 'quantitat', 'data'])
-data = datetime.now().strftime('%Y-%m-%d %H:%M')
-rows = []
-for p in tots_grups:
-    rows.append([
-        p['nom_normalitzat'],
-        p['categoria'],
-        p['supermercat'],
-        p['producte_original'],
-        p['preu'],
-        p['quantitat'],
-        data
-    ])
+ws_comp.append_row(CAPÇALERA)
+if files_comp:
+    bloc = 500
+    for i in range(0, len(files_comp), bloc):
+        ws_comp.append_rows(files_comp[i:i+bloc], value_input_option='USER_ENTERED')
+        print(f"  Escrites {min(i+bloc, len(files_comp))}/{len(files_comp)} files...")
 
-# Guardar en lots de 1000
-for i in range(0, len(rows), 1000):
-    ws_norm.append_rows(rows[i:i+1000])
-    time.sleep(2)
-
-print(f"✅ {len(rows)} files guardades a 'Productes_Normalitzats'")
-
-print("\n" + "="*60)
-print("✅ NORMALITZACIÓ COMPLETADA!")
-print("="*60)
+print(f"\n✅ Fet! {len(files_comp)} comparacions guardades a 'Comparacions'")
