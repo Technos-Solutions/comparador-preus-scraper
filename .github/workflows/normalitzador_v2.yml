@@ -12,9 +12,9 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install dependencies
-        run: pip install gspread oauth2client groq
+        run: pip install gspread oauth2client google-generativeai
       - name: Run normalitzador_v2
         env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: python normalitzador_v2.py

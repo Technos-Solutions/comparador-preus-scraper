@@ -1,10 +1,10 @@
-# normalitzador_v2.py — Normalitzador amb Groq LLM + caché Google Sheets
-# Llegeix de 'Preus', normalitza amb Groq (caché a 'Productes_Normalitzats'),
+# normalitzador_v2.py — Normalitzador amb Gemini Flash + caché Google Sheets
+# Llegeix de 'Preus', normalitza amb Gemini Flash (caché a 'Productes_Normalitzats'),
 # i escriu comparacions a 'Comparacions_v2' per validar en paral·lel amb v1.
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from groq import Groq
+import google.generativeai as genai
 import json, os, re, time
 from collections import defaultdict, Counter
 from datetime import date
@@ -19,10 +19,13 @@ sheet = client_sheets.open('Comparador_Preus_DB')
 
 print("✅ Connectat a Google Sheets")
 
-# ── Connexió Groq ─────────────────────────────────────────────────────────────
-client_groq = Groq(api_key=os.environ.get('GROQ_API_KEY'))
-MODEL_GROQ   = "llama-3.3-70b-versatile"
-MIDA_LOT     = 50   # productes per crida a Groq
+# ── Connexió Gemini Flash ─────────────────────────────────────────────────────
+genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
+MODEL_GEMINI = genai.GenerativeModel(
+    model_name="gemini-2.0-flash",
+    generation_config={"response_mime_type": "application/json", "temperature": 0.1},
+)
+MIDA_LOT = 50   # productes per crida a Gemini
 
 # ── Prompt de normalització ───────────────────────────────────────────────────
 PROMPT_SISTEMA = """Ets un expert en normalització de productes de supermercat.
@@ -128,28 +131,32 @@ print(f"\n   Productes nous a normalitzar: {len(noms_nous)}")
 print(f"   Crides a Groq necessàries:    {-(-len(noms_nous) // MIDA_LOT)}")  # ceil div
 
 # ── Normalitzar amb Groq en lots ──────────────────────────────────────────────
-def normalitzar_lot(noms: list[str]) -> list[dict]:
-    """Envia un lot de ≤50 noms a Groq. Retorna llista de dicts normalitzats."""
-    try:
-        resposta = client_groq.chat.completions.create(
-            model=MODEL_GROQ,
-            temperature=0.1,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": PROMPT_SISTEMA},
-                {"role": "user",   "content": json.dumps(noms, ensure_ascii=False)},
-            ]
-        )
-        data = json.loads(resposta.choices[0].message.content)
-        productes = data.get("productes", [])
-        # Validació: ha de retornar el mateix nombre d'elements
-        if len(productes) != len(noms):
-            print(f"   ⚠️  Groq ha retornat {len(productes)} en lloc de {len(noms)} — lot descartat")
-            return []
-        return productes
-    except Exception as e:
-        print(f"   ❌ Error Groq: {e}")
-        return []
+def normalitzar_lot(noms: list[str], reintents: int = 3) -> list[dict]:
+    """
+    Envia un lot de ≤50 noms a Gemini Flash. Retorna llista de dicts normalitzats.
+    Reintenta automàticament en cas d'error 429 (rate limit per minut).
+    """
+    prompt = PROMPT_SISTEMA + "\n\n" + json.dumps(noms, ensure_ascii=False)
+    for intent in range(reintents):
+        try:
+            resposta = MODEL_GEMINI.generate_content(prompt)
+            data = json.loads(resposta.text)
+            productes = data.get("productes", [])
+            if len(productes) != len(noms):
+                print(f"   ⚠️  Gemini ha retornat {len(productes)} en lloc de {len(noms)} — lot descartat")
+                return []
+            return productes
+        except Exception as e:
+            missatge = str(e)
+            if '429' in missatge or 'quota' in missatge.lower() or 'rate' in missatge.lower():
+                espera = 60 * (intent + 1)   # 60s, 120s, 180s
+                print(f"   ⏳ Rate limit — esperant {espera}s (intent {intent+1}/{reintents})...")
+                time.sleep(espera)
+            else:
+                print(f"   ❌ Error Gemini: {e}")
+                return []
+    print(f"   ❌ Lot descartat després de {reintents} intents")
+    return []
 
 nous_normalitzats = []  # llista de [nom_original, nom_normalitzat, marca, categoria, keywords]
 
@@ -183,9 +190,9 @@ if noms_nous:
         else:
             print("❌ lot descartat")
 
-        # Pausa per respectar rate limits de Groq
+        # Pausa breu entre lots per no saturar el rate limit per minut
         if num_lot < total_lots:
-            time.sleep(1)
+            time.sleep(2)
 
     # Guardar nous registres a la caché (Sheets)
     if nous_normalitzats:
@@ -370,5 +377,5 @@ if files_comp:
         print(f"   Escrites {min(i+bloc, len(files_comp))}/{len(files_comp)} files...")
 
 print(f"\n✅ Fet! {len(files_comp)} comparacions guardades a 'Comparacions_v2'")
-print(f"   Crides a Groq fetes: {-(-len(noms_nous) // MIDA_LOT) if noms_nous else 0}")
+print(f"   Crides a Gemini fetes: {-(-len(noms_nous) // MIDA_LOT) if noms_nous else 0}")
 print(f"   Productes nous afegits a caché: {len(nous_normalitzats)}")
