@@ -2,11 +2,16 @@ name: Normalitzador v2 (Gemini + caché)
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Scraper Part 5 - Carrefour"]
+    types:
+      - completed
 
 jobs:
   normalitzar:
     runs-on: ubuntu-latest
     timeout-minutes: 330
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
