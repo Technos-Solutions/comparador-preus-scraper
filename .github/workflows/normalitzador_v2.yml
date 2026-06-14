@@ -1,4 +1,4 @@
-name: Normalitzador v2 (Groq + caché)
+name: Normalitzador v2 (Gemini + caché)
 
 on:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
 jobs:
   normalitzar:
     runs-on: ubuntu-latest
+    timeout-minutes: 330
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

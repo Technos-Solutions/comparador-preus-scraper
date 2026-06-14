@@ -130,12 +130,17 @@ noms_nous = list(dict.fromkeys(noms_nous))
 print(f"\n   Productes nous a normalitzar: {len(noms_nous)}")
 print(f"   Crides a Groq necessàries:    {-(-len(noms_nous) // MIDA_LOT)}")  # ceil div
 
-# ── Normalitzar amb Groq en lots ──────────────────────────────────────────────
+# Senyal per aturar el bucle principal quan s'esgota la quota diària
+QUOTA_DIARIA_ESGOTADA = False
+
+# ── Normalitzar amb Gemini Flash en lots ──────────────────────────────────────
 def normalitzar_lot(noms: list[str], reintents: int = 3) -> list[dict]:
     """
     Envia un lot de ≤50 noms a Gemini Flash. Retorna llista de dicts normalitzats.
-    Reintenta automàticament en cas d'error 429 (rate limit per minut).
+    - Rate limit per minut (429 RPM): espera i reintenta fins a 3 cops.
+    - Quota diària esgotada (RESOURCE_EXHAUSTED / 'daily'): atura tot el procés.
     """
+    global QUOTA_DIARIA_ESGOTADA
     prompt = PROMPT_SISTEMA + "\n\n" + json.dumps(noms, ensure_ascii=False)
     for intent in range(reintents):
         try:
@@ -148,9 +153,18 @@ def normalitzar_lot(noms: list[str], reintents: int = 3) -> list[dict]:
             return productes
         except Exception as e:
             missatge = str(e)
-            if '429' in missatge or 'quota' in missatge.lower() or 'rate' in missatge.lower():
+            es_quota_diaria = (
+                'daily' in missatge.lower() or
+                'RESOURCE_EXHAUSTED' in missatge or
+                ('quota' in missatge.lower() and '429' not in missatge)
+            )
+            if es_quota_diaria:
+                print(f"\n   🛑 Quota diària de Gemini esgotada. Desant caché i aturant...")
+                QUOTA_DIARIA_ESGOTADA = True
+                return []
+            elif '429' in missatge or 'rate' in missatge.lower():
                 espera = 60 * (intent + 1)   # 60s, 120s, 180s
-                print(f"   ⏳ Rate limit — esperant {espera}s (intent {intent+1}/{reintents})...")
+                print(f"   ⏳ Rate limit per minut — esperant {espera}s (intent {intent+1}/{reintents})...")
                 time.sleep(espera)
             else:
                 print(f"   ❌ Error Gemini: {e}")
@@ -161,7 +175,7 @@ def normalitzar_lot(noms: list[str], reintents: int = 3) -> list[dict]:
 nous_normalitzats = []  # llista de [nom_original, nom_normalitzat, marca, categoria, keywords]
 
 if noms_nous:
-    print("\nNormalitzant amb Groq...")
+    print("\nNormalitzant amb Gemini Flash...")
     total_lots = -(-len(noms_nous) // MIDA_LOT)
     for i in range(0, len(noms_nous), MIDA_LOT):
         lot = noms_nous[i:i + MIDA_LOT]
@@ -169,6 +183,9 @@ if noms_nous:
         print(f"   Lot {num_lot}/{total_lots} ({len(lot)} productes)...", end=" ", flush=True)
 
         resultat = normalitzar_lot(lot)
+
+        if QUOTA_DIARIA_ESGOTADA:
+            break
 
         if resultat:
             for nom_orig, norm in zip(lot, resultat):
@@ -190,9 +207,9 @@ if noms_nous:
         else:
             print("❌ lot descartat")
 
-        # Pausa breu entre lots per no saturar el rate limit per minut
+        # 5s entre lots: respecta el límit de 15 RPM de Gemini Flash (mínim 4s)
         if num_lot < total_lots:
-            time.sleep(2)
+            time.sleep(5)
 
     # Guardar nous registres a la caché (Sheets)
     if nous_normalitzats:
@@ -204,8 +221,16 @@ if noms_nous:
                 value_input_option='USER_ENTERED'
             )
         print("   ✅ Caché actualitzada")
+
+    if QUOTA_DIARIA_ESGOTADA:
+        restants = len(noms_nous) - (i if 'i' in dir() else 0)
+        print(f"\n⏸️  Execució parcial completada.")
+        print(f"   Nous productes normalitzats aquesta run: {len(nous_normalitzats)}")
+        print(f"   Productes pendents per la propera run:  ~{len(noms_nous) - len(nous_normalitzats)}")
+        print(f"   Torna a executar el workflow demà per continuar.")
+        import sys; sys.exit(0)
 else:
-    print("   ✅ Tot a la caché — 0 crides a Groq necessàries")
+    print("   ✅ Tot a la caché — 0 crides a Gemini necessàries")
 
 # ── Construir taula de comparacions ──────────────────────────────────────────
 print("\nConstruint taula de comparacions...")
