@@ -22,7 +22,7 @@ print("✅ Connectat a Google Sheets")
 # ── Connexió Gemini Flash ─────────────────────────────────────────────────────
 genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
 MODEL_GEMINI = genai.GenerativeModel(
-    model_name="gemini-2.0-flash",
+    model_name="gemini-3.5-flash",
     generation_config={"response_mime_type": "application/json", "temperature": 0.1},
 )
 MIDA_LOT = 50   # productes per crida a Gemini
@@ -162,7 +162,7 @@ def normalitzar_lot(noms: list[str], reintents: int = 3) -> list[dict]:
                 print(f"\n   🛑 Quota diària de Gemini esgotada. Desant caché i aturant...")
                 QUOTA_DIARIA_ESGOTADA = True
                 return []
-            elif '429' in missatge or 'rate' in missatge.lower():
+            elif '429' in missatge:
                 espera = 60 * (intent + 1)   # 60s, 120s, 180s
                 print(f"   ⏳ Rate limit per minut ({missatge[:200]}) — esperant {espera}s (intent {intent+1}/{reintents})...")
                 time.sleep(espera)
