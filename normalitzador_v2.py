@@ -164,7 +164,7 @@ def normalitzar_lot(noms: list[str], reintents: int = 3) -> list[dict]:
                 return []
             elif '429' in missatge or 'rate' in missatge.lower():
                 espera = 60 * (intent + 1)   # 60s, 120s, 180s
-                print(f"   ⏳ Rate limit per minut — esperant {espera}s (intent {intent+1}/{reintents})...")
+                print(f"   ⏳ Rate limit per minut ({missatge[:200]}) — esperant {espera}s (intent {intent+1}/{reintents})...")
                 time.sleep(espera)
             else:
                 print(f"   ❌ Error Gemini: {e}")
@@ -174,9 +174,12 @@ def normalitzar_lot(noms: list[str], reintents: int = 3) -> list[dict]:
 
 nous_normalitzats = []  # llista de [nom_original, nom_normalitzat, marca, categoria, keywords]
 
+LLINDAR_LOTS_FALLITS = 5  # si tants lots seguits fallen, hi ha un problema de fons (clau/quota) i no val la pena cremar els 330 min
+
 if noms_nous:
     print("\nNormalitzant amb Gemini Flash...")
     total_lots = -(-len(noms_nous) // MIDA_LOT)
+    lots_fallits_consecutius = 0
     for i in range(0, len(noms_nous), MIDA_LOT):
         lot = noms_nous[i:i + MIDA_LOT]
         num_lot = i // MIDA_LOT + 1
@@ -186,6 +189,19 @@ if noms_nous:
 
         if QUOTA_DIARIA_ESGOTADA:
             break
+
+        if not resultat:
+            lots_fallits_consecutius += 1
+            if lots_fallits_consecutius >= LLINDAR_LOTS_FALLITS:
+                print(f"\n   🛑 {LLINDAR_LOTS_FALLITS} lots seguits han fallat — sembla un problema de fons "
+                      f"(clau API, quota o connexió), no un rate limit puntual. Aturant per no cremar els 330 min.")
+                if nous_normalitzats:
+                    print(f"\nGuardant {len(nous_normalitzats)} nous registres a 'Productes_Normalitzats'...")
+                    ws_cache.append_rows(nous_normalitzats, value_input_option='USER_ENTERED')
+                    print("   ✅ Caché actualitzada")
+                import sys; sys.exit(1)
+        else:
+            lots_fallits_consecutius = 0
 
         if resultat:
             for nom_orig, norm in zip(lot, resultat):
