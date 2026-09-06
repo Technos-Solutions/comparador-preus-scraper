@@ -1,0 +1,27 @@
+name: Re-categoritzar productes "altra"
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Nombre màxim de productes a re-categoritzar (buit = tots)'
+        required: false
+        default: ''
+
+jobs:
+  recategoritzar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install gspread oauth2client google-generativeai
+      - name: Run recategoritzar
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          LIMIT: ${{ inputs.limit }}
+        run: python recategoritzar.py

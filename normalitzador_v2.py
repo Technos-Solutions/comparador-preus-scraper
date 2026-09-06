@@ -69,8 +69,14 @@ Exemples OBLIGATORIS a seguir fil per randa:
 • Si no hi ha marca identificable: ""
 
 ━━ CATEGORIES disponibles (tria SEMPRE una) ━━
-iogurt · llet · beguda_vegetal · pasta · arros · oli ·
-tomaquet_conserva · sucre · farina · mantequilla · ous · cervesa · altra
+iogurt · llet · beguda_vegetal · formatge · embotit · carn · peix · marisc ·
+ous · mantequilla · pasta · arros · llegum · cereals · farina · sucre · oli ·
+vinagre · tomaquet_conserva · conserva · sopa · condiment · salsa · melmelada ·
+mel · pa · brioixeria · galeta · xocolata · snack · fruit_sec · congelat ·
+verdura · fruita · cafe · te · aigua · refresc · suc · cervesa · vi · licor ·
+neteja_llar · higiene_personal · cura_personal · bolquer · mascota ·
+parafarmacia · altra
+Fes servir "altra" NOMÉS si de veritat no encaixa en cap altra categoria.
 
 ━━ REGLES keywords ━━
 • Inclou (separats per espai, en minúscules):
@@ -288,10 +294,21 @@ def parse_quantitat(quantitat, envas, unitat_cat):
         return None
 
 UNITAT_CATEGORIA = {
-    'iogurt': 'g', 'llet': 'l', 'beguda_vegetal': 'l',
-    'pasta': 'g', 'arros': 'g', 'oli': 'l',
-    'tomaquet_conserva': 'g', 'sucre': 'g', 'farina': 'g',
-    'mantequilla': 'g', 'ous': 'u', 'cervesa': 'l',
+    # €/100g
+    'iogurt': 'g', 'formatge': 'g', 'embotit': 'g', 'carn': 'g', 'peix': 'g',
+    'marisc': 'g', 'pasta': 'g', 'arros': 'g', 'llegum': 'g', 'cereals': 'g',
+    'farina': 'g', 'sucre': 'g', 'tomaquet_conserva': 'g', 'conserva': 'g',
+    'sopa': 'g', 'condiment': 'g', 'salsa': 'g', 'melmelada': 'g', 'mel': 'g',
+    'pa': 'g', 'brioixeria': 'g', 'galeta': 'g', 'xocolata': 'g', 'snack': 'g',
+    'fruit_sec': 'g', 'congelat': 'g', 'verdura': 'g', 'fruita': 'g',
+    'cafe': 'g', 'te': 'g', 'mantequilla': 'g',
+    # €/l
+    'llet': 'l', 'beguda_vegetal': 'l', 'oli': 'l', 'vinagre': 'l',
+    'aigua': 'l', 'refresc': 'l', 'suc': 'l', 'cervesa': 'l', 'vi': 'l',
+    'licor': 'l',
+    # €/unitat
+    'ous': 'u', 'neteja_llar': 'u', 'higiene_personal': 'u',
+    'cura_personal': 'u', 'bolquer': 'u', 'mascota': 'u', 'parafarmacia': 'u',
 }
 
 taula = []
