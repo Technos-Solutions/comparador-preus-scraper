@@ -107,9 +107,9 @@ try:
     # Diccionari: nom_original (lower strip) → dict amb camps normalitzats
     cache = {
         r['nom_original'].strip(): {
-            'nom_normalitzat': r.get('nom_normalitzat', ''),
-            'marca':           r.get('marca', ''),
-            'categoria':       r.get('categoria', ''),
+            'nom_normalitzat': str(r.get('nom_normalitzat', '')),
+            'marca':           str(r.get('marca', '')),
+            'categoria':       str(r.get('categoria', '')),
             'keywords':        r.get('keywords', ''),
         }
         for r in registres_cache
@@ -385,7 +385,7 @@ CAPÇALERA = (
      'Keywords', 'Data actualització']
 )
 
-for (cat, marca, nom), entrades in sorted(grups.items()):
+for (cat, marca, nom), entrades in sorted(grups.items(), key=lambda kv: tuple(str(x) for x in kv[0])):
     per_sup = defaultdict(list)
     for e in entrades:
         per_sup[e['supermercat']].append(e)
