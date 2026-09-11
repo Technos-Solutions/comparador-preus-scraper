@@ -489,13 +489,20 @@ class CarrefourScraper:
         for i in range(3):
             driver.execute_script("window.scrollBy(0, 400);")
             time.sleep(2)
-        noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
-        preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
+
+        # IMPORTANT: nom i preu s'extreuen DINS de cada targeta de producte (no amb
+        # dues llistes globals emparellades per índex). Si algun producte té un
+        # element de preu addicional (p.ex. "preu per litre") amb la mateixa classe
+        # CSS, emparellar per índex desquadra totes les files següents de la pàgina
+        # i assigna preus equivocats a productes equivocats.
+        targetes = driver.find_elements(By.CSS_SELECTOR, 'div.product-card, article.product-card, li.product-card')
         productes = []
-        for i in range(min(len(noms), len(preus))):
+        for targeta in targetes:
             try:
-                nom = noms[i].get_attribute('innerText').strip()
-                preu_text = preus[i].get_attribute('innerText').strip()
+                nom_el = targeta.find_element(By.CSS_SELECTOR, 'a.product-card__title-link')
+                preu_el = targeta.find_element(By.CSS_SELECTOR, 'span.product-card__price')
+                nom = nom_el.get_attribute('innerText').strip()
+                preu_text = preu_el.get_attribute('innerText').strip()
                 if not nom or not preu_text:
                     continue
                 preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
