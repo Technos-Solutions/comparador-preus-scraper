@@ -490,19 +490,25 @@ class CarrefourScraper:
             driver.execute_script("window.scrollBy(0, 400);")
             time.sleep(2)
 
-        # IMPORTANT: nom i preu s'extreuen DINS de cada targeta de producte (no amb
-        # dues llistes globals emparellades per índex). Si algun producte té un
-        # element de preu addicional (p.ex. "preu per litre") amb la mateixa classe
-        # CSS, emparellar per índex desquadra totes les files següents de la pàgina
-        # i assigna preus equivocats a productes equivocats.
-        targetes = driver.find_elements(By.CSS_SELECTOR, 'div.product-card, article.product-card, li.product-card')
+        # NOTA: nom i preu s'extreuen amb dues llistes globals (find_elements)
+        # emparellades per índex/posició. Detectat un cas real (oli d'oliva
+        # Carbonell a Carrefour) on el preu capturat no corresponia al producte
+        # correcte, probablement perquè algun producte té un element de preu
+        # addicional (p.ex. "preu per litre") amb la mateixa classe CSS que
+        # desquadra l'emparellament per a la resta de la pàgina. S'ha provat
+        # d'arreglar-ho dues vegades sense accés real a l'HTML de carrefour.es
+        # (bloquejat des d'aquest entorn) i totes dues suposicions van trencar
+        # el scraper del tot (0 productes). Es manté aquest codi original -tot
+        # i el bug conegut- fins que es pugui verificar l'estructura real de la
+        # pàgina (per exemple, inspeccionant-la manualment amb les eines de
+        # desenvolupador del navegador).
+        noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
+        preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
         productes = []
-        for targeta in targetes:
+        for i in range(min(len(noms), len(preus))):
             try:
-                nom_el = targeta.find_element(By.CSS_SELECTOR, 'a.product-card__title-link')
-                preu_el = targeta.find_element(By.CSS_SELECTOR, 'span.product-card__price')
-                nom = nom_el.get_attribute('innerText').strip()
-                preu_text = preu_el.get_attribute('innerText').strip()
+                nom = noms[i].get_attribute('innerText').strip()
+                preu_text = preus[i].get_attribute('innerText').strip()
                 if not nom or not preu_text:
                     continue
                 preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
