@@ -1,0 +1,25 @@
+name: Audita preus sospitosos
+
+on:
+  workflow_dispatch:
+    inputs:
+      llindar_percentatge:
+        description: 'Llindar d''estalvi (%) a partir del qual es considera sospitós'
+        required: false
+        default: '60'
+
+jobs:
+  auditar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install gspread oauth2client
+      - name: Run audita_preus_sospitosos
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          LLINDAR_PERCENTATGE: ${{ inputs.llindar_percentatge }}
+        run: python audita_preus_sospitosos.py
