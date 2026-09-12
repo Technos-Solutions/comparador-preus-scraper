@@ -478,6 +478,25 @@ class CarrefourScraper:
     def scrape_pagina(self, driver, url):
         import re
         def extreure_quantitat(nom):
+            # Detecta "pack de N <paraula> de X <unitat>" (unidades, bolsitas,
+            # brik, botellas...) i retorna la quantitat TOTAL (N x X), no la
+            # d'una sola unitat. Sense això, el preu del pack sencer es
+            # dividia només per la mida d'un got/bossa, inflant molt el
+            # preu/100g o preu/l dels productes en pack (detectat amb
+            # l'auditoria de preus sospitosos de Comparacions_v2: iogurts en
+            # pack de Danone/Nestlé sortien 4-8 vegades més cars del compte).
+            pack = re.search(
+                r'pack\s+de\s+(\d+)\s+\w+\s+de\s+(\d+[.,]?\d*)\s*(kg|g|l|ml|cl)',
+                nom, re.IGNORECASE
+            )
+            if pack:
+                n = int(pack.group(1))
+                val = float(pack.group(2).replace(',', '.'))
+                unitat = pack.group(3).lower()
+                total = n * val
+                total_str = str(int(total)) if total == int(total) else str(total)
+                return f"{total_str} {unitat}"
+
             matches = re.findall(r'(\d+[.,]?\d*)\s*(kg|g|l|ml|cl|ud|unidades?)', nom, re.IGNORECASE)
             if matches:
                 val, unitat = matches[-1]
