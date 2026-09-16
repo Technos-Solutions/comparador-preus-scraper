@@ -625,9 +625,15 @@ class BonPreuEsclatScraper:
     def descobrir_categories(self, driver):
         print("  🔍 Descobrint categories principals...")
         driver.get(self.base_url)
+        # El lloc mostrava els noms de categoria en castella (cookie es-ES),
+        # pero categories_valides busca paraules en catala ('begudes',
+        # 'congelats', 'ctics', 'neteja', 'per la llar', 'nadons'...), que
+        # no encaixaven amb els noms en castella ('Bebidas', 'Congelados',
+        # 'Lacteos y huevos'...). Verificat amb un run real (cookie=ca dona
+        # 'Begudes', 'Congelats', 'Lactics i ous', etc., que si que encaixen).
         driver.add_cookie({
             "name": "language",
-            "value": "es-ES",
+            "value": "ca",
             "domain": "www.compraonline.bonpreuesclat.cat"
         })
         driver.refresh()
@@ -748,6 +754,17 @@ class BonPreuEsclatScraper:
         try:
             if driver_propi:
                 driver = self._crear_driver()
+                # Cada driver nou necessita el cookie d'idioma (nomes es fixa
+                # per a la sessio/domini actual, no es global); sense aixo
+                # aquest driver carregava les pagines en castella igualment,
+                # encara que descobrir_categories() ja s'hagues fet amb un
+                # altre driver.
+                driver.get(self.base_url)
+                driver.add_cookie({
+                    "name": "language",
+                    "value": "ca",
+                    "domain": "www.compraonline.bonpreuesclat.cat"
+                })
 
             driver.get(url)
             time.sleep(5)
