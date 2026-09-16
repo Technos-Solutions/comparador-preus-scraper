@@ -25,5 +25,7 @@ jobs:
         with:
           name: bonpreu-debug
           path: |
-            bonpreu_debug.png
-            bonpreu_debug.html
+            bonpreu_debug_prova1.png
+            bonpreu_debug_prova1.html
+            bonpreu_debug_prova2.png
+            bonpreu_debug_prova2.html
