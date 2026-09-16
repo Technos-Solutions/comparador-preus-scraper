@@ -509,25 +509,22 @@ class CarrefourScraper:
             driver.execute_script("window.scrollBy(0, 400);")
             time.sleep(2)
 
-        # NOTA: nom i preu s'extreuen amb dues llistes globals (find_elements)
-        # emparellades per índex/posició. Detectat un cas real (oli d'oliva
-        # Carbonell a Carrefour) on el preu capturat no corresponia al producte
-        # correcte, probablement perquè algun producte té un element de preu
-        # addicional (p.ex. "preu per litre") amb la mateixa classe CSS que
-        # desquadra l'emparellament per a la resta de la pàgina. S'ha provat
-        # d'arreglar-ho dues vegades sense accés real a l'HTML de carrefour.es
-        # (bloquejat des d'aquest entorn) i totes dues suposicions van trencar
-        # el scraper del tot (0 productes). Es manté aquest codi original -tot
-        # i el bug conegut- fins que es pugui verificar l'estructura real de la
-        # pàgina (per exemple, inspeccionant-la manualment amb les eines de
-        # desenvolupador del navegador).
-        noms = driver.find_elements(By.CSS_SELECTOR, 'a.product-card__title-link')
-        preus = driver.find_elements(By.CSS_SELECTOR, 'span.product-card__price')
+        # Carrefour va canviar el disseny de la pàgina (classes antigues
+        # 'product-card__title-link'/'product-card__price' ja no existeixen,
+        # per això el scraper donava 0 productes). Verificat amb l'HTML real
+        # de carrefour.es (inspecció manual, setembre 2026): ara cada
+        # producte és un <article data-test="search-grid-result"> que conté
+        # el nom a <a data-test="result-title"> i el preu a
+        # <div data-test="result-current-price">. Nom i preu s'extreuen dins
+        # del mateix article, no com dues llistes globals emparellades per
+        # índex, així que això també corregeix el desquadrament que causava
+        # preus incorrectes (cas de l'oli d'oliva Carbonell/Coosur).
+        articles = driver.find_elements(By.CSS_SELECTOR, 'article[data-test="search-grid-result"]')
         productes = []
-        for i in range(min(len(noms), len(preus))):
+        for article in articles:
             try:
-                nom = noms[i].get_attribute('innerText').strip()
-                preu_text = preus[i].get_attribute('innerText').strip()
+                nom = article.find_element(By.CSS_SELECTOR, 'a[data-test="result-title"]').get_attribute('innerText').strip()
+                preu_text = article.find_element(By.CSS_SELECTOR, 'div[data-test="result-current-price"]').get_attribute('innerText').strip()
                 if not nom or not preu_text:
                     continue
                 preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
