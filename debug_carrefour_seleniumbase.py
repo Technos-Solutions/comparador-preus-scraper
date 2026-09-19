@@ -11,7 +11,7 @@ from seleniumbase import Driver
 
 URL = 'https://www.carrefour.es/supermercado/la-despensa/cat20001/c?offset=0'
 
-driver = Driver(uc=True, headless=False, xvfb=True)
+driver = Driver(uc=True, headed=True)
 
 try:
     print(f"🌐 Obrint {URL} amb SeleniumBase UC Mode + Xvfb ...")

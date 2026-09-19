@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: pip install seleniumbase
       - name: Run debug_carrefour_seleniumbase
-        run: python debug_carrefour_seleniumbase.py
+        run: xvfb-run -a python debug_carrefour_seleniumbase.py
       - name: Upload debug artifacts
         if: always()
         uses: actions/upload-artifact@v4
