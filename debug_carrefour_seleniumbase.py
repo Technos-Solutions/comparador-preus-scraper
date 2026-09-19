@@ -25,6 +25,12 @@ try:
     except Exception as e:
         print(f"   (no hi havia checkbox o no s'ha pogut clicar: {e})")
 
+    print("📜 Fent scroll per activar la càrrega de productes (com fa el scraper real)...")
+    for i in range(3):
+        driver.execute_script("window.scrollBy(0, 400);")
+        time.sleep(2)
+    time.sleep(5)
+
     titol = driver.get_title()
     url_final = driver.get_current_url()
     html = driver.get_page_source()
