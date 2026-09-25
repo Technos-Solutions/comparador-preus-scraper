@@ -109,7 +109,7 @@ try:
     # les dades arriben pero el component Vue/Empathy no es munta. Mirem la
     # consola del navegador per veure si hi ha algun error JS que ho impedeix.
     try:
-        logs = driver.driver.get_log('browser')
+        logs = driver.get_log('browser')
         print(f"🖥️  Entrades de consola del navegador: {len(logs)}")
         for entry in logs[-40:]:
             print(f"   [{entry.get('level')}] {entry.get('message')[:300]}")
