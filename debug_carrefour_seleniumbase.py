@@ -25,6 +25,18 @@ try:
     except Exception as e:
         print(f"   (no hi havia checkbox o no s'ha pogut clicar: {e})")
 
+    # La pagina carrega el CMP de OneTrust (cdn.cookielaw.org / OptanonWrapper).
+    # Si el banner de cookies queda sense resposta, es possible que el Vue de
+    # la graella de productes no arribi a muntar-se. OneTrust fa servir sempre
+    # el mateix id estandard pel boto "Acceptar totes".
+    try:
+        print("🍪 Intentant acceptar el banner de cookies (OneTrust)...")
+        driver.click("#onetrust-accept-btn-handler", timeout=8)
+        print("   ✅ Banner de cookies acceptat")
+        time.sleep(3)
+    except Exception as e:
+        print(f"   (no s'ha trobat/clicat el banner de OneTrust: {e})")
+
     print("📜 Fent scroll per activar la càrrega de productes (com fa el scraper real)...")
     for i in range(3):
         driver.execute_script("window.scrollBy(0, 400);")
