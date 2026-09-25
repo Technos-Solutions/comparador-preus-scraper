@@ -42,6 +42,23 @@ try:
     articles = driver.find_elements('article[data-test="search-grid-result"]')
     print(f"🔎 Elements 'article[data-test=\"search-grid-result\"]' trobats: {len(articles)}")
 
+    # Diagnostic extra: quants <article> hi ha en total (amb qualsevol atribut)?
+    tots_articles = driver.find_elements('article')
+    print(f"🔎 Elements 'article' (qualsevol) trobats: {len(tots_articles)}")
+
+    # Quins data-test existeixen realment a la pagina?
+    amb_data_test = driver.find_elements('[data-test]')
+    valors_data_test = sorted(set(
+        el.get_attribute('data-test') for el in amb_data_test if el.get_attribute('data-test')
+    ))
+    print(f"🔎 Valors 'data-test' trobats a la pagina ({len(valors_data_test)}): {valors_data_test[:40]}")
+
+    # Hi ha un banner de cookies/consentiment visible?
+    for terme in ['aceptar', 'cookie', 'consent', 'onetrust', 'cookiebot', 'didomi']:
+        idx = html.lower().find(terme)
+        if idx != -1:
+            print(f"   🍪 Trobat '{terme}' a la posicio {idx}: ...{html[max(0,idx-80):idx+80]}...")
+
     if articles:
         primer = articles[0]
         try:
