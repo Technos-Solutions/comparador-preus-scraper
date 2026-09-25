@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: pip install seleniumbase
+        run: python -m pip install seleniumbase
       - name: Run debug_carrefour_seleniumbase
         run: python debug_carrefour_seleniumbase.py
       - name: Upload debug artifacts
