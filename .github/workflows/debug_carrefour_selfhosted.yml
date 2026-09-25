@@ -1,0 +1,22 @@
+name: Debug Carrefour Self-Hosted (IP residencial)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: pip install seleniumbase
+      - name: Run debug_carrefour_seleniumbase
+        run: python debug_carrefour_seleniumbase.py
+      - name: Upload debug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: carrefour-selfhosted-debug
+          path: |
+            carrefour_uc_debug.png
+            carrefour_uc_debug.html
