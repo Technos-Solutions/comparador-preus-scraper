@@ -105,6 +105,17 @@ try:
     trobades = [p for p in paraules_sospitoses if p in html.lower()]
     print(f"⚠️  Paraules sospitoses trobades a l'HTML: {trobades if trobades else 'cap'}")
 
+    # Els preus SI son a l'HTML (172 trobats) pero 0 <article> renderitzats:
+    # les dades arriben pero el component Vue/Empathy no es munta. Mirem la
+    # consola del navegador per veure si hi ha algun error JS que ho impedeix.
+    try:
+        logs = driver.driver.get_log('browser')
+        print(f"🖥️  Entrades de consola del navegador: {len(logs)}")
+        for entry in logs[-40:]:
+            print(f"   [{entry.get('level')}] {entry.get('message')[:300]}")
+    except Exception as e:
+        print(f"   (no s'ha pogut llegir la consola: {e})")
+
     driver.save_screenshot('carrefour_uc_debug.png')
     with open('carrefour_uc_debug.html', 'w', encoding='utf-8') as f:
         f.write(html)
