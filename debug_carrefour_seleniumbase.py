@@ -71,6 +71,26 @@ try:
         if idx != -1:
             print(f"   🍪 Trobat '{terme}' a la posicio {idx}: ...{html[max(0,idx-80):idx+80]}...")
 
+    # A la Xarxa (comprovat manualment amb DevTools) NO hi ha cap petició
+    # XHR/fetch que porti dades de productes -> les dades venen incrustades
+    # al document HTML inicial (SSR), no via AJAX. Busquem el bloc de dades
+    # incrustat (comu en apps Vue/Nuxt: window.__NUXT__, __INITIAL_STATE__,
+    # o similar) per veure si ve buit o amb productes reals.
+    marcadors = ['__NUXT__', '__INITIAL_STATE__', '__APOLLO_STATE__',
+                 '__PRELOADED_STATE__', 'window.__', 'application/json']
+    for m in marcadors:
+        idx = html.find(m)
+        if idx != -1:
+            print(f"   📦 Trobat marcador '{m}' a la posicio {idx}: ...{html[idx:idx+300]}...")
+
+    # Comptem quantes vegades apareix un preu tipic (X,XX €) o "carrefour" com
+    # a marca, per veure si hi ha ALGUNA dada de producte incrustada enlloc.
+    import re
+    preus_trobats = re.findall(r'\d+,\d{2}\s*€', html)
+    print(f"   💶 Ocurrencies de patro de preu ('X,XX €') a tot l'HTML: {len(preus_trobats)}")
+    if preus_trobats:
+        print(f"      Exemples: {preus_trobats[:5]}")
+
     if articles:
         primer = articles[0]
         try:
