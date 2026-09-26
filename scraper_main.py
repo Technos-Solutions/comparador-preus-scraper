@@ -12,6 +12,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+# Nomes per a BonPreuEsclatScraper: Chrome real (headed) + Xvfb via
+# SeleniumBase per evitar la pantalla "Human Verification" que Bon Preu
+# mostra a Selenium en mode headless (verificat amb diagnostic aillat).
+from seleniumbase import Driver as SeleniumBaseDriver
+
 print("="*60)
 print(f"🚀 SCRAPER INICIAT - {datetime.now()}")
 print("="*60)
@@ -590,9 +595,24 @@ class CarrefourScraper:
 
 
 class BonPreuEsclatScraper:
+    # Bon Preu detecta Selenium en mode headless i mostra una pantalla
+    # "Human Verification" en lloc dels productes (verificat amb
+    # diagnostic aillat: HTML de nomes ~10KB, sense cap producte). Amb
+    # Chrome real (headed) + Xvfb via SeleniumBase (UC Mode) el bloqueig
+    # desapareix. A mes, despres d'uns minuts d'activitat continuada la
+    # sessio es degrada i comenca a retornar 0 productes a subcategories
+    # que no poden estar buides (no es deteccio de bot, es una altra
+    # cosa - possible limit intern del lloc); reiniciar el navegador quan
+    # es detecten 2 subcategories seguides a 0 recupera dades valides de
+    # seguida (verificat amb un run complet real).
+    ZEROS_SEGUITS_PER_REINICI = 2
+
     def __init__(self, categories_filtre=None):
         self.base_url = 'https://www.compraonline.bonpreuesclat.cat'
         self.productes = []
+        self.driver = None
+        self.zeros_seguits = 0
+        self.reinicis = 0
         # Si no s'especifica filtre, usar totes les categories
         if categories_filtre:
             self.categories_valides = categories_filtre
@@ -608,37 +628,28 @@ class BonPreuEsclatScraper:
                 'parafarm',     # troba 'parafarmacia'
             ]
 
-    def _crear_driver(self):
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--disable-extensions')
-        chrome_options.add_argument('--window-size=1920,1080')
-        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
-        chrome_options.binary_location = '/usr/bin/chromium-browser'
-        from selenium.webdriver.chrome.service import Service
-        service = Service('/usr/bin/chromedriver')
-        return webdriver.Chrome(service=service, options=chrome_options)
-
-    def descobrir_categories(self, driver):
-        print("  🔍 Descobrint categories principals...")
-        driver.get(self.base_url)
-        # El lloc mostrava els noms de categoria en castella (cookie es-ES),
-        # pero categories_valides busca paraules en catala ('begudes',
-        # 'congelats', 'ctics', 'neteja', 'per la llar', 'nadons'...), que
-        # no encaixaven amb els noms en castella ('Bebidas', 'Congelados',
-        # 'Lacteos y huevos'...). Verificat amb un run real (cookie=ca dona
-        # 'Begudes', 'Congelats', 'Lactics i ous', etc., que si que encaixen).
-        driver.add_cookie({
+    def _crear_driver_nou(self):
+        if self.driver:
+            try:
+                self.driver.quit()
+            except Exception:
+                pass
+        self.reinicis += 1
+        self.driver = SeleniumBaseDriver(uc=True, headed=True)
+        self.driver.uc_open_with_reconnect(self.base_url, reconnect_time=6)
+        time.sleep(3)
+        self.driver.add_cookie({
             "name": "language",
             "value": "ca",
             "domain": "www.compraonline.bonpreuesclat.cat"
         })
-        driver.refresh()
-        time.sleep(8)
-        links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
+        self.driver.refresh()
+        time.sleep(5)
+
+    def descobrir_categories(self):
+        print("  🔍 Descobrint categories principals...")
+        driver = self.driver
+        links = driver.find_elements('a[href*="/categories/"]')
         categories = []
         uuids_vistos = set()
         for link in links:
@@ -656,14 +667,15 @@ class BonPreuEsclatScraper:
         print(f"  ✅ {len(categories)} categories principals trobades")
         return categories
 
-    def get_subcategories(self, driver, url):
+    def get_subcategories(self, url):
         """Retorna subcategories directes d'una URL basant-se en el nombre de segments del path"""
+        driver = self.driver
         path_pare = url.split('/categories/')[-1].split('?')[0]
         segments_pare = [s for s in path_pare.split('/') if s]
         slug_pare = segments_pare[0]  # primer segment = nom de la categoria
         n_segments_pare = len(segments_pare)
 
-        links = driver.find_elements(By.CSS_SELECTOR, 'a[href*="/categories/"]')
+        links = driver.find_elements('a[href*="/categories/"]')
         subcats = []
         uuids_vistos = set()
         for link in links:
@@ -682,6 +694,17 @@ class BonPreuEsclatScraper:
                 uuids_vistos.add(uuid)
                 url_neta = f"{self.base_url}/categories/{path}"
                 subcats.append((text, url_neta))
+        return subcats
+
+    def get_subcategories_amb_reintent(self, url, prefix):
+        subcats = self.get_subcategories(url)
+        if not subcats and self.zeros_seguits + 1 >= self.ZEROS_SEGUITS_PER_REINICI:
+            print(f"{prefix}⚠️  0 subcategories i ja portava zeros seguits, reiniciant per comprovar...")
+            self._crear_driver_nou()
+            self.zeros_seguits = 0
+            self.driver.get(url)
+            time.sleep(3)
+            subcats = self.get_subcategories(url)
         return subcats
 
     def convertir_pes(self, pes_text):
@@ -703,22 +726,23 @@ class BonPreuEsclatScraper:
             return str(v) + ' l'
         return pes_text
 
-    def extreure_productes_pagina(self, driver, url):
+    def extreure_productes_pagina(self, url):
         """Extreu productes d'una URL amb scroll infinit"""
+        driver = self.driver
         count = 0
         try:
             driver.get(url)
             time.sleep(4)
             anterior = 0
-            for i in range(5):
+            for i in range(8):
                 driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-                time.sleep(1)
-                actual = len(driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]'))
+                time.sleep(1.5)
+                actual = len(driver.find_elements('h3[data-test="fop-title"]'))
                 if actual == anterior and i > 1:
                     break
                 anterior = actual
-            noms = driver.find_elements(By.CSS_SELECTOR, 'h3[data-test="fop-title"]')
-            preus = driver.find_elements(By.CSS_SELECTOR, 'span[data-test="fop-price"]')
+            noms = driver.find_elements('h3[data-test="fop-title"]')
+            preus = driver.find_elements('span[data-test="fop-price"]')
             for i in range(min(len(noms), len(preus))):
                 try:
                     nom = noms[i].get_attribute('innerText').strip()
@@ -747,77 +771,63 @@ class BonPreuEsclatScraper:
             print(f"      ❌ Error: {e}")
         return count
 
-    def scrape_recursiu(self, url, nivell=0, driver=None):
+    def scrape_recursiu(self, url, nivell=0):
         """Descobreix i rasca recursivament totes les subcategories reutilitzant el driver"""
         prefix = '  ' * (nivell + 2)
-        driver_propi = driver is None
         try:
-            if driver_propi:
-                driver = self._crear_driver()
-                # Cada driver nou necessita el cookie d'idioma (nomes es fixa
-                # per a la sessio/domini actual, no es global); sense aixo
-                # aquest driver carregava les pagines en castella igualment,
-                # encara que descobrir_categories() ja s'hagues fet amb un
-                # altre driver.
-                driver.get(self.base_url)
-                driver.add_cookie({
-                    "name": "language",
-                    "value": "ca",
-                    "domain": "www.compraonline.bonpreuesclat.cat"
-                })
+            self.driver.get(url)
+            time.sleep(3)
 
-            driver.get(url)
-            time.sleep(5)
-            for i in range(2):
-                driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-                time.sleep(2)
-
-            subcats = self.get_subcategories(driver, url)
+            subcats = self.get_subcategories_amb_reintent(url, prefix)
             nom_cat = url.split('/')[-2]
 
             if subcats:
                 print(f"{prefix}📂 {nom_cat}: {len(subcats)} subcategories")
+                self.zeros_seguits = 0
                 for nom_sub, url_sub in subcats:
-                    self.scrape_recursiu(url_sub, nivell + 1, driver=driver)
+                    self.scrape_recursiu(url_sub, nivell + 1)
             else:
-                # Categoria final — extreure productes amb el mateix driver
-                count = self.extreure_productes_pagina(driver, url)
+                # Categoria final — extreure productes
+                count = self.extreure_productes_pagina(url)
+                if count == 0:
+                    self.zeros_seguits += 1
+                    if self.zeros_seguits >= self.ZEROS_SEGUITS_PER_REINICI:
+                        print(f"{prefix}⚠️  {self.zeros_seguits} subcategories seguides a 0, reiniciant navegador i reintentant...")
+                        self._crear_driver_nou()
+                        self.zeros_seguits = 0
+                        count = self.extreure_productes_pagina(url)
+                if count > 0:
+                    self.zeros_seguits = 0
                 print(f"{prefix}└ {nom_cat}: {count} productes")
 
         except Exception as e:
             nom_cat = url.split('/')[-2]
             print(f"{prefix}❌ Error {nom_cat}: {e}")
-        finally:
-            if driver_propi and driver:
-                try:
-                    driver.quit()
-                except:
-                    pass
 
     def scrape_all(self):
-        print(f"\n🟡 Bon Preu / Esclat: extraient productes amb Selenium...")
-        # Descobrir categories principals
-        driver_descobrir = None
-        categories = []
+        print(f"\n🟡 Bon Preu / Esclat: extraient productes amb Chrome real (Xvfb)...")
         try:
-            driver_descobrir = self._crear_driver()
-            categories = self.descobrir_categories(driver_descobrir)
+            self._crear_driver_nou()
+            categories = self.descobrir_categories()
+
+            # Rasquejar cada categoria recursivament reutilitzant el mateix
+            # driver (amb reinicis automatics si cal, gestionats a
+            # scrape_recursiu).
+            for nom_cat, url_cat in categories:
+                print(f"  📂 Categoria principal: {nom_cat}")
+                self.zeros_seguits = 0
+                self.scrape_recursiu(url_cat, nivell=0)
+                time.sleep(2)
         except Exception as e:
-            print(f"  ❌ Error descobrint categories: {e}")
+            print(f"  ❌ Error: {e}")
         finally:
-            if driver_descobrir:
+            if self.driver:
                 try:
-                    driver_descobrir.quit()
+                    self.driver.quit()
                 except:
                     pass
 
-        # Rasquejar cada categoria recursivament
-        for nom_cat, url_cat in categories:
-            print(f"  📂 Categoria principal: {nom_cat}")
-            self.scrape_recursiu(url_cat, nivell=0)
-            time.sleep(2)
-
-        print(f"✅ Bon Preu / Esclat: {len(self.productes)} productes extrets")
+        print(f"✅ Bon Preu / Esclat: {len(self.productes)} productes extrets (reinicis de navegador: {self.reinicis})")
         return self.productes
 
 
