@@ -16,7 +16,7 @@ from nodriver.core.config import Config
 ruta_chrome = shutil.which('google-chrome') or shutil.which('google-chrome-stable')
 print(f"Chrome trobat a: {ruta_chrome}")
 
-config = Config(headless=False)
+config = Config(headless=False, sandbox=False)
 args = config()
 print(f"Arguments generats per nodriver.Config: {args}")
 print(f"Host/Port assignats: {config.host}:{config.port}")
@@ -48,30 +48,33 @@ proc = subprocess.Popen(
     stderr=subprocess.PIPE,
 )
 
-time.sleep(4)
-
-codi_sortida = proc.poll()
-print(f"\nCodi de sortida del proces (None = encara actiu): {codi_sortida}")
-
-if codi_sortida is not None:
-    stdout, stderr = proc.communicate()
-    print(f"\n--- STDOUT de Chrome ---\n{stdout.decode(errors='replace')}")
-    print(f"\n--- STDERR de Chrome ---\n{stderr.decode(errors='replace')}")
-else:
-    print("El proces de Chrome encara esta actiu. Provant de connectar-hi...")
+connectat = False
+for intent in range(15):
+    time.sleep(1)
+    codi_sortida = proc.poll()
+    if codi_sortida is not None:
+        print(f"\nEl proces ha acabat sol despres de {intent+1}s amb codi: {codi_sortida}")
+        break
     try:
-        r = requests.get(f"http://127.0.0.1:{port}/json/version", timeout=5)
-        print(f"Resposta de /json/version: {r.status_code} {r.text[:300]}")
+        r = requests.get(f"http://127.0.0.1:{port}/json/version", timeout=2)
+        print(f"\nConnexio OK despres de {intent+1}s: {r.status_code} {r.text[:300]}")
+        connectat = True
+        break
     except Exception as e:
-        print(f"Error connectant a /json/version: {e}")
-        proc.terminate()
-        time.sleep(1)
-        try:
-            stdout, stderr = proc.communicate(timeout=3)
-            print(f"\n--- STDOUT de Chrome (despres de terminate) ---\n{stdout.decode(errors='replace')}")
-            print(f"\n--- STDERR de Chrome (despres de terminate) ---\n{stderr.decode(errors='replace')}")
-        except Exception as e2:
-            print(f"No s'ha pogut llegir stdout/stderr: {e2}")
-    proc.kill()
+        print(f"Intent {intent+1}/15: encara no respon ({type(e).__name__})")
+
+if not connectat:
+    codi_sortida = proc.poll()
+    print(f"\nCodi de sortida final (None = encara actiu): {codi_sortida}")
+    proc.terminate()
+    time.sleep(1)
+    try:
+        stdout, stderr = proc.communicate(timeout=5)
+        print(f"\n--- STDOUT de Chrome ---\n{stdout.decode(errors='replace')}")
+        print(f"\n--- STDERR de Chrome ---\n{stderr.decode(errors='replace')}")
+    except Exception as e2:
+        print(f"No s'ha pogut llegir stdout/stderr: {e2}")
+
+proc.kill()
 
 print("\nFet.")
