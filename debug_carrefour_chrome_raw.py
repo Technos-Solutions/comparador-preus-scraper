@@ -15,6 +15,13 @@ from nodriver.core.config import Config
 
 ruta_chrome = shutil.which('google-chrome') or shutil.which('google-chrome-stable')
 print(f"Chrome trobat a: {ruta_chrome}")
+with open(ruta_chrome, 'rb') as f:
+    capcalera = f.read(200)
+print(f"Primers bytes del fitxer (per veure si es script o binari ELF): {capcalera!r}")
+if capcalera.startswith(b'#!'):
+    print("Es un script! Contingut sencer:")
+    with open(ruta_chrome, 'r', errors='replace') as f:
+        print(f.read())
 
 config = Config(headless=False, sandbox=False)
 args = config()
@@ -66,6 +73,22 @@ for intent in range(15):
 if not connectat:
     codi_sortida = proc.poll()
     print(f"\nCodi de sortida final (None = encara actiu): {codi_sortida}")
+
+    print(f"\n--- Arbre de processos (ps -ef --forest) ---")
+    try:
+        r = subprocess.run(['ps', '-ef', '--forest'], capture_output=True, text=True, timeout=5)
+        print(r.stdout)
+    except Exception as e:
+        print(f"Error executant ps: {e}")
+
+    print(f"\n--- Ports en escolta (ss -tlnp) ---")
+    try:
+        r = subprocess.run(['ss', '-tlnp'], capture_output=True, text=True, timeout=5)
+        print(r.stdout)
+        print(r.stderr)
+    except Exception as e:
+        print(f"Error executant ss: {e}")
+
     proc.terminate()
     time.sleep(1)
     try:
