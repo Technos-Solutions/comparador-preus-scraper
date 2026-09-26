@@ -10,7 +10,12 @@
 import asyncio
 import re
 import shutil
+import socket
+import subprocess
+import time
+import requests
 import nodriver as uc
+from nodriver.core.config import Config
 
 URL = 'https://www.carrefour.es/supermercado/la-despensa/cat20001/c?offset=0'
 
@@ -28,9 +33,43 @@ def trobar_chrome():
     return None
 
 
+def free_port():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('127.0.0.1', 0))
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+
+def llancar_chrome_i_esperar(ruta_chrome, port, timeout=20):
+    # nodriver.Browser.start() nomes espera ~2.5s abans de donar-ho per
+    # fallit (5 intents de 0.5s), pero en aquest entorn (GitHub Actions +
+    # Xvfb) Chrome triga uns 5s reals a obrir el port de depuracio.
+    # Ho llancem nosaltres a ma i esperem el temps que calgui, i despres
+    # connectem nodriver a aquest Chrome ja actiu (host/port -> connect_existing).
+    config = Config(headless=False, sandbox=False, browser_executable_path=ruta_chrome)
+    args = config()
+    args.append(f"--remote-debugging-host=127.0.0.1")
+    args.append(f"--remote-debugging-port={port}")
+    cmd = [ruta_chrome] + args
+    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    for intent in range(timeout):
+        time.sleep(1)
+        try:
+            r = requests.get(f"http://127.0.0.1:{port}/json/version", timeout=2)
+            if r.status_code == 200:
+                print(f"Chrome llest despres de {intent+1}s")
+                return proc
+        except Exception:
+            pass
+    raise RuntimeError(f"Chrome no ha respost despres de {timeout}s")
+
+
 async def main():
     ruta_chrome = trobar_chrome()
-    browser = await uc.start(headless=False, sandbox=False, browser_executable_path=ruta_chrome)
+    port = free_port()
+    proc_chrome = llancar_chrome_i_esperar(ruta_chrome, port)
+    browser = await uc.start(host='127.0.0.1', port=port, browser_executable_path=ruta_chrome, sandbox=False)
     page = await browser.get(URL)
     await asyncio.sleep(8)
 
@@ -88,6 +127,7 @@ async def main():
     print("Captura desada a carrefour_nodriver_debug.png i HTML a carrefour_nodriver_debug.html")
 
     browser.stop()
+    proc_chrome.kill()
 
 
 if __name__ == '__main__':
