@@ -15,7 +15,7 @@ URL = 'https://www.carrefour.es/supermercado/la-despensa/cat20001/c?offset=0'
 
 
 async def main():
-    browser = await uc.start(headless=False)
+    browser = await uc.start(headless=False, no_sandbox=True)
     page = await browser.get(URL)
     await asyncio.sleep(8)
 
