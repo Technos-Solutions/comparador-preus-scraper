@@ -71,7 +71,27 @@ async def main():
     proc_chrome = llancar_chrome_i_esperar(ruta_chrome, port)
     browser = await uc.start(host='127.0.0.1', port=port, browser_executable_path=ruta_chrome, sandbox=False)
     page = await browser.get(URL)
-    await asyncio.sleep(8)
+
+    # Cloudflare ("Just a moment...") normalment es resol sol via JS al cap
+    # d'uns segons si el navegador passa el repte. Comprovem activament el
+    # titol en lloc de fer una espera fixa curta, per donar-li tot el temps
+    # real que calgui (fins a 30s) abans de continuar.
+    max_espera = 30
+    interval = 2
+    titol_actual = await page.evaluate("document.title")
+    temps_esperat = 0
+    while 'just a moment' in (titol_actual or '').lower() and temps_esperat < max_espera:
+        await asyncio.sleep(interval)
+        temps_esperat += interval
+        titol_actual = await page.evaluate("document.title")
+        print(f"Esperant repte de Cloudflare... {temps_esperat}s, titol actual: {titol_actual!r}")
+
+    if 'just a moment' in (titol_actual or '').lower():
+        print(f"El repte de Cloudflare NO s'ha resolt despres de {max_espera}s")
+    else:
+        print(f"Repte de Cloudflare resolt despres de {temps_esperat}s, titol: {titol_actual!r}")
+
+    await asyncio.sleep(3)
 
     try:
         boto = await page.select('#onetrust-accept-btn-handler')
