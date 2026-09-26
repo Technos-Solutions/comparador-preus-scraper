@@ -1,0 +1,23 @@
+name: Debug Carrefour Chrome raw launch
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+      - name: Install Xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+      - name: Install dependencies
+        run: pip install nodriver requests
+      - name: Run debug_carrefour_chrome_raw
+        run: xvfb-run -a python debug_carrefour_chrome_raw.py
