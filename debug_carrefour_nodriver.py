@@ -9,13 +9,28 @@
 
 import asyncio
 import re
+import shutil
 import nodriver as uc
 
 URL = 'https://www.carrefour.es/supermercado/la-despensa/cat20001/c?offset=0'
 
 
+def trobar_chrome():
+    # browser-actions/setup-chrome posa el binari en una ruta que nodriver
+    # no sempre detecta automaticament; el busquem explicitament.
+    candidats = ['google-chrome', 'google-chrome-stable', 'chromium-browser', 'chromium', 'chrome']
+    for nom in candidats:
+        ruta = shutil.which(nom)
+        if ruta:
+            print(f"Chrome trobat amb shutil.which('{nom}'): {ruta}")
+            return ruta
+    print("No s'ha trobat cap binari de Chrome amb shutil.which")
+    return None
+
+
 async def main():
-    browser = await uc.start(headless=False, no_sandbox=True)
+    ruta_chrome = trobar_chrome()
+    browser = await uc.start(headless=False, no_sandbox=True, browser_executable_path=ruta_chrome)
     page = await browser.get(URL)
     await asyncio.sleep(8)
 
