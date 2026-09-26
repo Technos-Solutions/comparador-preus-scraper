@@ -30,7 +30,7 @@ def trobar_chrome():
 
 async def main():
     ruta_chrome = trobar_chrome()
-    browser = await uc.start(headless=False, no_sandbox=True, browser_executable_path=ruta_chrome)
+    browser = await uc.start(headless=False, sandbox=False, browser_executable_path=ruta_chrome)
     page = await browser.get(URL)
     await asyncio.sleep(8)
 
