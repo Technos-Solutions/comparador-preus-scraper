@@ -16,9 +16,11 @@ import re
 import time
 from seleniumbase import Driver
 
-BASE = 'https://www.carrefour.es/supermercado/frescos/cat20002/c'
+CATEGORIES = [
+    ('https://www.carrefour.es/supermercado/frescos/cat20002/c', 12),
+    ('https://www.carrefour.es/supermercado/la-despensa/cat20001/c', 3),
+]
 PAS_OFFSET = 24
-MAX_PAGINES = 8
 
 
 def superar_cloudflare(driver, url, max_intents=3):
@@ -48,15 +50,42 @@ def superar_cloudflare(driver, url, max_intents=3):
 
 
 def carregar_tota_la_pagina(driver):
+    # Scroll pas a pas (no saltant directament al final): la graella es
+    # renderitza a mesura que les targetes entren a la pantalla, i saltar
+    # al final deixava pagines amb nomes 13 de 24 targetes carregades.
+    estable = 0
     anterior = -1
-    for _ in range(15):
-        driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
-        time.sleep(1.5)
+    for _ in range(40):
+        driver.execute_script('window.scrollBy(0, 600);')
+        time.sleep(0.8)
         actual = len(driver.find_elements('div[data-origin="list"]'))
-        if actual == anterior:
-            break
+        al_final = driver.execute_script(
+            'return window.innerHeight + window.scrollY >= document.body.scrollHeight - 50;')
+        if actual == anterior and al_final:
+            estable += 1
+            if estable >= 2:
+                break
+        else:
+            estable = 0
         anterior = actual
     return anterior
+
+
+def classificar_contenidors(driver):
+    # Distingeix targetes de la graella principal de les de carrusels
+    # (recomanats, promocions...) que poden fer servir el mateix format.
+    return driver.execute_script("""
+        const cards = document.querySelectorAll('div[data-origin="list"]');
+        const compte = {};
+        cards.forEach(c => {
+            const ul = c.closest('ul');
+            const sec = c.closest('section, [class*="carousel"], [class*="slider"]');
+            const clau = (ul ? ul.className : 'sense-ul') + ' || ' +
+                         (sec ? (sec.className || sec.tagName) : 'sense-seccio');
+            compte[clau] = (compte[clau] || 0) + 1;
+        });
+        return compte;
+    """)
 
 
 def llegir_productes(driver):
@@ -81,65 +110,74 @@ def llegir_productes(driver):
     return productes
 
 
+def provar_categoria(driver, base, max_pagines, primera):
+    print(f"\n\n######## {base} ########")
+    vistos = {}
+    total_nous = 0
+    for pagina in range(max_pagines):
+        offset = pagina * PAS_OFFSET
+        url = f'{base}?offset={offset}'
+        print(f"\n=== offset={offset} ===")
+        if primera and pagina == 0:
+            driver.uc_open_with_reconnect(url, reconnect_time=6)
+        else:
+            driver.get(url)
+        time.sleep(3)
+
+        if not superar_cloudflare(driver, url):
+            print("⛔ No s'ha pogut superar Cloudflare despres de 3 intents, parant")
+            return
+
+        if primera and pagina == 0:
+            try:
+                driver.click('#onetrust-accept-btn-handler', timeout=8)
+                time.sleep(2)
+            except Exception:
+                pass
+
+        print(f"Titol: {driver.get_title()!r}")
+        if pagina == 0:
+            html = driver.get_page_source()
+            m = re.findall(r'(\d[\d\.]*)\s+(?:productos|resultados)', html)
+            print(f"Recompte de productes que mostra la pagina: {m[:5]}")
+
+        n = carregar_tota_la_pagina(driver)
+        productes = llegir_productes(driver)
+        errors = [p for p in productes if 'error' in p]
+        valids = [p for p in productes if p.get('nom') and p.get('preu')]
+        sense_nom = [p for p in productes if 'error' not in p and not p.get('nom')]
+        links_pagina = [p['link'] for p in valids]
+        duplicats_pagina = len(links_pagina) - len(set(links_pagina))
+        nous = [p for p in valids if p['link'] not in vistos]
+        repetits = [p for p in valids if p['link'] in vistos]
+        for p in valids:
+            vistos.setdefault(p['link'], offset)
+        total_nous += len(set(p['link'] for p in nous))
+
+        print(f"Targetes despres de scroll: {n}")
+        print(f"Contenidors: {classificar_contenidors(driver)}")
+        print(f"Valids (nom+preu): {len(valids)} | sense nom: {len(sense_nom)} | errors: {len(errors)}")
+        print(f"Duplicats dins la pagina: {duplicats_pagina}")
+        print(f"Nous: {len(nous)} | Repetits de pagines anteriors: {len(repetits)}")
+        for p in repetits[:6]:
+            print(f"   ↩ repetit (vist a offset={vistos[p['link']]}): {p['nom']!r}")
+        for p in valids[:2]:
+            print(f"   - {p['nom']!r} | {p['preu']} | {p['preu_unitat']} | marca={p['marca']!r}")
+        if sense_nom:
+            print(f"   Exemple sense nom: {sense_nom[0]}")
+
+        if not nous:
+            print("Cap producte nou: fi de la paginacio (o offset no funciona)")
+            break
+
+    print(f"\n🏁 Total productes unics ({max_pagines} pagines max): {total_nous}")
+
+
 def main():
     driver = Driver(uc=True, headed=True)
-    vistos_links = set()
-    total_nous = 0
     try:
-        for pagina in range(MAX_PAGINES):
-            offset = pagina * PAS_OFFSET
-            url = f'{BASE}?offset={offset}'
-            print(f"\n=== offset={offset} ===")
-            if pagina == 0:
-                driver.uc_open_with_reconnect(url, reconnect_time=6)
-            else:
-                driver.get(url)
-            time.sleep(3)
-
-            if not superar_cloudflare(driver, url):
-                print("⛔ No s'ha pogut superar Cloudflare despres de 3 intents, parant")
-                break
-
-            if pagina == 0:
-                try:
-                    driver.click('#onetrust-accept-btn-handler', timeout=8)
-                    time.sleep(2)
-                except Exception:
-                    pass
-
-            titol = driver.get_title()
-            print(f"Titol: {titol!r}")
-
-            if pagina == 0:
-                html = driver.get_page_source()
-                m = re.findall(r'(\d[\d\.]*)\s+(?:productos|resultados)', html)
-                print(f"Recompte de productes que mostra la pagina: {m[:5]}")
-
-            n = carregar_tota_la_pagina(driver)
-            productes = llegir_productes(driver)
-            errors = [p for p in productes if 'error' in p]
-            valids = [p for p in productes if p.get('nom') and p.get('preu')]
-            sense_nom = [p for p in productes if 'error' not in p and not p.get('nom')]
-            links_pagina = [p['link'] for p in valids]
-            duplicats_pagina = len(links_pagina) - len(set(links_pagina))
-            nous = [p for p in valids if p['link'] not in vistos_links]
-            vistos_links.update(links_pagina)
-            total_nous += len(nous)
-
-            print(f"Targetes despres de scroll: {n}")
-            print(f"Valids (nom+preu): {len(valids)} | sense nom: {len(sense_nom)} | errors: {len(errors)}")
-            print(f"Duplicats dins la pagina: {duplicats_pagina}")
-            print(f"Nous respecte pagines anteriors: {len(nous)}")
-            for p in valids[:3]:
-                print(f"   - {p['nom']!r} | {p['preu']} | {p['preu_unitat']} | marca={p['marca']!r}")
-            if sense_nom:
-                print(f"   Exemple sense nom: {sense_nom[0]}")
-
-            if not nous:
-                print("Cap producte nou: fi de la paginacio (o offset no funciona)")
-                break
-
-        print(f"\n🏁 Total productes unics a la categoria (fins a {MAX_PAGINES} pagines): {total_nous}")
+        for i, (base, max_pagines) in enumerate(CATEGORIES):
+            provar_categoria(driver, base, max_pagines, primera=(i == 0))
     finally:
         driver.quit()
 
