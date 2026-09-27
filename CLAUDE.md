@@ -79,6 +79,9 @@ Exemples:
 - ⏳ **Pendent:** Carrefour per subcategories (ara ~6.400; el catàleg en té ~16.000) + Mascotas i Parafarmacia
 - ⏳ **Pendent:** Front-end Streamlit (no iniciat)
 
+**Llista d'incidències pendents: [`INCIDENCIES.md`](INCIDENCIES.md).** Hi s'anota tot el que es detecti
+(qualitat de dades, scrapers, automatització) per resoldre-ho quan s'acabi la tasca en curs.
+
 ## Fitxers principals
 ```
 comparador-preus-scraper/
