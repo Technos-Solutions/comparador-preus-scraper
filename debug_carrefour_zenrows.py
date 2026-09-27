@@ -57,13 +57,16 @@ def prova(etiqueta, params_extra):
         ))
         print(f"  'data-test' que semblen relacionats amb productes: {rellevants[:30]}")
 
-        # Context al voltant d'un parell de preus, per veure si son
-        # productes reals o nomes banners/promocions.
-        for m in re.finditer(r'\d+,\d{2}\s*€', html):
-            inici = max(0, m.start() - 150)
-            fi = min(len(html), m.end() + 50)
-            print(f"  Context preu {m.group()!r}: ...{html[inici:fi]!r}...")
-            break
+        # Context al voltant de TOTS els preus trobats (no nomes el
+        # primer), per veure si n'hi ha algun que sigui un producte real
+        # enmig de text generic (banners, despeses d'enviament, etc.)
+        for i, m in enumerate(re.finditer(r'\d+,\d{2}\s*€', html)):
+            if i >= 15:
+                print(f"  ... ({len(preus_trobats) - 15} preus mes, no mostrats)")
+                break
+            inici = max(0, m.start() - 120)
+            fi = min(len(html), m.end() + 30)
+            print(f"  [{i}] Context preu {m.group()!r}: ...{html[inici:fi]!r}...")
 
         nom_fitxer = etiqueta.lower().replace(' ', '_')
         with open(f'carrefour_zenrows_{nom_fitxer}.html', 'w', encoding='utf-8') as f:
