@@ -6,6 +6,7 @@ on:
 jobs:
   debug:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,13 +20,5 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y xvfb
       - name: Install dependencies
         run: pip install seleniumbase
-      - name: Run debug_carrefour_seleniumbase_v2
-        run: xvfb-run -a python debug_carrefour_seleniumbase_v2.py
-      - name: Upload debug artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: carrefour-seleniumbase-v2-debug
-          path: |
-            carrefour_seleniumbase_v2.png
-            carrefour_seleniumbase_v2.html
+      - name: Run debug_carrefour_categoria
+        run: xvfb-run -a python debug_carrefour_categoria.py
