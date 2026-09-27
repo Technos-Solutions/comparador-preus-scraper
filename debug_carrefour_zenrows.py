@@ -76,20 +76,46 @@ def prova(etiqueta, params_extra):
         return False
 
 
+exit_final = False
+
 # PROVA 1: petició basica, nomes amb renderitzat JS (necessari perque
 # Carrefour carrega els productes via una crida interna a una API un cop
 # la pagina ja s'ha carregat al navegador).
-exit1 = prova('basica_js_render', {'js_render': 'true'})
+if not exit_final:
+    exit_final = prova('basica_js_render', {'js_render': 'true'})
 
 # PROVA 2: la prova basica ja evita Cloudflare (titol correcte, preus
 # trobats), pero potser la graella de productes encara no s'ha acabat
 # de carregar quan ZenRows fa la captura. Afegim una espera addicional.
-if not exit1:
-    prova('amb_espera', {'js_render': 'true', 'wait': '5000'})
+if not exit_final:
+    exit_final = prova('amb_espera', {'js_render': 'true', 'wait': '5000'})
 
 # PROVA 3: si encara no hi ha productes, afegim proxy premium
 # (residencial), que sol caldre per als llocs amb proteccio mes forta.
-if not exit1:
-    prova('premium_proxy', {'js_render': 'true', 'premium_proxy': 'true', 'wait': '5000'})
+if not exit_final:
+    exit_final = prova('premium_proxy', {'js_render': 'true', 'premium_proxy': 'true', 'wait': '5000'})
+
+# PROVA 4: potser la graella nomes es carrega si l'usuari fa scroll
+# (com fa el nostre scraper amb Selenium). ZenRows permet enviar
+# instruccions JS explicites (scroll + esperes) abans de capturar la
+# pagina final.
+if not exit_final:
+    import json
+    instructions = json.dumps([
+        {"wait": 2000},
+        {"scroll_y": 800},
+        {"wait": 2000},
+        {"scroll_y": 1600},
+        {"wait": 2000},
+        {"scroll_y": 2400},
+        {"wait": 3000},
+    ])
+    exit_final = prova('amb_scroll', {
+        'js_render': 'true',
+        'premium_proxy': 'true',
+        'js_instructions': instructions,
+    })
+
+print(f"\n🏁 Resultat final: {'PRODUCTES TROBATS' if exit_final else 'cap producte trobat en cap prova'}")
 
 print("\n✅ Fet.")
