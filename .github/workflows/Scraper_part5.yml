@@ -1,8 +1,6 @@
 name: Scraper Part 5 - Carrefour
 
 on:
-  schedule:
-    - cron: '0 18 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -26,3 +24,25 @@ jobs:
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: xvfb-run -a python scraper_main.py --part=5
+
+  # El normalitzador s'engega explicitament en acabar. Abans depenia de
+  # 'workflow_run', que GitHub no dispara quan la Part 5 la llança la Part 4
+  # (execucions iniciades amb GITHUB_TOKEN), i per aixo nomes funcionava
+  # quan la Part 5 s'executava pel seu propi horari.
+  trigger_normalitzador:
+    needs: scrape
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Trigger Normalitzador v2
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'normalitzador_v2.yml',
+              ref: 'master'
+            })

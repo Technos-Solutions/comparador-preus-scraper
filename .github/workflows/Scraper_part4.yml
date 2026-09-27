@@ -1,8 +1,6 @@
 name: Scraper Part 4 - Bon Preu Congelats+Lactics+Cura+Neteja+Llar+Mascotes+Nadons+Parafarmacia
 
 on:
-  schedule:
-    - cron: '0 13 * * 1'
   workflow_dispatch:
 
 jobs:
