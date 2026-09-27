@@ -2,7 +2,7 @@
 
 ## Descripció
 Scraper automàtic de preus de supermercats catalans. Executa scrapers setmanalment
-via GitHub Actions i guarda ~17.500 productes únics a Google Sheets.
+via GitHub Actions i guarda ~29.000 productes únics a Google Sheets.
 Objectiu final: app de comparació de preus entre supermercats.
 
 ## Repositori
@@ -12,24 +12,29 @@ https://github.com/Technos-Solutions/comparador-preus-scraper
 - GitHub: Technos-Solutions
 - Gmail: starstech.solution@gmail.com
 
-## Supermercats i estat dels scrapers
-| Supermercat    | Estat    | Productes aprox |
-|----------------|----------|-----------------|
-| Mercadona      | ✅ OK    | ~4.500          |
-| Bon Àrea       | ✅ OK    | ~3.000          |
-| Dia            | ✅ OK    | ~5.000          |
-| Bon Preu/Esclat| ✅ OK    | ~3.500          |
-| Carrefour      | ✅ OK    | ~1.500          |
+## Supermercats i estat dels scrapers (27/09/2026)
+| Supermercat    | Estat    | Productes aprox | Notes |
+|----------------|----------|-----------------|-------|
+| Mercadona      | ✅ OK    | (Parts 1+2: 14.581 en total) | |
+| Bon Àrea       | ✅ OK    | (inclòs a Parts 1+2) | |
+| Dia            | ✅ OK    | (inclòs a Parts 1+2) | |
+| Bon Preu/Esclat| ✅ OK    | ~8.000 únics    | SeleniumBase headed + Xvfb; reinici si 2 subcategories seguides a 0 |
+| Carrefour      | 🟡 Parcial | ~6.400        | SeleniumBase headed + Xvfb. Cloudflare bloqueja offset >= 1008: cal baixar a subcategories per arribar a ~16.000 |
+Total a `Preus`: 28.919 productes (27/09/2026).
 
-## Arquitectura GitHub Actions (5 workflows sequencials, encadenats amb `workflow_run`)
-- **Part 1** (`Scraper_part1.yml`, dilluns 04:00 UTC): Mercadona + Bon Àrea
-- **Part 2** (`Scraper_part2.yml`, dilluns 06:00 UTC): Dia
-- **Part 3** (`Scraper_part3.yml`, dilluns 08:00 UTC): Bon Preu — Frescos + Alimentació + Begudes
-- **Part 4** (`Scraper_part4.yml`, dilluns 13:00 UTC): Bon Preu — Congelats + Làctics + Cura + Neteja + Llar + Mascotes + Nadons + Parafarmàcia
-- **Part 5** (`Scraper_part5.yml`, dilluns 18:00 UTC): Carrefour
+## Arquitectura GitHub Actions (5 workflows en cadena, un sol cop cadascun)
+Només la **Part 1** té horari (dilluns 04:00 UTC). Cada part, en acabar amb èxit, llança
+la següent amb `workflow_dispatch`, i la Part 5 llança `normalitzador_v2.yml`:
+Part 1 → Part 2 → Part 3 → Part 4 → Part 5 → Normalitzador v2.
+(Fins al 27/09/2026 cada part tenia també el seu propi horari, i això feia que la Part 5
+s'executés fins a 5 cops cada dilluns, amb execucions solapades escrivint als mateixos fulls.
+No tornar a posar horaris a les Parts 2-5. Si la cadena es trenca, llançar a mà la part que falta.)
+- **Part 1** (`Scraper_part1.yml`): Mercadona + Bon Àrea
+- **Part 2** (`Scraper_part2.yml`): Dia
+- **Part 3** (`Scraper_part3.yml`): Bon Preu — Frescos + Alimentació + Begudes (~3h)
+- **Part 4** (`Scraper_part4.yml`): Bon Preu — Congelats + Làctics + Cura + Neteja + Llar + Mascotes + Nadons + Parafarmàcia (~3h)
+- **Part 5** (`Scraper_part5.yml`): Carrefour
 (dividit en 5 parts per respectar el límit de 6h per job de GitHub Actions; cada part crida `python scraper_main.py --part=N`)
-
-En acabar la Part 5, s'engega automàticament `normalitzador_v2.yml` (via `workflow_run`).
 
 ## Normalitzador de noms de productes (Fase 3 — ✅ implementat, en validació)
 Compara el mateix producte entre supermercats normalitzant el nom amb un LLM (no rapidfuzz, tot i que encara apareix a `requirements.txt`/algun workflow de debug).
@@ -66,12 +71,12 @@ Exemples:
 - GitHub Actions (automatització setmanal, 5 workflows encadenats)
 
 ## Estat actual del projecte
-- ✅ ~17.500 productes únics funcionant
+- ✅ ~29.000 productes únics funcionant (27/09/2026: Bon Preu i Carrefour arreglats)
 - ✅ Camps `quantitat` i `envas` afegits a tots els scrapers
 - ✅ Workflows ampliats a 5 parts (límit 6h) i encadenats automàticament
 - ✅ Normalitzador de noms (Fase 3) implementat amb LLM (v1 Groq, v2 Gemini Flash 2.0 amb caché) — en fase de validació, v1 i v2 conviuen en paral·lel (`Comparacions_v2` vs sortida v1)
 - ⏳ **Pendent:** Decidir/consolidar v1 vs v2 del normalitzador un cop validat
-- ⏳ **Pendent:** Millorar cobertura de Carrefour (~1.500 vs 5.000+ esperats)
+- ⏳ **Pendent:** Carrefour per subcategories (ara ~6.400; el catàleg en té ~16.000) + Mascotas i Parafarmacia
 - ⏳ **Pendent:** Front-end Streamlit (no iniciat)
 
 ## Fitxers principals

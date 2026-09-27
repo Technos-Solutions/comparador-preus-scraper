@@ -1,8 +1,6 @@
 name: Scraper Part 3 - Bon Preu Frescos+Alimentació+Begudes
 
 on:
-  schedule:
-    - cron: '0 8 * * 1'
   workflow_dispatch:
 
 jobs:
