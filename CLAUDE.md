@@ -101,5 +101,24 @@ comparador-preus-scraper/
 - `GEMINI_API_KEY` — per al normalitzador v2 (Gemini Flash)
 - `GROQ_API_KEY` — per al normalitzador v1 i el workflow de debug de Carrefour
 
+## Metodologia de treball (lliçons apreses — seguir sempre)
+1. **El que funciona no es toca.** Qualsevol canvi es prova primer amb un script de
+   diagnòstic aïllat (`debug_*.py` + workflow propi, només lectura). Només quan està
+   validat amb un run real es porta a `scraper_main.py`.
+2. **Validar amb el contingut real, no amb recomptes.** Abans de concloure que una web
+   ens bloqueja o que "no hi ha productes", mirar el títol de la pàgina, la mida de
+   l'HTML i exemples reals de noms i preus. Els selectors CSS caduquen quan el
+   supermercat canvia la web: un recompte de 0 pot ser un selector obsolet, no un
+   bloqueig. (Setembre 2026: es van perdre setmanes creient que Cloudflare bloquejava
+   Carrefour quan el problema era el selector `article[data-test="search-grid-result"]`,
+   que ja no existeix.)
+3. **Esgotar les opcions pròpies i gratuïtes abans d'anar a eines externes de pagament**
+   (ZenRows, Bright Data...): navegador real en lloc de headless, revisar selectors,
+   buscar l'API interna del lloc, reinicis de sessió.
+4. **Comprovar a fons cada resultat**, encara que sembli clar, per no fer voltes ni
+   repetir feina.
+5. Nota tècnica: `workflow_dispatch` només es pot llançar si el fitxer del workflow ja
+   existeix a `master` (encara que s'executi sobre una altra branca).
+
 ## Idioma de treball
 Sempre en català. Comentaris del codi en català.
