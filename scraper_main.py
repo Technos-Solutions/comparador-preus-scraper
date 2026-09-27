@@ -445,9 +445,30 @@ class BonAreaScraper:
 
 
 class CarrefourScraper:
+    # Setembre 2026 — validat amb diagnostics reals (debug_carrefour_categoria.py):
+    # - El Selenium headless queda aturat a "Just a moment..." de Cloudflare;
+    #   cal Chrome real (headed) + Xvfb via SeleniumBase. El repte de
+    #   Cloudflare apareix de forma intermitent (algunes pagines si, d'altres
+    #   no) i es resol clicant la casella (uc_gui_click_cf).
+    # - El selector antic article[data-test="search-grid-result"] ja no
+    #   existeix: cada producte es un <div data-origin="list" app_price="...">
+    #   amb el nom a l'atribut alt de la imatge.
+    # - Nomes es llegeix la graella principal (ul.product-card-list__list, 24
+    #   productes per pagina amb ?offset=N): fora de la graella hi ha blocs de
+    #   destacats/carrusels que es repeteixen a totes les pagines.
+    # - La graella es renderitza a mesura que es fa scroll: cal baixar pas a
+    #   pas, saltar al final deixava pagines amb nomes 13 de 24 productes.
+    PAS_OFFSET = 24
+    # El job de GitHub Actions te un limit de 6h i les dades nomes s'escriuen
+    # a Sheets al final: s'atura el scraping amb marge per poder-les desar.
+    TEMPS_MAXIM_SEGONS = 5 * 3600
+
     def __init__(self):
         self.base_url = 'https://www.carrefour.es/supermercado'
         self.productes = []
+        self.driver = None
+        self.reinicis = 0
+        self.inici = None
         self.categories = [
             ('frescos', 'cat20002'),
             ('la-despensa', 'cat20001'),
@@ -459,28 +480,80 @@ class CarrefourScraper:
             ('mascotas', 'cat20007'),
         ]
 
-    def _crear_driver(self):
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--disable-extensions')
-        chrome_options.add_argument('--window-size=1920,1080')
-        chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-        chrome_options.add_argument('--disable-web-security')
-        chrome_options.add_argument('--allow-running-insecure-content')
-        chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
-        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-        chrome_options.binary_location = '/usr/bin/chromium-browser'
-        from selenium.webdriver.chrome.service import Service
-        service = Service('/usr/bin/chromedriver')
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-        return driver
+    def _temps_esgotat(self):
+        return self.inici is not None and time.time() - self.inici > self.TEMPS_MAXIM_SEGONS
 
-    def scrape_pagina(self, driver, url):
+    def _superar_cloudflare(self, url, max_intents=3):
+        for intent in range(1, max_intents + 1):
+            # A les proves el repte no s'ha resolt mai sol esperant, sempre
+            # ha calgut clicar la casella: s'espera poc abans de clicar.
+            for _ in range(3):
+                if 'just a moment' not in self.driver.get_title().lower():
+                    return True
+                time.sleep(2)
+            try:
+                self.driver.uc_gui_click_cf()
+                time.sleep(4)
+            except Exception:
+                pass
+            if 'just a moment' not in self.driver.get_title().lower():
+                return True
+            print(f"    ⏳ Cloudflare persisteix (intent {intent}), reconnectant...")
+            self.driver.uc_open_with_reconnect(url, reconnect_time=8)
+            time.sleep(3)
+        return False
+
+    def _crear_driver_nou(self):
+        if self.driver:
+            try:
+                self.driver.quit()
+            except Exception:
+                pass
+        self.reinicis += 1
+        url = f'{self.base_url}/frescos/cat20002/c'
+        self.driver = SeleniumBaseDriver(uc=True, headed=True)
+        self.driver.uc_open_with_reconnect(url, reconnect_time=6)
+        time.sleep(3)
+        self._superar_cloudflare(url)
+        try:
+            self.driver.click('#onetrust-accept-btn-handler', timeout=8)
+            time.sleep(2)
+        except Exception:
+            pass
+
+    def _carregar_tota_la_pagina(self):
+        estable = 0
+        anterior = -1
+        for _ in range(40):
+            self.driver.execute_script('window.scrollBy(0, 600);')
+            time.sleep(0.8)
+            actual = len(self.driver.find_elements('ul.product-card-list__list div[data-origin="list"]'))
+            al_final = self.driver.execute_script(
+                'return window.innerHeight + window.scrollY >= document.body.scrollHeight - 50;')
+            if actual == anterior and al_final:
+                estable += 1
+                if estable >= 2:
+                    break
+            else:
+                estable = 0
+            anterior = actual
+
+    @staticmethod
+    def _parse_preu(text):
+        net = text.replace('€', '').replace('\xa0', '').replace(' ', '').replace('.', '').replace(',', '.')
+        return float(net)
+
+    def _total_categoria(self):
+        # Nomes com a cota superior per saber quan s'acaba la paginacio; si
+        # no es troba, s'atura igualment quan una pagina no dona res de nou.
+        import re
+        trobats = re.findall(r'(\d[\d\.]*)\s+(?:productos|resultados)', self.driver.get_page_source())
+        valors = [int(t.replace('.', '')) for t in trobats if t.replace('.', '').isdigit()]
+        return max(valors) if valors else None
+
+    def scrape_pagina(self, url):
+        """Retorna la llista de productes de la graella, o None si Cloudflare
+        no ha deixat passar."""
         import re
         def extreure_quantitat(nom):
             # Detecta "pack de N <paraula> de X <unitat>" (unidades, bolsitas,
@@ -508,89 +581,107 @@ class CarrefourScraper:
                 return f"{val} {unitat.lower()}"
             return ''
 
-        driver.get(url)
-        time.sleep(10)
-        for i in range(3):
-            driver.execute_script("window.scrollBy(0, 400);")
-            time.sleep(2)
+        self.driver.get(url)
+        time.sleep(3)
+        if not self._superar_cloudflare(url):
+            return None
+        self._carregar_tota_la_pagina()
 
-        # Carrefour va canviar el disseny de la pàgina (classes antigues
-        # 'product-card__title-link'/'product-card__price' ja no existeixen,
-        # per això el scraper donava 0 productes). Verificat amb l'HTML real
-        # de carrefour.es (inspecció manual, setembre 2026): ara cada
-        # producte és un <article data-test="search-grid-result"> que conté
-        # el nom a <a data-test="result-title"> i el preu a
-        # <div data-test="result-current-price">. Nom i preu s'extreuen dins
-        # del mateix article, no com dues llistes globals emparellades per
-        # índex, així que això també corregeix el desquadrament que causava
-        # preus incorrectes (cas de l'oli d'oliva Carbonell/Coosur).
-        articles = driver.find_elements(By.CSS_SELECTOR, 'article[data-test="search-grid-result"]')
+        targetes = self.driver.execute_script("""
+            const out = [];
+            document.querySelectorAll('ul.product-card-list__list div[data-origin="list"]').forEach(c => {
+                const img = c.querySelector('img.product-card__image');
+                const a = c.querySelector('a.product-card__media-link');
+                out.push({
+                    nom: img ? (img.getAttribute('alt') || '').trim() : '',
+                    preu: c.getAttribute('app_price') || '',
+                    link: a ? (a.getAttribute('href') || '') : ''
+                });
+            });
+            return out;
+        """)
         productes = []
-        for article in articles:
+        for t in targetes:
             try:
-                nom = article.find_element(By.CSS_SELECTOR, 'a[data-test="result-title"]').get_attribute('innerText').strip()
-                preu_text = article.find_element(By.CSS_SELECTOR, 'div[data-test="result-current-price"]').get_attribute('innerText').strip()
-                if not nom or not preu_text:
+                if not t['nom'] or not t['preu']:
                     continue
-                preu_text = preu_text.replace('€', '').replace(',', '.').replace('\xa0', '').strip()
-                preu = float(preu_text)
-                quantitat = extreure_quantitat(nom)
-                productes.append({'producte': nom, 'marca': 'Carrefour', 'supermercat': 'Carrefour', 'preu': preu, 'quantitat': quantitat, 'envas': ''})
-            except:
+                preu = self._parse_preu(t['preu'])
+                productes.append((t['link'] or t['nom'], {
+                    'producte': t['nom'], 'marca': 'Carrefour', 'supermercat': 'Carrefour',
+                    'preu': preu, 'quantitat': extreure_quantitat(t['nom']), 'envas': ''
+                }))
+            except Exception:
                 continue
         return productes
 
     def scrape_categoria(self, nom_cat, codi_cat, max_productes=100):
         print(f"  📂 Categoria: {nom_cat}")
+        vistos = set()
         count = 0
         offset = 0
-        noms_anteriors = set()
-        reintents = 0
+        total = None
         while count < max_productes:
-            driver = None
+            if self._temps_esgotat():
+                print("    ⏱️ Temps maxim esgotat, parant per poder desar les dades")
+                break
+            if total is not None and offset >= total:
+                break
+            url = f'{self.base_url}/{nom_cat}/{codi_cat}/c?offset={offset}'
             try:
-                driver = self._crear_driver()
-                url = f'{self.base_url}/{nom_cat}/{codi_cat}/c?offset={offset}'
-                productes = self.scrape_pagina(driver, url)
-
+                productes = self.scrape_pagina(url)
                 if not productes:
-                    if reintents < 2:
-                        reintents += 1
-                        print(f"    offset={offset} -> 0 productes, reintentant ({reintents}/2)...")
-                        time.sleep(15)
-                        continue
-                    else:
-                        print(f"    offset={offset} -> 0 productes, parant")
+                    # Una pagina de la graella buida enmig d'una categoria no
+                    # es normal: bloqueig o sessio degradada. Es reinicia el
+                    # navegador i es reintenta un cop abans de donar la
+                    # categoria per acabada.
+                    motiu = 'Cloudflare' if productes is None else '0 productes'
+                    print(f"    offset={offset} -> {motiu}, reiniciant navegador i reintentant...")
+                    self._crear_driver_nou()
+                    productes = self.scrape_pagina(url)
+                    if not productes:
+                        print(f"    offset={offset} -> segueix sense productes, fi de la categoria")
                         break
-
-                reintents = 0
-                noms_actuals = set(p['producte'] for p in productes)
-                if noms_actuals == noms_anteriors and offset > 0:
-                    print(f"    ⚠️ Pagina repetida detectada, parant")
-                    break
-                noms_anteriors = noms_actuals
-                self.productes.extend(productes)
-                count += len(productes)
-                print(f"    offset={offset} -> {len(productes)} productes")
-                offset += 24
+                if offset == 0:
+                    total = self._total_categoria()
+                    print(f"    Productes que indica la categoria: {total}")
             except Exception as e:
                 print(f"    ❌ Error offset={offset}: {e}")
                 break
-            finally:
-                if driver:
-                    try:
-                        driver.quit()
-                    except:
-                        pass
-            time.sleep(5)
+
+            nous = []
+            for link, p in productes:
+                if link not in vistos:
+                    vistos.add(link)
+                    nous.append(p)
+            if not nous:
+                print(f"    offset={offset} -> cap producte nou, fi de la paginacio")
+                break
+            self.productes.extend(nous)
+            count += len(nous)
+            print(f"    offset={offset} -> {len(nous)} productes")
+            offset += self.PAS_OFFSET
         print(f"    ✅ {count} productes extrets")
 
     def scrape_all(self, max_per_categoria=100):
-        print("\n🔴 Carrefour: extraient productes amb Selenium...")
-        for nom_cat, codi_cat in self.categories:
-            self.scrape_categoria(nom_cat, codi_cat, max_productes=max_per_categoria)
-            time.sleep(10)
-        print(f"✅ Carrefour: {len(self.productes)} productes extrets")
+        print("\n🔴 Carrefour: extraient productes amb Chrome real (Xvfb)...")
+        self.inici = time.time()
+        try:
+            self._crear_driver_nou()
+            for nom_cat, codi_cat in self.categories:
+                if self._temps_esgotat():
+                    print(f"  ⏱️ Temps maxim esgotat, no es fa la categoria {nom_cat}")
+                    continue
+                self.scrape_categoria(nom_cat, codi_cat, max_productes=max_per_categoria)
+        except Exception as e:
+            print(f"  ❌ Error: {e}")
+        finally:
+            if self.driver:
+                try:
+                    self.driver.quit()
+                except Exception:
+                    pass
+        minuts = (time.time() - self.inici) / 60
+        print(f"✅ Carrefour: {len(self.productes)} productes extrets en {minuts:.0f} min (reinicis de navegador: {self.reinicis})")
         return self.productes
 
 
