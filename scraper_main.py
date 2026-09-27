@@ -458,26 +458,42 @@ class CarrefourScraper:
     #   destacats/carrusels que es repeteixen a totes les pagines.
     # - La graella es renderitza a mesura que es fa scroll: cal baixar pas a
     #   pas, saltar al final deixava pagines amb nomes 13 de 24 productes.
+    # - Cloudflare bloqueja ("Sorry, you have been blocked") qualsevol pagina
+    #   a partir d'offset=1008: les categories de mes de ~1000 productes es
+    #   recorren baixant a les subcategories (debug_carrefour_arbre.py: 103
+    #   fulles, totes <= 1008, ~16.800 productes en total). Algunes
+    #   categories (Mascotas, Parafarmacia, Vinos) son portades sense graella
+    #   i tambe cal baixar-hi.
     PAS_OFFSET = 24
+    LIMIT_PAGINACIO = 1008
+    PROFUNDITAT_MAXIMA = 3
+    # Si les subcategories sumen menys d'aquest % del total de la mare (hi
+    # ha productes que no pengen de cap subcategoria, o una subcategoria no
+    # ha carregat), es recorre tambe la mare fins al limit de paginacio.
+    COBERTURA_MINIMA = 0.97
     # El job de GitHub Actions te un limit de 6h i les dades nomes s'escriuen
     # a Sheets al final: s'atura el scraping amb marge per poder-les desar.
     TEMPS_MAXIM_SEGONS = 5 * 3600
 
     def __init__(self):
-        self.base_url = 'https://www.carrefour.es/supermercado'
+        self.web = 'https://www.carrefour.es'
+        self.base_url = f'{self.web}/supermercado'
         self.productes = []
+        self.vistos = set()
         self.driver = None
         self.reinicis = 0
         self.inici = None
+        self.incidencies = []
         self.categories = [
             ('frescos', 'cat20002'),
             ('la-despensa', 'cat20001'),
             ('bebidas', 'cat20003'),
             ('drogueria-y-limpieza', 'cat20005'),
-            ('perfumeria-e-higiene', 'cat20004'),
+            ('cuidado-personal-e-higiene', 'cat20004'),
             ('congelados', 'cat21449123'),
             ('bebe', 'cat20006'),
             ('mascotas', 'cat20007'),
+            ('parafarmacia', 'cat20008'),
         ]
 
     def _temps_esgotat(self):
@@ -537,6 +553,7 @@ class CarrefourScraper:
             else:
                 estable = 0
             anterior = actual
+        return max(anterior, 0)
 
     @staticmethod
     def _parse_preu(text):
@@ -545,15 +562,35 @@ class CarrefourScraper:
 
     def _total_categoria(self):
         # Nomes com a cota superior per saber quan s'acaba la paginacio; si
-        # no es troba, s'atura igualment quan una pagina no dona res de nou.
+        # no es troba, s'atura igualment quan una pagina surt buida.
         import re
         trobats = re.findall(r'(\d[\d\.]*)\s+(?:productos|resultados)', self.driver.get_page_source())
         valors = [int(t.replace('.', '')) for t in trobats if t.replace('.', '').isdigit()]
         return max(valors) if valors else None
 
-    def scrape_pagina(self, url):
+    def _subcategories(self, cami_node):
+        """Links de categoria un nivell per sota del node actual
+        (cami_node + '/<segment>/catNNN/c'), en ordre d'aparicio."""
+        links = self.driver.execute_script("""
+            const out = [];
+            document.querySelectorAll('a[href]').forEach(a => {
+                let h = (a.getAttribute('href') || '').split('?')[0].split('#')[0];
+                h = h.replace(/^https?:\\/\\/www\\.carrefour\\.es/, '');
+                const m = h.match(/^(\\/supermercado\\/.+)\\/(cat\\d+)\\/c$/);
+                if (m) out.push([m[1], m[2], (a.innerText || '').trim().replace(/\\s+/g, ' ').slice(0, 50)]);
+            });
+            return out;
+        """)
+        fills = {}
+        for cami, codi, text in links:
+            if cami.startswith(cami_node + '/') and cami.count('/') == cami_node.count('/') + 1:
+                fills.setdefault(codi, (cami, text or cami.split('/')[-1]))
+        return fills
+
+    def scrape_pagina(self, url, esperats=None):
         """Retorna la llista de productes de la graella, o None si Cloudflare
-        no ha deixat passar."""
+        no ha deixat passar. Si se sap quants productes hi hauria d'haver i
+        n'han carregat menys, torna a fer scroll des de dalt un cop."""
         import re
         def extreure_quantitat(nom):
             # Detecta "pack de N <paraula> de X <unitat>" (unidades, bolsitas,
@@ -585,7 +622,13 @@ class CarrefourScraper:
         time.sleep(3)
         if not self._superar_cloudflare(url):
             return None
-        self._carregar_tota_la_pagina()
+        carregats = self._carregar_tota_la_pagina()
+        if esperats and 0 < carregats < esperats:
+            time.sleep(2)
+            self.driver.execute_script('window.scrollTo(0, 0);')
+            carregats = self._carregar_tota_la_pagina()
+            if carregats < esperats:
+                print(f"    ⚠️ Carrega parcial: {carregats} de {esperats} productes esperats")
 
         targetes = self.driver.execute_script("""
             const out = [];
@@ -614,64 +657,132 @@ class CarrefourScraper:
                 continue
         return productes
 
-    def scrape_categoria(self, nom_cat, codi_cat, max_productes=100):
-        print(f"  📂 Categoria: {nom_cat}")
-        vistos = set()
-        count = 0
-        offset = 0
-        total = None
-        while count < max_productes:
+    def _afegir(self, productes):
+        # Deduplicacio global per link: un mateix producte pot sortir a
+        # diverses categories (p. ex. Bebe i Parafarmacia > Bebe).
+        nous = 0
+        for link, p in productes:
+            if link not in self.vistos:
+                self.vistos.add(link)
+                self.productes.append(p)
+                nous += 1
+        return nous
+
+    def _paginar(self, url_base, total, sagnat, offset_inicial=PAS_OFFSET):
+        """Recorre les pagines d'un llistat a partir d'offset_inicial, sense
+        passar mai del limit de paginacio de Cloudflare."""
+        limit = min(total, self.LIMIT_PAGINACIO) if total else self.LIMIT_PAGINACIO
+        offset = offset_inicial
+        nous_totals = 0
+        while offset < limit:
             if self._temps_esgotat():
-                print("    ⏱️ Temps maxim esgotat, parant per poder desar les dades")
+                print(f"{sagnat}⏱️ Temps maxim esgotat, parant per poder desar les dades")
                 break
-            if total is not None and offset >= total:
-                break
-            url = f'{self.base_url}/{nom_cat}/{codi_cat}/c?offset={offset}'
+            url = f'{url_base}?offset={offset}'
+            esperats = min(self.PAS_OFFSET, limit - offset) if total else None
             try:
-                productes = self.scrape_pagina(url)
+                productes = self.scrape_pagina(url, esperats)
                 if not productes:
-                    # Una pagina de la graella buida enmig d'una categoria no
-                    # es normal: bloqueig o sessio degradada. Es reinicia el
-                    # navegador i es reintenta un cop abans de donar la
-                    # categoria per acabada.
-                    motiu = 'Cloudflare' if productes is None else '0 productes'
-                    print(f"    offset={offset} -> {motiu}, reiniciant navegador i reintentant...")
-                    self._crear_driver_nou()
-                    productes = self.scrape_pagina(url)
-                    if not productes:
-                        print(f"    offset={offset} -> segueix sense productes, fi de la categoria")
+                    # Una pagina buida abans del total indicat no es normal:
+                    # bloqueig o sessio degradada. Es reinicia el navegador i
+                    # es reintenta un cop abans de donar el llistat per acabat.
+                    if not total:
                         break
-                if offset == 0:
-                    total = self._total_categoria()
-                    print(f"    Productes que indica la categoria: {total}")
+                    motiu = 'Cloudflare' if productes is None else '0 productes'
+                    print(f"{sagnat}offset={offset} -> {motiu}, reiniciant navegador i reintentant...")
+                    self._crear_driver_nou()
+                    productes = self.scrape_pagina(url, esperats)
+                    if not productes:
+                        print(f"{sagnat}offset={offset} -> segueix sense productes, fi del llistat")
+                        self.incidencies.append(f"{url}: pagina buida")
+                        break
             except Exception as e:
-                print(f"    ❌ Error offset={offset}: {e}")
+                print(f"{sagnat}❌ Error offset={offset}: {e}")
+                self.incidencies.append(f"{url}: {e}")
                 break
-
-            nous = []
-            for link, p in productes:
-                if link not in vistos:
-                    vistos.add(link)
-                    nous.append(p)
-            if not nous:
-                print(f"    offset={offset} -> cap producte nou, fi de la paginacio")
-                break
-            self.productes.extend(nous)
-            count += len(nous)
-            print(f"    offset={offset} -> {len(nous)} productes")
+            nous_totals += self._afegir(productes)
             offset += self.PAS_OFFSET
-        print(f"    ✅ {count} productes extrets")
+        return nous_totals
 
-    def scrape_all(self, max_per_categoria=100):
-        print("\n🔴 Carrefour: extraient productes amb Chrome real (Xvfb)...")
+    def _obrir_node(self, url_base, cami):
+        """Primera pagina d'una categoria: productes, total indicat i
+        subcategories. El total nomes es coneix un cop oberta la pagina, aixi
+        que si la graella ha carregat parcialment es torna a llegir."""
+        productes = self.scrape_pagina(url_base)
+        if productes is None:
+            return None, None, {}
+        total = self._total_categoria()
+        fills = self._subcategories(cami)
+        esperats = min(self.PAS_OFFSET, total) if total else None
+        if esperats and 0 < len(productes) < esperats:
+            productes = self.scrape_pagina(url_base, esperats) or productes
+        return productes, total, fills
+
+    def scrape_node(self, cami, codi, nom, nivell=0):
+        """Recorre una categoria: si es pot paginar sencera (<= 1008
+        productes) la pagina; si no, baixa a les subcategories. Retorna el
+        nombre de productes que indica la categoria (per quadrar la suma)."""
+        sagnat = '  ' * (nivell + 1)
+        if self._temps_esgotat():
+            print(f"{sagnat}⏱️ Temps maxim esgotat, no es fa {nom}")
+            return 0
+        url_base = f'{self.web}{cami}/{codi}/c'
+        productes, total, fills = self._obrir_node(url_base, cami)
+        if not productes and total is None and not fills:
+            # Ni graella, ni total, ni subcategories: pagina que no ha
+            # carregat be (a l'arbre de prova li va passar a una categoria).
+            print(f"{sagnat}{nom}: pagina buida, reiniciant navegador i reintentant...")
+            self._crear_driver_nou()
+            productes, total, fills = self._obrir_node(url_base, cami)
+            if not productes and total is None and not fills:
+                print(f"{sagnat}⚠️ {nom}: segueix buida, es salta")
+                self.incidencies.append(f"{url_base}: categoria buida")
+                return 0
+
+        cal_baixar = total is None or total > self.LIMIT_PAGINACIO
+        if cal_baixar and fills and nivell < self.PROFUNDITAT_MAXIMA:
+            print(f"{sagnat}📂 {nom} [{codi}]: {total} productes -> {len(fills)} subcategories")
+            self._afegir(productes or [])
+            suma = 0
+            for sub_codi, (sub_cami, sub_nom) in fills.items():
+                suma += self.scrape_node(sub_cami, sub_codi, sub_nom, nivell + 1)
+            if total and suma < total * self.COBERTURA_MINIMA and not self._temps_esgotat():
+                print(f"{sagnat}↳ {nom}: les subcategories sumen {suma} de {total}, "
+                      f"es recorre tambe la categoria fins a {self.LIMIT_PAGINACIO}")
+                nous = self._paginar(url_base, total, sagnat + '  ')
+                print(f"{sagnat}↳ {nom}: {nous} productes nous del complement")
+            return total or suma
+
+        if total and total > self.LIMIT_PAGINACIO:
+            print(f"{sagnat}⚠️ {nom}: {total} productes i sense subcategories, "
+                  f"nomes es poden recorrer els primers {self.LIMIT_PAGINACIO}")
+            self.incidencies.append(f"{url_base}: {total} productes sense subcategories")
+        abans = len(self.productes)
+        self._afegir(productes or [])
+        self._paginar(url_base, total, sagnat + '  ')
+        print(f"{sagnat}✅ {nom} [{codi}]: {len(self.productes) - abans} productes nous (indica {total})")
+        return total or 0
+
+    def scrape_all(self):
+        print("\n🔴 Carrefour: extraient productes amb Chrome real (Xvfb), per subcategories...")
         self.inici = time.time()
+        suma = 0
         try:
             self._crear_driver_nou()
-            for nom_cat, codi_cat in self.categories:
+            for slug, codi in self.categories:
                 if self._temps_esgotat():
-                    print(f"  ⏱️ Temps maxim esgotat, no es fa la categoria {nom_cat}")
+                    print(f"  ⏱️ Temps maxim esgotat, no es fa la categoria {slug}")
                     continue
-                self.scrape_categoria(nom_cat, codi_cat, max_productes=max_per_categoria)
+                abans = len(self.productes)
+                try:
+                    suma += self.scrape_node(f'/supermercado/{slug}', codi, slug)
+                except Exception as e:
+                    # Un error en una categoria no ha de fer perdre les altres.
+                    print(f"  ❌ Error a {slug}: {e}")
+                    self.incidencies.append(f"{slug}: {e}")
+                    self._crear_driver_nou()
+                print(f"  📊 {slug}: {len(self.productes) - abans} productes nous "
+                      f"(acumulat {len(self.productes)})")
         except Exception as e:
             print(f"  ❌ Error: {e}")
         finally:
@@ -681,7 +792,12 @@ class CarrefourScraper:
                 except Exception:
                     pass
         minuts = (time.time() - self.inici) / 60
-        print(f"✅ Carrefour: {len(self.productes)} productes extrets en {minuts:.0f} min (reinicis de navegador: {self.reinicis})")
+        print(f"✅ Carrefour: {len(self.productes)} productes unics extrets en {minuts:.0f} min "
+              f"(els llistats n'indiquen {suma}; reinicis de navegador: {self.reinicis})")
+        if self.incidencies:
+            print(f"⚠️ Incidencies ({len(self.incidencies)}):")
+            for inc in self.incidencies:
+                print(f"   - {inc}")
         return self.productes
 
 
@@ -1132,7 +1248,7 @@ if __name__ == '__main__':
 
         tots = []
         scraper_carrefour = CarrefourScraper()
-        tots.extend(scraper_carrefour.scrape_all(max_per_categoria=9999))
+        tots.extend(scraper_carrefour.scrape_all())
 
         unics_part5 = desduplicar(tots)
         print(f"\n✅ Part 5: {len(unics_part5)} productes unics de Carrefour")
