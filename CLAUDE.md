@@ -2,7 +2,7 @@
 
 ## Descripció
 Scraper automàtic de preus de supermercats catalans. Executa scrapers setmanalment
-via GitHub Actions i guarda ~29.000 productes únics a Google Sheets.
+via GitHub Actions i guarda ~39.000 productes únics a Google Sheets.
 Objectiu final: app de comparació de preus entre supermercats.
 
 ## Repositori
@@ -19,8 +19,8 @@ https://github.com/Technos-Solutions/comparador-preus-scraper
 | Bon Àrea       | ✅ OK    | (inclòs a Parts 1+2) | |
 | Dia            | ✅ OK    | (inclòs a Parts 1+2) | |
 | Bon Preu/Esclat| ✅ OK    | ~8.000 únics    | SeleniumBase headed + Xvfb; reinici si 2 subcategories seguides a 0 |
-| Carrefour      | 🟡 Parcial | ~6.400        | SeleniumBase headed + Xvfb. Cloudflare bloqueja offset >= 1008: cal baixar a subcategories per arribar a ~16.000 |
-Total a `Preus`: 28.919 productes (27/09/2026).
+| Carrefour      | ✅ OK    | ~16.500 únics   | SeleniumBase headed + Xvfb. Cloudflare bloqueja offset >= 1008: es recorre per subcategories (~3h15) |
+Total a `Preus`: 38.990 productes (27/09/2026).
 
 ## Arquitectura GitHub Actions (5 workflows en cadena, un sol cop cadascun)
 Només la **Part 1** té horari (dilluns 04:00 UTC). Cada part, en acabar amb èxit, llança
@@ -33,7 +33,7 @@ No tornar a posar horaris a les Parts 2-5. Si la cadena es trenca, llançar a m�
 - **Part 2** (`Scraper_part2.yml`): Dia
 - **Part 3** (`Scraper_part3.yml`): Bon Preu — Frescos + Alimentació + Begudes (~3h)
 - **Part 4** (`Scraper_part4.yml`): Bon Preu — Congelats + Làctics + Cura + Neteja + Llar + Mascotes + Nadons + Parafarmàcia (~3h)
-- **Part 5** (`Scraper_part5.yml`): Carrefour
+- **Part 5** (`Scraper_part5.yml`): Carrefour, per subcategories (~3h15)
 (dividit en 5 parts per respectar el límit de 6h per job de GitHub Actions; cada part crida `python scraper_main.py --part=N`)
 
 ## Normalitzador de noms de productes (Fase 3 — ✅ implementat, en validació)
@@ -71,12 +71,11 @@ Exemples:
 - GitHub Actions (automatització setmanal, 5 workflows encadenats)
 
 ## Estat actual del projecte
-- ✅ ~29.000 productes únics funcionant (27/09/2026: Bon Preu i Carrefour arreglats)
+- ✅ ~39.000 productes únics funcionant (27/09/2026: Bon Preu i Carrefour arreglats; Carrefour complet per subcategories)
 - ✅ Camps `quantitat` i `envas` afegits a tots els scrapers
 - ✅ Workflows ampliats a 5 parts (límit 6h) i encadenats automàticament
 - ✅ Normalitzador de noms (Fase 3) implementat amb LLM (v1 Groq, v2 Gemini Flash 2.0 amb caché) — en fase de validació, v1 i v2 conviuen en paral·lel (`Comparacions_v2` vs sortida v1)
 - ⏳ **Pendent:** Decidir/consolidar v1 vs v2 del normalitzador un cop validat
-- ⏳ **Pendent:** Carrefour per subcategories (ara ~6.400; el catàleg en té ~16.000) + Mascotas i Parafarmacia
 - ⏳ **Pendent:** Front-end Streamlit (no iniciat)
 
 **Llista d'incidències pendents: [`INCIDENCIES.md`](INCIDENCIES.md).** Hi s'anota tot el que es detecti

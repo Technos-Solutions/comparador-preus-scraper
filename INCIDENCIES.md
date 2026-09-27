@@ -37,16 +37,21 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
 ## Scrapers
 
 7. **Carrefour: algunes pàgines carreguen parcialment** (16 de 24 productes, fins i tot
-   després de tornar a fer scroll). A la prova, a Refrescos se'n van perdre ~48 de 294.
+   després de tornar a fer scroll). Al run complet del 27/09 es van extreure 16.521 productes únics,
+   mentre que els llistats en sumen 16.988. Una part de la diferència són productes repetits en diverses
+   categories, però n'hi ha de perduts: Aperitivos 533/615, Platos Preparados 222/268, Panadería 359/419.
    Opcions: més espera, un segon reintent o reiniciar el navegador.
 
-8. **Carrefour: productes que no pengen de cap subcategoria.** A Conservas, les subcategories
-   sumen 1.091 i la categoria n'indica 1.194. Ara s'hi fa un "complement" recorrent la
-   categoria mare fins a 1.008 productes. Verificar amb el primer run complet que el
-   complement recupera la diferència.
+8. **Rellançar una part a mà conserva les files antigues.** Cada part llegeix el full temporal anterior,
+   hi afegeix els productes nous i treu duplicats quedant-se amb la **primera** aparició, que és la fila vella.
+   Si es rellança una part (p. ex. la Part 5 el 27/09, que ja tenia Carrefour d'un run anterior), els preus
+   dels productes repetits no s'actualitzen i els productes que ja no existeixen continuen a `Preus`.
+   A la cadena setmanal normal no passa, perquè la Part 3 reconstrueix `Preus_Temp` sense Carrefour.
+   Solució: abans de combinar, treure del full anterior les files del supermercat que la part torna a
+   extreure, o quedar-se amb la fila més nova.
 
-9. **Temps de la Part 5.** Amb subcategories s'espera ~3,5 h (el límit intern és de 5 h i
-   el del job de 6 h). Vigilar-ho: si el catàleg creix, caldrà dividir Carrefour en dues parts.
+9. **Temps de la Part 5.** El run complet del 27/09 va trigar 3h15 (el límit intern és de 5 h
+   i el del job de 6 h). Vigilar-ho: si el catàleg creix, caldrà dividir Carrefour en dues parts.
 
 ## Automatització i manteniment
 
@@ -89,3 +94,7 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
   a partir d'aquest offset. Ara es recorre per subcategories (commit 3354f7a).
 - 27/09/2026 — La Part 5 s'executava fins a 5 cops cada dilluns: cada part tenia horari propi
   i també la llançava la part anterior. Ara només té horari la Part 1 (commit bdab5a1).
+- 27/09/2026 — Primer run complet de Carrefour per subcategories: 16.521 productes únics en 3h15.
+  La Part 5 ha llançat el normalitzador sola. `Preus`: 38.990 productes.
+- 27/09/2026 — Conservas: les subcategories sumaven 1.091 de 1.194. El "complement" (recórrer també la
+  categoria mare) n'ha recuperat 70.
