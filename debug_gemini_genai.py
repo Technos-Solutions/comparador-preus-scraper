@@ -115,7 +115,9 @@ def main():
     print("\n######## Error amb clau falsa (forma de l'error al SDK nou) ########")
     from google import genai
     try:
-        genai.Client(api_key='clau-falsa-diagnostic').models.generate_content(model=MODEL, contents='hola')
+        # El client s'ha de guardar en una variable: si no, es tanca abans de fer la crida
+        client_fals = genai.Client(api_key='clau-falsa-diagnostic')
+        client_fals.models.generate_content(model=MODEL, contents='hola')
     except Exception as e:
         print(descriure_error(e))
 

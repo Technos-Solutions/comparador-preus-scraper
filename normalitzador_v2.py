@@ -143,9 +143,11 @@ QUOTA_DIARIA_ESGOTADA = False
 ERROR_COMPTE = None
 # Setembre 2026: amb els crèdits de prepagament esgotats Gemini respon
 # "429 Your prepayment credits are depleted..." i el 429 es confonia amb el
-# límit per minut (es perdien 6 min d'esperes per lot abans d'aturar-se)
+# límit per minut (es perdien 6 min d'esperes per lot abans d'aturar-se).
+# Amb el límit de despesa mensual del projecte superat respon
+# "429 Your project has exceeded its monthly spending cap..."
 SENYALS_ERROR_COMPTE = (
-    'prepayment', 'credits are depleted', 'billing',
+    'prepayment', 'credits are depleted', 'billing', 'spending cap', 'spend cap',
     'api key not valid', 'api_key_invalid', 'permission denied', 'permission_denied',
 )
 
