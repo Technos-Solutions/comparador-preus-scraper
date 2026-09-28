@@ -4,7 +4,22 @@ Incidències detectades per anar resolent un cop acabada la feina en curs.
 Seguir la metodologia de `CLAUDE.md`: primer diagnòstic aïllat, després producció.
 Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
 
-Última revisió: 27/09/2026
+Última revisió: 28/09/2026
+
+## 🔴 Urgent
+
+0. **Normalitzador v2 aturat: s'han acabat els crèdits de Gemini.** El run #31 (27/09) va rebre
+   `429 Your prepayment credits are depleted` de l'API de Gemini a tots els lots i es va aturar (bé)
+   al cap de 5 lots fallits. Hi ha 9.687 productes nous pendents de normalitzar (sobretot Carrefour).
+   Mentre no es resolgui, el normalitzador de cada setmana fallarà igual.
+   Cal decidir al compte de Google AI Studio: recarregar crèdits, o passar a una clau del nivell gratuït
+   (el script ja té caché i s'atura net si s'esgota la quota diària).
+   Millores al script:
+   - Detectar aquest error de facturació i aturar-se de seguida amb un missatge clar. Ara el tracta
+     com a "rate limit per minut" i perd ~30 min en esperes inútils.
+   - El log encara diu "Crides a Groq".
+   - El paquet `google.generativeai` ja no té suport; cal migrar a `google.genai`.
+   - `CLAUDE.md` diu "Gemini Flash 2.0", però el model configurat és `gemini-3.5-flash`.
 
 ## Dades (qualitat dels productes)
 
@@ -53,11 +68,18 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
 9. **Temps de la Part 5.** El run complet del 27/09 va trigar 3h15 (el límit intern és de 5 h
    i el del job de 6 h). Vigilar-ho: si el catàleg creix, caldrà dividir Carrefour en dues parts.
 
+18. **Bon Àrea tarda 4h20 i el 85% del que extreu són duplicats.** A la Part 1 del 28/09 es van
+    extreure 33.677 productes de Bon Àrea, però en quedaven 9.390 únics amb Mercadona inclòs: 28.779
+    duplicats. Recorre subcategories que es repeteixen (`_010`, `_020`...). Si s'evitessin, la Part 1
+    seria molt més curta.
+
+
 ## Automatització i manteniment
 
-10. **Primera setmana amb l'encadenament nou** (Part 1 → … → Part 5 → Normalitzador, un sol
-    cop cadascuna). Verificar dilluns 28/09 que cada part s'executa una sola vegada i que la
-    cadena arriba fins al normalitzador.
+10. **Primera setmana amb l'encadenament nou** (28/09, en curs). Fins ara, correcte: Part 1 → Part 2
+    → Part 3, un sol cop cadascuna. Nota: GitHub endarrereix l'horari de les 04:00 UTC unes 5-6 h
+    (la Part 1 va començar a les 10:24, igual que les setmanes anteriors), així que la Part 5 acaba
+    de matinada de dimarts. Pendent de verificar les Parts 4, 5 i el normalitzador.
 
 11. **Si una part falla, la cadena s'atura en silenci.** Cal un avís, per exemple un correu o
     una alerta quan una part falla o no s'executa.
