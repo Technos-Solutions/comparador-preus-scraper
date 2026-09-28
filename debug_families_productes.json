@@ -1,0 +1,2703 @@
+{
+ "font": "Preus_Temp del 27/09/2026 (run complet de les 5 parts)",
+ "families": {
+  "coca_cola": [
+   {
+    "supermercat": "Mercadona",
+    "producte": "Refresco Coca-Cola",
+    "preu": 3.8,
+    "quantitat": "4 l"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Refresco Coca-Cola zero azúcar",
+    "preu": 10.2,
+    "quantitat": "3.96 l"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Refresco Coca-Cola light",
+    "preu": 7.38,
+    "quantitat": "2.97 l"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Refresco Coca-Cola zero azúcar zero cafeína",
+    "preu": 10.2,
+    "quantitat": "3.96 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola light ampolla",
+    "preu": 2.15,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola light paq. 8 llaunes",
+    "preu": 7.6,
+    "quantitat": "264 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola sabor original ampolla",
+    "preu": 1.78,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola sabor original paq. 6 llaunes de 33 cl",
+    "preu": 5.55,
+    "quantitat": "198 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola sabor original paq. 8 llaunes de 33 cl",
+    "preu": 8.08,
+    "quantitat": "264 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola sabor original paq. de 2 ampolles de 1,25 l",
+    "preu": 3.46,
+    "quantitat": "2,5 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola sense cafeïna ampolla",
+    "preu": 2.51,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola sense cafeïna paq. 8 llaunes de 33 cl",
+    "preu": 8.08,
+    "quantitat": "264 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola zero sucre ampolla",
+    "preu": 1.55,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola zero sucre mini llauna paq. de 6 u. de 20 cl",
+    "preu": 4.15,
+    "quantitat": "120 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola zero sucre paq. de 2 ampolles de 1,25 l",
+    "preu": 3.0,
+    "quantitat": "2,5 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola zero sucre paq. de 8 llaunes de 33 cl",
+    "preu": 7.6,
+    "quantitat": "264 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola zero sucre zero cafeïna ampolla",
+    "preu": 2.15,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Coca Cola zero sucre zero cafeïna paq. de 8 llaunes de 33 cl",
+    "preu": 7.6,
+    "quantitat": "264 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Refresc normal Coca-cola paq. de 6 llaunes de 20 cl",
+    "preu": 4.37,
+    "quantitat": "120 cl"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola 2 x 2 L",
+    "preu": 4.09,
+    "quantitat": "2 x 2 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar 2 x 2 L",
+    "preu": 4.09,
+    "quantitat": "2 x 2 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar 12 x 330 ml",
+    "preu": 11.19,
+    "quantitat": "12 x 330 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola 330 ml",
+    "preu": 0.95,
+    "quantitat": "330 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar 330 ml",
+    "preu": 0.95,
+    "quantitat": "330 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar 2 x 1,25 L",
+    "preu": 3.0,
+    "quantitat": "2 x 1,25 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar zero cafeína 2 x 2 L",
+    "preu": 4.09,
+    "quantitat": "2 x 2 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar zero cafeína 330 ml",
+    "preu": 0.95,
+    "quantitat": "330 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola 1,25 L",
+    "preu": 1.55,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar 2 L",
+    "preu": 2.15,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola light 330 ml",
+    "preu": 0.95,
+    "quantitat": "330 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola mini zero azúcar 6 x 200 ml",
+    "preu": 4.19,
+    "quantitat": "6 x 200 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola mini 6 x 200 ml",
+    "preu": 4.19,
+    "quantitat": "6 x 200 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar zero cafeína 2 L",
+    "preu": 2.15,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar zero cafeína 2 x 1,25 L",
+    "preu": 3.0,
+    "quantitat": "2 x 1,25 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola light 2 L",
+    "preu": 2.19,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola sin cafeína 330 ml",
+    "preu": 0.95,
+    "quantitat": "330 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola 2 x 1,25 L",
+    "preu": 3.0,
+    "quantitat": "2 x 1,25 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar zero cafeína 1,25 L",
+    "preu": 1.55,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar lima 330 ml",
+    "preu": 0.99,
+    "quantitat": "330 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar 1,25 L",
+    "preu": 1.55,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola sin cafeína 2 L",
+    "preu": 2.15,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar 500 ml",
+    "preu": 1.5,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola 500 ml",
+    "preu": 1.5,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola light 1,25 L",
+    "preu": 1.59,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar zero cafeína 500 ml",
+    "preu": 1.5,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola 12 x 330 ml",
+    "preu": 11.15,
+    "quantitat": "12 x 330 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Coca-Cola zero azúcar zero cafeína 12 x 330 ml",
+    "preu": 10.2,
+    "quantitat": "12 x 330 ml"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COCA-COLA Refresc de cola sabor original en ampolla",
+    "preu": 1.6,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COCA-COLA Refresc de cola en ampolla de vidre",
+    "preu": 2.64,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COCA-COLA Refresc de cola sabor original en llauna",
+    "preu": 21.12,
+    "quantitat": "24 x 0.33L"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COCA-COLA Refresc de cola Zero sucre llima en llauna",
+    "preu": 0.95,
+    "quantitat": "330 ml"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COCA-COLA Refresc de cola Zero sucre llima en ampolla",
+    "preu": 1.55,
+    "quantitat": "1.25 l"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COCA-COLA Refresc de cola zero sucre en ampolla",
+    "preu": 3.8,
+    "quantitat": "2 x 2L"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COCA-COLA Refresc de cola zero sucre mini en ampolla de vidre",
+    "preu": 4.6,
+    "quantitat": "4 x 0.2L"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COCA-COLA Refresc de cola sense cafeïna en ampolla",
+    "preu": 2.52,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "JACK DANIEL'S Whisky amb Coca-Cola en llauna",
+    "preu": 2.79,
+    "quantitat": "330 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola botella 1,25 l.",
+    "preu": 1.52,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar botella 1,25 l.",
+    "preu": 1.55,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola pack de 2 botellas de 2 l.",
+    "preu": 4.09,
+    "quantitat": "4 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca-Cola original lata 50 cl.",
+    "preu": 1.58,
+    "quantitat": "50 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca-Cola zero azúcar lata 50 cl.",
+    "preu": 1.58,
+    "quantitat": "50 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar pack 2 botellas 2 l.",
+    "preu": 4.09,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola sin cafeína lata 33 cl.",
+    "preu": 0.95,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar pack 12 latas 33 cl.",
+    "preu": 11.13,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola pack 12 latas 33 cl.",
+    "preu": 11.15,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar sin cafeína pack 2 botellas 2 l.",
+    "preu": 4.09,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar pack 24 latas 33 cl.",
+    "preu": 19.68,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola pack 24 latas 33 cl.",
+    "preu": 19.68,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar sabor cereza lata 33 cl.",
+    "preu": 0.99,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar sabor limón lata 33 cl.",
+    "preu": 0.99,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca-Cola zero azúcar lima lata 33 cl.",
+    "preu": 0.99,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar zero cafeína pack 12 latas 33 cl.",
+    "preu": 11.13,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca-Cola mini pack 10 latas 20 cl.",
+    "preu": 7.49,
+    "quantitat": "20 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca-Cola zero mini pack 10 latas 20 cl.",
+    "preu": 7.49,
+    "quantitat": "20 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola pack 6 botellas 2 l.",
+    "preu": 10.98,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar pack 4 botellas 2 l.",
+    "preu": 7.52,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola pack 4 botellas 2 l.",
+    "preu": 7.52,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Whisky Jack Daniel’s con Coca-Cola lata 33 cl.",
+    "preu": 3.09,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola light sin cafeína lata 33 cl.",
+    "preu": 0.95,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar pack 6 botellas 2 l.",
+    "preu": 10.98,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar zero cafeína mini pack 10 latas 20 cl.",
+    "preu": 7.49,
+    "quantitat": "20 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar zero cafeina pack 4 botellas 2 l.",
+    "preu": 7.52,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar zero cafeína pack 24 latas 33 cl.",
+    "preu": 19.68,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar zero cafeína pack 2 botellas 1,25 l.",
+    "preu": 3.05,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola pack de 4 botellas de 20 cl.",
+    "preu": 4.69,
+    "quantitat": "80 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola sin cafeína botella 2 l.",
+    "preu": 2.15,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola light pack 9 latas 33 cl.",
+    "preu": 8.35,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola botella 1 l.",
+    "preu": 2.65,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola pack 4 botellas 1,25 l.",
+    "preu": 6.08,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola pack 4 botellas 50 cl.",
+    "preu": 5.48,
+    "quantitat": "50 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Whisky Jack Daniel’s con Coca-Cola Zero azúcar lata 33 cl.",
+    "preu": 3.15,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar pack 4 botellas 50 cl.",
+    "preu": 5.48,
+    "quantitat": "50 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar pack 4 botellas 1,25 l.",
+    "preu": 6.1,
+    "quantitat": "1,25 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola sabor vanilla lata 33 cl.",
+    "preu": 2.29,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola light pack 2 botellas 2 l.",
+    "preu": 4.09,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola light pack 24 latas 33 cl.",
+    "preu": 19.68,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola light pack 4 botellas 2 l.",
+    "preu": 7.52,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar botella 1 l.",
+    "preu": 2.65,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola zero azúcar pack 4 botellas 20 cl.",
+    "preu": 4.69,
+    "quantitat": "20 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Coca Cola light mini pack 6 latas 20 cl.",
+    "preu": 3.9,
+    "quantitat": "20 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Ron Bacardí con Coca Cola lata 25 cl.",
+    "preu": 2.95,
+    "quantitat": "25 cl"
+   }
+  ],
+  "nutella": [
+   {
+    "supermercat": "Mercadona",
+    "producte": "Crema al cacao con avellanas Nutella",
+    "preu": 4.0,
+    "quantitat": "350 g"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Galetes Nutella biscuits 22 u.",
+    "preu": 4.45,
+    "quantitat": "304 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Galletas rellenas de Nutella 166 g",
+    "preu": 2.79,
+    "quantitat": "166 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Crema de cacao con avellanas Nutella 350 g",
+    "preu": 4.0,
+    "quantitat": "350 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Crema de cacao con avellanas Nutella 200 g",
+    "preu": 2.99,
+    "quantitat": "200 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "NUTELLA Bastonets de pa amb crema d'avellanes",
+    "preu": 1.89,
+    "quantitat": "52 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "NUTELLA Galetes farcides de xocolata",
+    "preu": 1.09,
+    "quantitat": "124 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "NUTELLA Creps de Nutella",
+    "preu": 5.95,
+    "quantitat": "240 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "NUTELLA Croissants farcits de crema d'avellana i cacau",
+    "preu": 4.49,
+    "quantitat": "4 x 0.085kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Helado sabor avellana Nutella Ferrero 470 ml.",
+    "preu": 6.09,
+    "quantitat": "470 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Croissant relleno Nutella 340 g.",
+    "preu": 5.09,
+    "quantitat": "340 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Crepe rellena de crema para untar de avellanas y cacao Nutella 240 g.",
+    "preu": 6.59,
+    "quantitat": "240 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Muffins relleno Nutella 4 ud.",
+    "preu": 5.55,
+    "quantitat": "4 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Galletas rellenas de crema de chocolate Nutella biscuits 166 g.",
+    "preu": 3.09,
+    "quantitat": "166 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Galletas rellenas de crema de avellanas y cacao Nutella 304 g.",
+    "preu": 4.89,
+    "quantitat": "304 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Barritas Nutella B-ready pack de 6 unidades de 30 g.",
+    "preu": 2.89,
+    "quantitat": "180 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Crema de cacao con avellanas Nutella sin gluten 200 g.",
+    "preu": 3.09,
+    "quantitat": "200 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Crema de cacao con avellanas Nutella sin gluten 450 g.",
+    "preu": 6.74,
+    "quantitat": "450 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Crema de cacao con avellanas Nutella 1 kg.",
+    "preu": 14.42,
+    "quantitat": "1 kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Crema de untar vegana con avellanas y cacao Nutella Plant Based sin gluten 350 g.",
+    "preu": 5.05,
+    "quantitat": "350 g"
+   }
+  ],
+  "cola_cao": [
+   {
+    "supermercat": "Mercadona",
+    "producte": "Cacao soluble ColaCao original",
+    "preu": 15.5,
+    "quantitat": "2.2 kg"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Batido de chocolate ColaCao Energy",
+    "preu": 2.85,
+    "quantitat": "752 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Batido de cacao energy Colacao 4 x 188 ml",
+    "preu": 2.85,
+    "quantitat": "4 x 188 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Batido de chocolate shake ColaCao 200 ml",
+    "preu": 1.75,
+    "quantitat": "200 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "ColaCao 1.1 Kg",
+    "preu": 9.99,
+    "quantitat": "1.1 kg"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "ColaCao 383 g",
+    "preu": 5.0,
+    "quantitat": "383 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "ColaCao 0% azúcares añadidos 325 g",
+    "preu": 5.79,
+    "quantitat": "325 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "ColaCao 760 g",
+    "preu": 7.0,
+    "quantitat": "760 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COLACAO Galetes de xocolata banyades amb ColaCao",
+    "preu": 2.99,
+    "quantitat": "157 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COLACAO Cacau soluble en pols 0% sucre amb fibra",
+    "preu": 5.39,
+    "quantitat": "300 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COLACAO Cacau soluble en pols",
+    "preu": 3.4,
+    "quantitat": "6 per paquet"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COLACAO Cacau soluble sense gluten",
+    "preu": 5.49,
+    "quantitat": "383 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "COLACAO Cacau soluble",
+    "preu": 7.99,
+    "quantitat": "760 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Batido de cacao Shake Cola Cao 200 ml.",
+    "preu": 1.83,
+    "quantitat": "200 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Batido de cacao Shake Cola Cao sin azúcar añadido 200 ml.",
+    "preu": 1.83,
+    "quantitat": "200 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Batido de cacao Energy Cola Cao pack de 9 botellas de 188 ml.",
+    "preu": 5.89,
+    "quantitat": "1692 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "ColaCao energy sin gluten y sin azúcar añadido pack 4 botellas 188 ml.",
+    "preu": 3.15,
+    "quantitat": "188 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Galleta bañada en chocolate ColaCao 157 g.",
+    "preu": 3.25,
+    "quantitat": "157 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Mini galletas bañadas en chocolate ColaCao 100 g.",
+    "preu": 2.15,
+    "quantitat": "100 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble Cola Cao Cero sin azúcar añadido 325 g.",
+    "preu": 5.79,
+    "quantitat": "325 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble Cola Cao 4,3 kg.",
+    "preu": 32.4,
+    "quantitat": "4,3 kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble con fibra Cola Cao Cero sin azúcar añadido 300 g.",
+    "preu": 6.09,
+    "quantitat": "300 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble Cola Cao Original 1,5 kg.",
+    "preu": 13.49,
+    "quantitat": "1,5 kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble en sobres Cola Cao pack de 6 unidades de 18 g.",
+    "preu": 3.69,
+    "quantitat": "108 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble original Cola Cao 900 g.",
+    "preu": 8.25,
+    "quantitat": "900 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble instantáneo Cola Cao Turbo 375 g.",
+    "preu": 5.65,
+    "quantitat": "375 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble puro Cola Cao sin gluten y sin azúcar añadido 250 g.",
+    "preu": 7.55,
+    "quantitat": "250 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble original Cola Cao 2,5 kg.",
+    "preu": 19.09,
+    "quantitat": "2,5 kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble Colacao Original pack 2 unidades de 1,5 Kg.",
+    "preu": 21.8,
+    "quantitat": "1,5 kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble instantáneo Cola Cao Turbo 1 kg.",
+    "preu": 9.45,
+    "quantitat": "1 kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble ColaCao Turbo 2,2 kg.",
+    "preu": 19.89,
+    "quantitat": "2,2 kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble Cola Cao Noir sin azúcar añadido 300 g.",
+    "preu": 7.35,
+    "quantitat": "300 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble Cola Cao Cero sin azúcar añadido 700 g.",
+    "preu": 12.15,
+    "quantitat": "700 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble con fibra Cola Cao Cero sin azúcar añadido 1,3 kg.",
+    "preu": 19.05,
+    "quantitat": "1,3 kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble Cola Cao 3,9 kg.",
+    "preu": 28.0,
+    "quantitat": "3,9 kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble con frutas y cereales Cola Cao Complet 750 g.",
+    "preu": 11.09,
+    "quantitat": "750 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cacao soluble original Cola Cao  5,9 kg.",
+    "preu": 36.9,
+    "quantitat": "5,9 kg"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Copos de avena solubles con cacao naturalCola Cao Avenacao  sin azúcar añadido 300 g",
+    "preu": 8.05,
+    "quantitat": "300 g"
+   }
+  ],
+  "llet_sencera": [
+   {
+    "supermercat": "Mercadona",
+    "producte": "Leche entera Hacendado",
+    "preu": 5.76,
+    "quantitat": "6 l"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Leche entera Asturiana",
+    "preu": 11.82,
+    "quantitat": "9 l"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Leche entera sin lactosa Hacendado",
+    "preu": 6.18,
+    "quantitat": "6 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Llet sencera",
+    "preu": 1.77,
+    "quantitat": "1,5 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Llet sencera paq. de 6 brics",
+    "preu": 5.94,
+    "quantitat": "6 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Llet sencera paq. 3 u. de 200 ml",
+    "preu": 1.07,
+    "quantitat": "600 ml"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Llet sencera sense lactosa paq. 3 u. de 200 ml",
+    "preu": 1.12,
+    "quantitat": "600 ml"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Llet sencera ATO paq. de 6 brics",
+    "preu": 7.68,
+    "quantitat": "6 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Llet sencera Pascual paq. de 6 brics",
+    "preu": 8.34,
+    "quantitat": "6 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Dia Láctea pack 6 x 1 L",
+    "preu": 5.76,
+    "quantitat": "6 x 1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera pasteurizada Dia Láctea 1 L",
+    "preu": 1.15,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Dia Láctea 1 L",
+    "preu": 0.96,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Dia Láctea 3 x 200 ml",
+    "preu": 0.92,
+    "quantitat": "3 x 200 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Asturiana pack 6 x 1.5 L",
+    "preu": 11.34,
+    "quantitat": "6 x 1.5 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Asturiana 1 L",
+    "preu": 1.29,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Dia Láctea pack 6 x 1.5 L",
+    "preu": 9.36,
+    "quantitat": "6 x 1.5 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Asturiana botella 1.5 L",
+    "preu": 1.89,
+    "quantitat": "1.5 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Pascual pack 6 x 1 L",
+    "preu": 8.34,
+    "quantitat": "6 x 1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Asturiana pack 6 x 2.2 L",
+    "preu": 16.14,
+    "quantitat": "6 x 2.2 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Dia Láctea botella 1.5 L",
+    "preu": 1.56,
+    "quantitat": "1.5 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Lauki pack 6 x 1 L",
+    "preu": 6.9,
+    "quantitat": "6 x 1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Celta 1 L",
+    "preu": 1.09,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Pascual 1 L",
+    "preu": 1.39,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Lauki 1 L",
+    "preu": 1.15,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera Madriz 1 L",
+    "preu": 1.29,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera sin lactosa Dia Láctea pack 6 x 1 L",
+    "preu": 6.18,
+    "quantitat": "6 x 1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera sin lactosa Dia Láctea 1 L",
+    "preu": 1.03,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera sin lactosa Asturiana pack 6 x 1 L",
+    "preu": 8.52,
+    "quantitat": "6 x 1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera calcio Dia Láctea pack 6 x 1 L",
+    "preu": 7.02,
+    "quantitat": "6 x 1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera calcio Puleva 1 L",
+    "preu": 1.29,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera calcio Dia Láctea 1 L",
+    "preu": 1.17,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Leche entera sin lactosa Asturiana 1 L",
+    "preu": 1.42,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "ASTURIANA Llet sencera 6x1,5L en ampolla",
+    "preu": 11.82,
+    "quantitat": "6 x 1.5L"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "CASTILLO Llet sencera 6x1,5L en ampolla",
+    "preu": 10.74,
+    "quantitat": "6 x 1.5L"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "ATO Llet sencera 6x1,5L en ampolla",
+    "preu": 11.7,
+    "quantitat": "6 x 1.5L"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "VERNTALLAT Llet sencera Km0 en cartró",
+    "preu": 1.44,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "VERNTALLAT Llet sencera Km0 6x1L en cartró",
+    "preu": 8.64,
+    "quantitat": "6 x 1L"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Carrefour brik 1 l.",
+    "preu": 0.96,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Central Lechera Asturiana brik 1 l.",
+    "preu": 1.24,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Président brik 1 l.",
+    "preu": 1.02,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Pascual brik 1 l.",
+    "preu": 1.29,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera brik 1 l.",
+    "preu": 0.94,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Carrefour sin lactosa brik 1 l.",
+    "preu": 1.03,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera fresca Carrefour botella 1 l.",
+    "preu": 1.15,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Central Lechera Asturiana botella 1,5 l.",
+    "preu": 1.99,
+    "quantitat": "1,5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Carrefour botella 1,5 l.",
+    "preu": 1.56,
+    "quantitat": "1,5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera ecológica Carrefour Bio brik 1 l.",
+    "preu": 1.26,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Carrefour pack de 6 briks de 200 ml.",
+    "preu": 1.71,
+    "quantitat": "1200 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera con calcio Carrefour brik 1 l.",
+    "preu": 1.17,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Simpl 1 l.",
+    "preu": 0.94,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Lauki brik 1 l.",
+    "preu": 1.12,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera fresca Puleva botella 1,5 l.",
+    "preu": 2.69,
+    "quantitat": "1,5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Central Lechera Asturiana sin lactosa brik 1 l.",
+    "preu": 1.42,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Central Lechera Asturiana botella 2,2 l.",
+    "preu": 2.65,
+    "quantitat": "2,2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Vita Calcio Puleva brik 1 l.",
+    "preu": 1.29,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Puleva sin lactosa botella 1 l.",
+    "preu": 1.24,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Pascual sin lactosa brik 1 l.",
+    "preu": 1.63,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Pascual botella 1,5 l.",
+    "preu": 2.15,
+    "quantitat": "1,5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Rio brik 1 l.",
+    "preu": 1.27,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera ecológica El Buen Pastor brik 1 l.",
+    "preu": 1.99,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera ecológica Puleva brik 1 l.",
+    "preu": 1.69,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Kaiku sin lactosa brik 1 l.",
+    "preu": 1.43,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Président sin lactosa brik 1 l.",
+    "preu": 1.57,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Président botella 1,5 l.",
+    "preu": 1.83,
+    "quantitat": "1,5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera Disney Puleva brik 1 l.",
+    "preu": 1.48,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Leche entera de vaca pasteurizada Saha 750 ml.",
+    "preu": 3.75,
+    "quantitat": "750 ml"
+   }
+  ],
+  "oli_verge_extra": [
+   {
+    "supermercat": "Mercadona",
+    "producte": "Aceite de oliva virgen extra Hacendado",
+    "preu": 12.8,
+    "quantitat": "3 l"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Aceite de oliva virgen extra Hacendado Gran Selección",
+    "preu": 5.5,
+    "quantitat": "750 ml"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Aceite de oliva virgen extra Picual Casa Juncal",
+    "preu": 4.85,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Tonyina clara en oli d'oliva verge extra paq. 3 u.",
+    "preu": 2.95,
+    "quantitat": "156 g"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra arbequina DO Siurana",
+    "preu": 14.85,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra",
+    "preu": 15.95,
+    "quantitat": "3 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra picual",
+    "preu": 3.95,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva Verge Extra Pons Arbequina",
+    "preu": 6.79,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra Bargalló arbequina",
+    "preu": 7.95,
+    "quantitat": "75 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra Borges arbequina",
+    "preu": 3.1,
+    "quantitat": "250 ml"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra Coosur Picual",
+    "preu": 5.89,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra Coosur hojiblanca",
+    "preu": 5.89,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra Coosur spray",
+    "preu": 3.99,
+    "quantitat": "400 ml"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra Coosur squizz",
+    "preu": 3.69,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra Sensolive DOP Sierra de Cazorla",
+    "preu": 6.75,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra Trujal Tudela arróniz pet",
+    "preu": 5.99,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra Urzante selección",
+    "preu": 5.99,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra Ybarra",
+    "preu": 6.49,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Oli d'oliva verge extra les Cabanes DO les Garrigues",
+    "preu": 16.95,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Tomàquet fregit amb oli d'oliva verge extra",
+    "preu": 1.4,
+    "quantitat": "620 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Regañás con aceite de oliva virgen extra El Molino de Dia 150 g",
+    "preu": 1.29,
+    "quantitat": "150 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra Dia La Almazara del Olivar 1 L",
+    "preu": 4.45,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra Dia La Almazara del Olivar 3 L",
+    "preu": 13.05,
+    "quantitat": "3 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra squizz Coosur 500 ml",
+    "preu": 4.29,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra Hojiblanca 1 L",
+    "preu": 7.95,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra Jaencoop 250 ml",
+    "preu": 2.49,
+    "quantitat": "250 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra Coosur 5 L",
+    "preu": 27.95,
+    "quantitat": "5 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra ecológico Oro de Génave 500 ml",
+    "preu": 4.99,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra Dia La Almazara del Olivar 750 ml",
+    "preu": 5.45,
+    "quantitat": "750 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra de ajo La Española 250 ml",
+    "preu": 3.69,
+    "quantitat": "250 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra hojiblanca Coosur 1 L",
+    "preu": 7.99,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra Carbonell 750 ml",
+    "preu": 6.59,
+    "quantitat": "750 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra Hojiblanca 500 ml",
+    "preu": 4.69,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra de trufa La Española 250 ml",
+    "preu": 3.69,
+    "quantitat": "250 ml"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Aceite de oliva virgen extra Jaencoop 1 L",
+    "preu": 6.85,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Tortas de aceite de oliva virgen extra Florbu 240 g",
+    "preu": 2.15,
+    "quantitat": "240 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Galletas saladas con aceite de oliva virgen extra Biscuits Galicia 200 g",
+    "preu": 1.85,
+    "quantitat": "200 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "CARBONELL Oli d'oliva verge extra",
+    "preu": 3.69,
+    "quantitat": "460 ml"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "CARBONELL Oli d'oliva verge extra en esprai",
+    "preu": 2.89,
+    "quantitat": "200 ml"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "SOLDEBRE Oli d'oliva verge extra Km0",
+    "preu": 4.95,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "MITANPLANA Oli d'oliva verge extra ecològic Km0",
+    "preu": 6.95,
+    "quantitat": "500ml"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "LES CABANES Oli d'oliva verge extra Km0",
+    "preu": 16.5,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "IBEROLEI Oli d'oliva verge extra",
+    "preu": 19.85,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "MITANPLANA Oli d'oliva verge extra Km0",
+    "preu": 18.95,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "PRIORDEI Oli d'oliva verge extra i tofòna negra",
+    "preu": 2.99,
+    "quantitat": "100 ml"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "PRIORDEI Oli d'oliva verge extra i tofòna blanca",
+    "preu": 2.99,
+    "quantitat": "92 ml"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "ORTIZ Bonítol del nord en oli d'oliva verge extra",
+    "preu": 8.79,
+    "quantitat": "150 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "ALBO Sardines en oli d'oliva verge extra",
+    "preu": 2.75,
+    "quantitat": "85 g"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "ALBO Filets de cavalla en oli d'oliva verge extra",
+    "preu": 3.75,
+    "quantitat": "85 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Picos con aceite de oliva virgen extra Horno Antequerano bolsa 150 g",
+    "preu": 2.15,
+    "quantitat": "150 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Maestros de Hojiblanca 1 l.",
+    "preu": 7.39,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Carrefour Extra 1 l.",
+    "preu": 4.44,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Aromas del Sur 5 l.",
+    "preu": 20.99,
+    "quantitat": "5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Carbonell 5 l.",
+    "preu": 31.6,
+    "quantitat": "5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Picos camperos con aceite de oliva virgen extra Classic Carrefour 250 g.",
+    "preu": 1.05,
+    "quantitat": "250 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Coosur 5 l.",
+    "preu": 29.8,
+    "quantitat": "5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Tomate frito con aceite de oliva virgen extra Carrefour sin gluten pack de 3 briks de 215 g.",
+    "preu": 1.43,
+    "quantitat": "645 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra hojiblanca Coosur 1 l.",
+    "preu": 7.79,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Gazpacho original con aceite de oliva virgen extra Alvalle 1 l.",
+    "preu": 3.65,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Regañás con sésamo y aceite de oliva virgen extra Classic Carrefour 250 g.",
+    "preu": 1.1,
+    "quantitat": "250 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra intenso Coosur 1 l.",
+    "preu": 7.79,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra spray Carrefour Extra 200 ml.",
+    "preu": 2.59,
+    "quantitat": "200 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Surtido de picos y regañás con aceite de oliva virgen extra Classic Carrefour 450 g.",
+    "preu": 1.93,
+    "quantitat": "450 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Dcoop 5 l.",
+    "preu": 30.8,
+    "quantitat": "5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Carbonell 1 l.",
+    "preu": 7.25,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Gazpacho con aceite de oliva virgen extra Carrefour sin gluten pack de 3 unidades de 330 ml.",
+    "preu": 2.15,
+    "quantitat": "990 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Carrefour Extra 500 ml.",
+    "preu": 4.25,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Linimento para higiene de la zona del pañal con aceite de oliva virgen extra Mustela 400 ml.",
+    "preu": 14.29,
+    "quantitat": "400 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Bacalao ahumado en lonchas en aceite de oliva virgen extra Extra Carrefour 80 g.",
+    "preu": 4.79,
+    "quantitat": "80 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Queso mezcla añejo en aceite de oliva virgen extra 250 g",
+    "preu": 6.19,
+    "quantitat": "250 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Tomate frito con aceite de oliva virgen extra Orlando pack de 3 briks de 350 g.",
+    "preu": 4.95,
+    "quantitat": "1050 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Tomate frito con aceite de oliva virgen extra Carrefour tarro 550 g.",
+    "preu": 2.25,
+    "quantitat": "550 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Tomate frito con aceite de oliva virgen extra Carrefour pack de 3 briks de 390 g.",
+    "preu": 2.79,
+    "quantitat": "1170 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Tomate frito con aceite de oliva virgen extra Orlando sin gluten pack de 3 briks de 212 g.",
+    "preu": 3.09,
+    "quantitat": "636 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Tomate con aceite de oliva virgen extra ecológico Pedro Luis sin gluten 340 g.",
+    "preu": 3.19,
+    "quantitat": "340 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra arbequina Coosur 1 l.",
+    "preu": 7.79,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Maestros de Hojiblanca 5 l.",
+    "preu": 19.95,
+    "quantitat": "5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Selección Coosur 2 l.",
+    "preu": 13.79,
+    "quantitat": "2 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Carrefour Extra 5 l.",
+    "preu": 21.32,
+    "quantitat": "5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Carrefour Extra 750 ml.",
+    "preu": 5.24,
+    "quantitat": "750 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra gran selección Carbonell 750 ml.",
+    "preu": 6.55,
+    "quantitat": "750 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Carbonell 200 ml.",
+    "preu": 3.49,
+    "quantitat": "200 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra spray Coosur 400 ml.",
+    "preu": 5.85,
+    "quantitat": "400 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra cornicabra Coosur 1 l.",
+    "preu": 7.79,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra ecológico Carrefour Bio 500 ml.",
+    "preu": 4.99,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra ecológico Coosur 1 l.",
+    "preu": 10.95,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Coosur Gran Selección 750 ml.",
+    "preu": 6.99,
+    "quantitat": "750 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra hojiblanca Carrefour Extra 1 l.",
+    "preu": 5.95,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra picual Carrefour Extra 1 l.",
+    "preu": 5.95,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Maestros de Hojiblanca 460 ml.",
+    "preu": 3.99,
+    "quantitat": "460 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Ybarra 1 l.",
+    "preu": 6.45,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra ecológico Oro de Génave 75 cl.",
+    "preu": 11.55,
+    "quantitat": "75 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra arbequina Carbonell 1 l.",
+    "preu": 8.49,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra ecológico Carrefour Bio 1 l.",
+    "preu": 6.99,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra picual Oro Bailén 500 ml.",
+    "preu": 14.69,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra hojiblanca Carbonell 1 l.",
+    "preu": 8.49,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra arbequina Carrefour Extra 1 l.",
+    "preu": 5.95,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra De Nuestra Tierra lata 500 ml.",
+    "preu": 5.45,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Dcoop 1 l.",
+    "preu": 6.95,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Ybarra 750 ml.",
+    "preu": 6.29,
+    "quantitat": "750 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Nuñez de Prado 500 ml.",
+    "preu": 14.39,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Oda a Nuestra Tierra nº 5 Maestros de Hojiblanca 500 ml.",
+    "preu": 5.09,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra De Nuestra Tierra D.O Sierra de Segura lata 50 cl.",
+    "preu": 4.75,
+    "quantitat": "50 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra variedad arbequina ecológico Carrefour Bio 500 ml.",
+    "preu": 5.95,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra variedad picual ecológico Carrefour Bio 500 ml.",
+    "preu": 5.95,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Oleoestepa 1 l.",
+    "preu": 7.65,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra De Nuestra Tierra 500 ml.",
+    "preu": 4.55,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Condimento preparado a base de aceite de oliva virgen extra a la trufa La Española 250 ml.",
+    "preu": 4.15,
+    "quantitat": "250 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra De Nuestra Tierra D.O Priego de Córdoba",
+    "preu": 5.55,
+    "quantitat": ""
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra ecológico Carrefour Bio Hojiblanca 500 ml.",
+    "preu": 5.95,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra picual Carbonell 1 l.",
+    "preu": 8.49,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra cosecha temprana Coosur Squizz 500 ml.",
+    "preu": 4.35,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra ecológico Carrefour Bio 3 l.",
+    "preu": 19.95,
+    "quantitat": "3 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Capricho Andaluz pack de 10 porciones de 10 ml.",
+    "preu": 2.49,
+    "quantitat": "100 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra De Nuestra Tierra 1 l.",
+    "preu": 9.99,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra De Nuestra Tierra lata 1 l.",
+    "preu": 8.75,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra De Nuestra Tierra 2,5 l.",
+    "preu": 23.95,
+    "quantitat": "2,5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Marqués de Griñón 500 ml.",
+    "preu": 14.15,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra picual ecológico Oro Bailén 500 ml.",
+    "preu": 21.3,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra ecológico spray Maeva 200 ml.",
+    "preu": 4.15,
+    "quantitat": "200 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Retama 1 l.",
+    "preu": 6.59,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Retama garrafa 5 l.",
+    "preu": 29.4,
+    "quantitat": "5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra ecológico Carbonell 750 ml.",
+    "preu": 8.35,
+    "quantitat": "750 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra De Nuestra Tierra D.O Les Garrigues 50 cl.",
+    "preu": 6.25,
+    "quantitat": "50 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra De Nuestra Tierra D.O Estepa 500 ml.",
+    "preu": 6.99,
+    "quantitat": "500 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra ecológico Maestros de Hojiblanca 75 cl.",
+    "preu": 8.85,
+    "quantitat": "75 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra ecológico Coosur 5 l.",
+    "preu": 52.9,
+    "quantitat": "5 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra sabor ajo spray Maeva 200 ml.",
+    "preu": 3.95,
+    "quantitat": "200 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aceite de oliva virgen extra Coosur grifo 4 l.",
+    "preu": 29.9,
+    "quantitat": "4 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Picos gordos bajos en sal con aceite de oliva virgen extra Carrefour Classic 180 g.",
+    "preu": 0.95,
+    "quantitat": "180 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Bocaditos de pan cristal con aceite de oliva virgen extra Andrés 130 g.",
+    "preu": 1.44,
+    "quantitat": "130 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Focaccia con aceite de oliva virgen extra y romero Dulcesol 210 g.",
+    "preu": 1.85,
+    "quantitat": "210 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Atún claro en aceite de oliva virgen extra Albo pack de 3 latas de 55 g.",
+    "preu": 6.65,
+    "quantitat": "165 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Atún claro en aceite de oliva virgen extra Albo pack de 6 latas de 55 g.",
+    "preu": 12.95,
+    "quantitat": "330 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Atún en aceite de oliva virgen extra ecológico Carrefour pack de 6 latas de 52 g.",
+    "preu": 6.99,
+    "quantitat": "312 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Sardinas en aceite de oliva virgen extra Classic Carrefour 95 g.",
+    "preu": 1.7,
+    "quantitat": "95 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Atún claro en aceite de oliva virgen extra Calvo pack de 3 latas de 52 g.",
+    "preu": 4.99,
+    "quantitat": "156 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Sardinas en aceite de oliva virgen extra ecológico Minerva 85 g.",
+    "preu": 2.99,
+    "quantitat": "85 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Bonito del norte en aceite de oliva virgen extra Carrefour 72 g.",
+    "preu": 2.85,
+    "quantitat": "72 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Boquerones en aceite de oliva virgen extra Carrefour Extra 80 g.",
+    "preu": 3.35,
+    "quantitat": "80 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Atún claro con aceite de oliva virgen extra Ligero Calvo pack de 3 unidades de 56 g.",
+    "preu": 5.65,
+    "quantitat": "168 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Anchoa con aceite de oliva virgen extra Lorea Gourmet 125 g.",
+    "preu": 11.95,
+    "quantitat": "125 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Bonito del Norte en aceite de oliva virgen extra ecológico Planeta Huerto 133 g.",
+    "preu": 7.15,
+    "quantitat": "133 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Anchoas en aceite de oliva virgen extra ecológico Consorcio 38 g.",
+    "preu": 7.05,
+    "quantitat": "38 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Salmorejo con aceite de oliva virgen extra Alvalle 1 l.",
+    "preu": 3.85,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Salmorejo con aceite de oliva virgen extra Carrefour Classic pack de 3 unidades de 330 ml.",
+    "preu": 2.65,
+    "quantitat": "990 ml"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Ajoblanco con aceite de oliva virgen extra Alvalle 1 l.",
+    "preu": 4.25,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Caldo de carne con aceite de oliva virgen extra Avecrem Gallina Blanca sin gluten 8 pastillas",
+    "preu": 1.09,
+    "quantitat": ""
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Caldo de pescado con un toque de aceite de oliva virgen extra Knorr sin gluten 12 pastillas",
+    "preu": 2.09,
+    "quantitat": ""
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Caldo vegetal sabor pollo con aceite de oliva virgen extra Sensation Carrefour sin gluten brik 1 l.",
+    "preu": 1.68,
+    "quantitat": "1 l"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Patatas fritas en aceite de oliva virgen extra Frit Ravich 160 g.",
+    "preu": 2.39,
+    "quantitat": "160 g"
+   }
+  ],
+  "estrella_damm": [
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Cervesa Estrella Damm paq. de 12 llaunes de 33 cl",
+    "preu": 8.29,
+    "quantitat": "396 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Cervesa Estrella Damm paq. de 12 u. de 25 cl",
+    "preu": 8.37,
+    "quantitat": "300 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Cervesa Estrella Damm paq. de 6 u. de 25 cl",
+    "preu": 3.64,
+    "quantitat": "150 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Cervesa Estrella Damm paq. de 6 u. de 33 cl",
+    "preu": 5.34,
+    "quantitat": "198 cl"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Cervesa Estrella Damm paq. de 6 u. de 50 cl",
+    "preu": 8.1,
+    "quantitat": "300 cl"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Cerveza Estrella Damm 33 cl",
+    "preu": 0.89,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Bon Preu / Esclat",
+    "producte": "ESTRELLA DAMM Cervesa especial 6 x 25 cl en ampolla",
+    "preu": 3.49,
+    "quantitat": "6 x 0.25L"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cerveza Estrella Damm mediterránea pack 12 latas 33 cl.",
+    "preu": 10.03,
+    "quantitat": "33 cl"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Cerveza Estrella Damm mediterránea pack 12 botellas 25 cl.",
+    "preu": 8.75,
+    "quantitat": "25 cl"
+   }
+  ],
+  "pringles": [
+   {
+    "supermercat": "Mercadona",
+    "producte": "Aperitivo de patata sabor original Pringles",
+    "preu": 2.0,
+    "quantitat": "165 g"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Aperitivo de patata sabor crema agria y cebolla Pringles",
+    "preu": 2.0,
+    "quantitat": "165 g"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Aperitiu original Pringles",
+    "preu": 2.55,
+    "quantitat": "165 g"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Aperitiu sour cream & onion Pringles",
+    "preu": 2.55,
+    "quantitat": "165 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Pringles original mini 40 g",
+    "preu": 1.0,
+    "quantitat": "40 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Pringles paprika 165 g",
+    "preu": 2.69,
+    "quantitat": "165 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Pringles original 165 g",
+    "preu": 2.65,
+    "quantitat": "165 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Pringles sabor nachos original 150 g",
+    "preu": 2.69,
+    "quantitat": "150 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Pringles original mini 5 x 20 g",
+    "preu": 2.69,
+    "quantitat": "5 x 20 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Pringles sour cream & onion 70 g",
+    "preu": 1.5,
+    "quantitat": "70 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Pringles paprika 70 g",
+    "preu": 1.5,
+    "quantitat": "70 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Pringles original 70 g",
+    "preu": 1.5,
+    "quantitat": "70 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Pringles mediterranean herbs 165 g",
+    "preu": 1.99,
+    "quantitat": "165 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Pringles bbq 70 g",
+    "preu": 1.4,
+    "quantitat": "70 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata Cream & Onion Pringles 185 g.",
+    "preu": 2.95,
+    "quantitat": "185 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata sabor original Pringles 185 g.",
+    "preu": 2.95,
+    "quantitat": "185 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata sabor pizza Pringles 185 g.",
+    "preu": 2.95,
+    "quantitat": "185 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata sabor jamón Pringles 185 g.",
+    "preu": 2.95,
+    "quantitat": "185 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata sabor paprika Pringles 185 g.",
+    "preu": 2.95,
+    "quantitat": "185 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata sabor trufa negra y mantequilla Passport Pringles 165 g.",
+    "preu": 2.89,
+    "quantitat": "165 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata sabor barbacoa Pringles 185 g.",
+    "preu": 2.95,
+    "quantitat": "185 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata sour cream Hot Pringles 160 g.",
+    "preu": 2.85,
+    "quantitat": "160 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata sabor paprika Pringles 70 g.",
+    "preu": 1.4,
+    "quantitat": "70 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata sabor picante Pringles 185 g.",
+    "preu": 2.95,
+    "quantitat": "185 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Aperitivo de patata sabor queso y cebolla Pringles 185 g.",
+    "preu": 2.95,
+    "quantitat": "185 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Nachos sabor original Pringles 150 g.",
+    "preu": 2.85,
+    "quantitat": "150 g"
+   }
+  ],
+  "ous": [
+   {
+    "supermercat": "Mercadona",
+    "producte": "Huevos sorpresa de chocolate Hacendado dibujo",
+    "preu": 1.9,
+    "quantitat": "60 g"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Huevos super grandes XL",
+    "preu": 4.3,
+    "quantitat": "12.0 ud"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Huevos grandes L",
+    "preu": 3.05,
+    "quantitat": "12.0 ud"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Huevos medianos M",
+    "preu": 2.85,
+    "quantitat": "12.0 ud"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Huevos de gallinas camperas",
+    "preu": 3.35,
+    "quantitat": "12.0 ud"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Huevos cocidos",
+    "preu": 2.2,
+    "quantitat": "6.0 ud"
+   },
+   {
+    "supermercat": "Mercadona",
+    "producte": "Huevos de codorniz",
+    "preu": 1.85,
+    "quantitat": "18.0 ud"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Ous de gallines criades al terra L - M",
+    "preu": 1.6,
+    "quantitat": "6 u."
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Ous cuits de gallina",
+    "preu": 2.45,
+    "quantitat": "6 u."
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Ous de guatlla cuits i pelats 14 u.",
+    "preu": 1.59,
+    "quantitat": "130 g"
+   },
+   {
+    "supermercat": "Bon Àrea",
+    "producte": "Ous de guatlla cuits i pelats",
+    "preu": 3.29,
+    "quantitat": "372 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos medianos M Dia 24 unidades",
+    "preu": 5.25,
+    "quantitat": "24 unidades"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos grandes L de gallinas criadas en suelo Dia 12 unidades",
+    "preu": 3.05,
+    "quantitat": "12 unidades"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos medianos M de gallinas criadas en suelo Dia 12 unidades",
+    "preu": 2.85,
+    "quantitat": "12 unidades"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos camperos medianos/grandes M/L Dia 10 unidades",
+    "preu": 3.0,
+    "quantitat": "10 unidades"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos extragrandes L/XL de gallinas criadas en suelo Dia 6 unidades",
+    "preu": 2.2,
+    "quantitat": "6 unidades"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos grandes L Dia 18 unidades",
+    "preu": 4.39,
+    "quantitat": "18 unidades"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos ecológicos grandes/medianos M/L Dia 6 unidades",
+    "preu": 2.95,
+    "quantitat": "6 unidades"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos medianos/grandes M/L maíz Grupo de lucas 12 unidades",
+    "preu": 3.69,
+    "quantitat": "12 unidades"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos camperos Pazo de Vilane 12 unidades",
+    "preu": 4.69,
+    "quantitat": "12 unidades"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos medianos/grandes M/L de gallinas criadas en el suelo Dia 12 unidades",
+    "preu": 3.49,
+    "quantitat": "12 unidades"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos de chocolate relleno de leche y avellanas Kinder 125 g",
+    "preu": 3.29,
+    "quantitat": "125 g"
+   },
+   {
+    "supermercat": "Dia",
+    "producte": "Huevos de chocolate relleno de leche y avellanas Kinder 200 g",
+    "preu": 4.49,
+    "quantitat": "200 g"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos frescos M Carrefour El Mercado 24 ud.",
+    "preu": 5.25,
+    "quantitat": "24 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos camperos L Círculo de Calidad 6 ud",
+    "preu": 2.59,
+    "quantitat": "6 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos frescos L Carrefour El Mercado 12 ud.",
+    "preu": 3.05,
+    "quantitat": "12 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos camperos L Círculo de Calidad 12 ud.",
+    "preu": 4.05,
+    "quantitat": "12 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos ecológicos M-L Carrefour Bio 10 ud.",
+    "preu": 4.58,
+    "quantitat": "10 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos M-L ecológicos Carrefour Bio 6 ud.",
+    "preu": 2.85,
+    "quantitat": "6 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos Frescos Carrefour El Mercado 12 ud.",
+    "preu": 4.18,
+    "quantitat": "12 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos de chocolate con leche con sorpresa Carrefour Classic Magic Eggs 3 ud.",
+    "preu": 1.9,
+    "quantitat": "3 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos de gallinas criadas en suelo Carrefour El Mercado 12 ud.",
+    "preu": 2.85,
+    "quantitat": "12 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos de gallinas criadas en suelo Carrefour El Mercado 6 ud.",
+    "preu": 1.69,
+    "quantitat": "6 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos L-M camperos Granja Villarreal 12 ud",
+    "preu": 4.03,
+    "quantitat": "12 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos L-M camperos Granjas Villarreal 6 ud",
+    "preu": 2.3,
+    "quantitat": "6 ud"
+   },
+   {
+    "supermercat": "Carrefour",
+    "producte": "Huevos de codorniz Dagu 18 ud.",
+    "preu": 1.85,
+    "quantitat": "18 ud"
+   }
+  ]
+ }
+}
