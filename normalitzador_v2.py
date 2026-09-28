@@ -134,10 +134,20 @@ for f in files:
 # Deduplicar mantenint ordre
 noms_nous = list(dict.fromkeys(noms_nous))
 print(f"\n   Productes nous a normalitzar: {len(noms_nous)}")
-print(f"   Crides a Groq necessàries:    {-(-len(noms_nous) // MIDA_LOT)}")  # ceil div
+print(f"   Crides a Gemini necessàries:  {-(-len(noms_nous) // MIDA_LOT)}")  # ceil div
 
 # Senyal per aturar el bucle principal quan s'esgota la quota diària
 QUOTA_DIARIA_ESGOTADA = False
+# Error del compte de Gemini (crèdits esgotats, facturació, clau invàlida):
+# reintentar no serveix de res, cal aturar-se de seguida i avisar
+ERROR_COMPTE = None
+# Setembre 2026: amb els crèdits de prepagament esgotats Gemini respon
+# "429 Your prepayment credits are depleted..." i el 429 es confonia amb el
+# límit per minut (es perdien 6 min d'esperes per lot abans d'aturar-se)
+SENYALS_ERROR_COMPTE = (
+    'prepayment', 'credits are depleted', 'billing',
+    'api key not valid', 'api_key_invalid', 'permission denied', 'permission_denied',
+)
 
 # ── Normalitzar amb Gemini Flash en lots ──────────────────────────────────────
 def normalitzar_lot(noms: list[str], reintents: int = 3) -> list[dict]:
@@ -146,7 +156,7 @@ def normalitzar_lot(noms: list[str], reintents: int = 3) -> list[dict]:
     - Rate limit per minut (429 RPM): espera i reintenta fins a 3 cops.
     - Quota diària esgotada (RESOURCE_EXHAUSTED / 'daily'): atura tot el procés.
     """
-    global QUOTA_DIARIA_ESGOTADA
+    global QUOTA_DIARIA_ESGOTADA, ERROR_COMPTE
     prompt = PROMPT_SISTEMA + "\n\n" + json.dumps(noms, ensure_ascii=False)
     for intent in range(reintents):
         try:
@@ -159,8 +169,13 @@ def normalitzar_lot(noms: list[str], reintents: int = 3) -> list[dict]:
             return productes
         except Exception as e:
             missatge = str(e)
+            if any(senyal in missatge.lower() for senyal in SENYALS_ERROR_COMPTE):
+                ERROR_COMPTE = missatge[:300]
+                return []
             es_quota_diaria = (
                 'daily' in missatge.lower() or
+                'per day' in missatge.lower() or
+                'perday' in missatge.lower() or
                 'RESOURCE_EXHAUSTED' in missatge or
                 ('quota' in missatge.lower() and '429' not in missatge)
             )
@@ -192,6 +207,15 @@ if noms_nous:
         print(f"   Lot {num_lot}/{total_lots} ({len(lot)} productes)...", end=" ", flush=True)
 
         resultat = normalitzar_lot(lot)
+
+        if ERROR_COMPTE:
+            print(f"\n\n   🛑 ERROR DEL COMPTE DE GEMINI (no és un límit puntual): {ERROR_COMPTE}")
+            print("   Revisar el projecte a https://aistudio.google.com (crèdits de prepagament, facturació o clau API).")
+            if nous_normalitzats:
+                print(f"\nGuardant {len(nous_normalitzats)} nous registres a 'Productes_Normalitzats'...")
+                ws_cache.append_rows(nous_normalitzats, value_input_option='USER_ENTERED')
+                print("   ✅ Caché actualitzada")
+            import sys; sys.exit(1)
 
         if QUOTA_DIARIA_ESGOTADA:
             break
