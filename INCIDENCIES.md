@@ -8,18 +8,24 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
 
 ## 🔴 Urgent
 
-0. **Normalitzador v2 aturat: s'han acabat els crèdits de Gemini.** El run #31 (27/09) va rebre
-   `429 Your prepayment credits are depleted` de l'API de Gemini a tots els lots i es va aturar (bé)
-   al cap de 5 lots fallits. Hi ha 9.687 productes nous pendents de normalitzar (sobretot Carrefour).
-   Mentre no es resolgui, el normalitzador de cada setmana fallarà igual.
-   Cal decidir al compte de Google AI Studio: recarregar crèdits, o passar a una clau del nivell gratuït
-   (el script ja té caché i s'atura net si s'esgota la quota diària).
-   Millores al script:
-   - Detectar aquest error de facturació i aturar-se de seguida amb un missatge clar. Ara el tracta
-     com a "rate limit per minut" i perd ~30 min en esperes inútils.
-   - El log encara diu "Crides a Groq".
-   - El paquet `google.generativeai` ja no té suport; cal migrar a `google.genai`.
-   - `CLAUDE.md` diu "Gemini Flash 2.0", però el model configurat és `gemini-3.5-flash`.
+0. **Normalitzador v2 aturat per la facturació de Gemini.**
+   - 27/09, run #31: `429 Your prepayment credits are depleted`. Hi ha 9.687 productes nous pendents,
+     sobretot Carrefour.
+   - 28/09: el David hi afegeix 20 € de crèdits, però el diagnòstic `debug_gemini_genai.py` rep
+     `429 Your project has exceeded its monthly spending cap`. El projecte té un **límit de despesa
+     mensual** que ja s'ha superat. Cal apujar-lo a https://ai.studio/spend o esperar a l'1 d'octubre.
+   - Resolt al script (commits 1530b00 i següent): els errors del compte (crèdits, límit de despesa,
+     facturació, clau invàlida) aturen el procés al primer lot, i la quota diària es detecta també
+     amb "per day".
+   - Pendent:
+     - Migrar a `google.genai`, que té el mateix format d'error: `ClientError` amb `code`=429 i
+       `status`=RESOURCE_EXHAUSTED.
+     - Mesurar els tokens per lot per saber el cost real per producte.
+     - `CLAUDE.md` diu "Gemini Flash 2.0", però el model configurat és `gemini-3.5-flash`.
+       L'estudi de cost inicial era amb el 2.0 i el 3.5 pot ser més car.
+   - Historial: els runs #4 a #12 (del 15/06 al 10/08) van arribar tots al límit de temps de 5,5 h,
+     amb errors "Illegal header value" (problema amb la clau). Com que la caché només es desa al final,
+     aquells runs no van deixar res desat.
 
 ## Dades (qualitat dels productes)
 
@@ -73,6 +79,13 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
     duplicats. Recorre subcategories que es repeteixen (`_010`, `_020`...). Si s'evitessin, la Part 1
     seria molt més curta.
 
+
+19. **Poques comparacions: 370 de 13.920 productes.** Al run #30, el normalitzador agrupa per
+    (categoria, **marca**, nom normalitzat). Només compara productes de la mateixa marca en supermercats
+    diferents, i les marques pròpies (Hacendado, Bonpreu, Carrefour...) no es comparen mai entre elles.
+    Per a l'app caldrà decidir com comparar genèrics, p. ex. "llet sencera" de qualsevol marca per €/l.
+    A més, de 28.919 productes només n'entren 13.920 a la taula: la resta es descarten per la
+    categoria "altra", per no tenir quantitat o per unitat incompatible.
 
 ## Automatització i manteniment
 
