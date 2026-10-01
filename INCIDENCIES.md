@@ -4,7 +4,7 @@ Incidències detectades per anar resolent un cop acabada la feina en curs.
 Seguir la metodologia de `CLAUDE.md`: primer diagnòstic aïllat, després producció.
 Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
 
-Última revisió: 28/09/2026
+Última revisió: 01/10/2026
 
 ## 🔴 Urgent
 
@@ -26,6 +26,32 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
    - Historial: els runs #4 a #12 (del 15/06 al 10/08) van arribar tots al límit de temps de 5,5 h,
      amb errors "Illegal header value" (problema amb la clau). Com que la caché només es desa al final,
      aquells runs no van deixar res desat.
+
+## Normalitzador v3 (en disseny, 01/10/2026)
+
+Els diagnòstics del 28/09 i l'01/10 (`debug_gemini_thinking.py`, `debug_mateix_producte.py`) mostren
+que el v2 falla per disseny: demana a Gemini un nom lliure en català i després compara text exacte.
+Exemple: la Coca-Cola original surt amb 5 noms diferents ("refresc cola", "refresc de cua",
+"refresc de cola original"...) i no s'agrupa mai. A més, el nom no és estable entre crides
+(28 de 50 iguals) i cada lot de 50 gasta ~6.400 tokens de raonament que no calen.
+
+Mètode nou validat (com ho faria una persona):
+- Gemini veu tota una **família de candidats** dels 5 supermercats en una sola crida i en treu
+  **atributs**: marca, producte, variant, marca blanca i format (unitats × mida, amb el nom i la
+  quantitat de la web).
+- Mateix producte = mateixa marca + producte + variant. Coca-Cola: 7 productes comparables entre
+  supermercats, amb els €/l correctes (abans Carrefour sortia a 5,49 €/l en lloc de 0,92).
+- **Marques blanques**: es comparen entre elles per producte + variant. Llet sencera: Carrefour 0,94,
+  Mercadona 0,96, Dia 0,96 i Bon Àrea 0,99 €/l. Llista fixa per supermercat + camp de Gemini.
+  Gemini n'ha trobat que no eren a la llista: Casa Juncal (Mercadona), La Almazara del Olivar (Dia),
+  De Nuestra Tierra, Simpl i Sensation (Carrefour). Dubtós: "Círculo de Calidad" a Carrefour (és de Lidl?).
+- Sense raonament (`thinking_budget=0`) i temperatura 0: els mateixos grups, 1/3 del cost i noms estables.
+
+Pendent per al v3:
+- Productes sense marca (ous, fruita de Mercadona...) també compten com a marca blanca del supermercat.
+- No comparar unitats diferents (€/u amb €/kg).
+- Com formar les famílies de candidats a producció (per categoria?) i desar-ne els atributs a la caché.
+- Cost real: el run del v2 del 29/09 va normalitzar Carrefour (~15 €). Saldo de Gemini l'01/10: 1,45 €.
 
 ## Dades (qualitat dels productes)
 
@@ -114,7 +140,10 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
 ## Producte
 
 15. **Normalitzador:** decidir entre la v1 (Groq) i la v2 (Gemini) i eliminar-ne una.
-16. **Front-end Streamlit:** no iniciat.
+16. **Front-end:** no iniciat. Proposta (01/10): **GitHub Pages** en lloc de Streamlit. Una pàgina
+    estàtica gratuïta al mateix repositori que el workflow regenera en acabar la cadena setmanal.
+    Google Sheets continua de base de dades fins que vulguem historial de preus (39.000 files per
+    setmana superarien el límit de 10 milions de cel·les en un any); llavors, SQLite o Supabase.
 17. **Navegació visual/OCR per a Carrefour** (idea del David): probablement ja no cal, perquè el
     scraping funciona. Es deixa anotada per si Carrefour torna a bloquejar.
 
