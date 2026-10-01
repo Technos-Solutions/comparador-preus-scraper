@@ -47,6 +47,14 @@ Mètode nou validat (com ho faria una persona):
   De Nuestra Tierra, Simpl i Sensation (Carrefour). Dubtós: "Círculo de Calidad" a Carrefour (és de Lidl?).
 - Sense raonament (`thinking_budget=0`) i temperatura 0: els mateixos grups, 1/3 del cost i noms estables.
 
+Prova del v3 a producció (01/10, `debug_normalitzador_v3.py`, categoria llet sencera del v2):
+620 productes en 8 lots de 80 barrejant supermercats, amb vocabulari compartit. Vocabulari final:
+només 8 productes (llet, batut, crema de llet, llet condensada...). 60 grups de marca comercial
+i 26 de marca blanca comparables, 58 i 26 amb productes de lots diferents (el vocabulari funciona
+entre crides). Exemple: llet semidesnatada de marca blanca, Carrefour 0,82 €/l, Dia i Mercadona 0,84,
+Bon Àrea 0,89. Cost: ~0,33 € per 1.000 productes (resposta compacta) → ~13 € per als 39.000.
+Detall a revisar: variants massa fines ("pasteuritzada, sencera" separada de "sencera").
+
 Pendent per al v3:
 - Productes sense marca (ous, fruita de Mercadona...) també compten com a marca blanca del supermercat.
 - No comparar unitats diferents (€/u amb €/kg).
