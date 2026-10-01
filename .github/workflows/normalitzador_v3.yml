@@ -1,0 +1,38 @@
+name: Normalitzador v3 (atributs + marques blanques)
+
+on:
+  # De moment nomes manual. Quan estigui validat, la Part 5 el llancara en lloc del v2.
+  workflow_dispatch:
+    inputs:
+      max_productes:
+        description: 'Maxim de productes nous a enviar a Gemini (0 = sense limit)'
+        required: false
+        default: '0'
+      categories:
+        description: 'Categories separades per comes (buit = totes)'
+        required: false
+        default: ''
+      nomes_comparar:
+        description: '1 = no cridar Gemini, nomes recalcular Comparacions_v3'
+        required: false
+        default: '0'
+
+jobs:
+  normalitzar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install gspread oauth2client google-genai
+      - name: Run normalitzador_v3
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          MAX_PRODUCTES: ${{ github.event.inputs.max_productes }}
+          CATEGORIES: ${{ github.event.inputs.categories }}
+          NOMES_COMPARAR: ${{ github.event.inputs.nomes_comparar }}
+        run: python normalitzador_v3.py
