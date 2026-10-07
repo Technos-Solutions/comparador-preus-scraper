@@ -55,6 +55,12 @@ entre crides). Exemple: llet semidesnatada de marca blanca, Carrefour 0,82 €/l
 Bon Àrea 0,89. Cost: ~0,33 € per 1.000 productes (resposta compacta) → ~13 € per als 39.000.
 Detall a revisar: variants massa fines ("pasteuritzada, sencera" separada de "sencera").
 
+Primer run real del v3 (07/10, llet+oli+aigua, 445 productes, ~0,15 €): 67 comparacions
+(42 marca comercial, 25 marca blanca). Revisió del David: correcte en general. Corregit al codi:
+agrupació sense accents ("beguda lactia" = "beguda làctia") i columna "Revisar" quan el més car
+costa més de 2,5 vegades el més barat (cas real: Puleva amb cereals i fruita, format mal llegit
+a Mercadona, 0,33 vs 3,32 €/l). Pendent: variants massa fines ("gust llimona" vs "suc de llimona").
+
 Pendent per al v3:
 - Productes sense marca (ous, fruita de Mercadona...) també compten com a marca blanca del supermercat.
 - No comparar unitats diferents (€/u amb €/kg).
@@ -123,7 +129,10 @@ Pendent per al v3:
 
 ## Automatització i manteniment
 
-10. **Primera setmana amb l'encadenament nou** (28/09, en curs). Fins ara, correcte: Part 1 → Part 2
+10. **05/10: la Part 4 es va cancel·lar sense arrencar** (GitHub no va assignar cap màquina en
+    15 min) i la cadena es va aturar abans de Carrefour. Relançada a mà el 07/10. Reforça la
+    necessitat de l'avís de l'incidència 11.
+    **Primera setmana amb l'encadenament nou** (28/09, en curs). Fins ara, correcte: Part 1 → Part 2
     → Part 3, un sol cop cadascuna. Nota: GitHub endarrereix l'horari de les 04:00 UTC unes 5-6 h
     (la Part 1 va començar a les 10:24, igual que les setmanes anteriors), així que la Part 5 acaba
     de matinada de dimarts. Pendent de verificar les Parts 4, 5 i el normalitzador.

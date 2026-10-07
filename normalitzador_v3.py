@@ -41,6 +41,7 @@ from datetime import date
 MODEL = 'gemini-3.5-flash'
 MIDA_LOT = 80                 # productes per crida al pas B
 MIDA_LOT_CATEGORIA = 150      # productes per crida al pas A
+RATIO_REVISAR = 2.5           # si el mes car costa mes de 2,5 vegades el mes barat, sol ser un error de format
 TEMPS_MAXIM = 300 * 60        # el workflow te timeout de 330 min: s'atura net abans
 LLINDAR_LOTS_FALLITS = 5
 
@@ -73,7 +74,7 @@ CAPCALERA_MARQUES = ['marca', 'supermercat', 'estat', 'origen', 'data']
 CAPCALERA_COMPARACIONS = (
     ['Tipus', 'Categoria', 'Marca', 'Producte', 'Variant', 'Unitat'] + SUPERMERCATS +
     ['Preu mínim', 'Supermercat més barat', 'Estalvi', 'Estalvi (%)', 'Producte més barat',
-     'Data actualització'])
+     'Revisar', 'Data actualització'])
 
 PROMPT_CATEGORIA = """Classifica cada producte de supermercat en UNA d'aquestes categories:
 """ + ' · '.join(CATEGORIES) + """
@@ -305,6 +306,8 @@ def demanar_atributs(gemini, vocabulari, lot):
 
 # ── Comparacio (sense Gemini) ─────────────────────────────────────────────────
 def comparar(preus, atributs, marques):
+    # Les claus no tenen en compte accents ni majuscules ("beguda lactia" = "beguda làctia");
+    # per mostrar es fa servir la forma mes frequent
     comercials, blanques = defaultdict(list), defaultdict(list)
     for f in preus:
         clau = (f['supermercat'], f['producte'])
@@ -314,11 +317,12 @@ def comparar(preus, atributs, marques):
         pu, u = preu_unitat(f['preu'], a['unitats'], a['mida'], a['unitat'])
         if not pu:
             continue
-        entrada = dict(f, pu=pu, u=u, marca=a['marca'])
+        entrada = dict(f, pu=pu, u=u, marca=a['marca'], producte_n=a['producte'], variant=a['variant'])
+        producte, variant = sense_accents(a['producte']), sense_accents(a['variant'])
         if marques.es_blanca(a['marca'], f['supermercat'], a['marca_blanca']):
-            blanques[(a['categoria'], a['producte'], a['variant'], u)].append(entrada)
+            blanques[(a['categoria'], producte, variant, u)].append(entrada)
         else:
-            comercials[(a['categoria'], sense_accents(a['marca']), a['producte'], a['variant'], u)].append(entrada)
+            comercials[(a['categoria'], sense_accents(a['marca']), producte, variant, u)].append(entrada)
 
     files = []
     for tipus, grups in (('Marca comercial', comercials), ('Marca blanca', blanques)):
@@ -329,7 +333,9 @@ def comparar(preus, atributs, marques):
                     millors[e['supermercat']] = e
             if len(millors) < 2:
                 continue
-            categoria, producte, variant, u = clau[0], clau[-3], clau[-2], clau[-1]
+            categoria, u = clau[0], clau[-1]
+            producte = Counter(e['producte_n'] for e in entrades).most_common(1)[0][0]
+            variant = Counter(e['variant'] for e in entrades).most_common(1)[0][0]
             if tipus == 'Marca comercial':
                 marca = Counter(e['marca'] for e in entrades).most_common(1)[0][0]
             else:
@@ -337,11 +343,12 @@ def comparar(preus, atributs, marques):
             min_pu = min(e['pu'] for e in millors.values())
             max_pu = max(e['pu'] for e in millors.values())
             barat = min(millors.values(), key=lambda e: e['pu'])
+            revisar = f"sí: x{max_pu / min_pu:.1f}" if max_pu > min_pu * RATIO_REVISAR else ''
             fila = [tipus, categoria, marca, producte, variant or 'normal', u]
             fila += [round(millors[s]['pu'], 3) if s in millors else '' for s in SUPERMERCATS]
             fila += [round(min_pu, 3), barat['supermercat'], round(max_pu - min_pu, 3),
                      f"{round((max_pu - min_pu) / max_pu * 100, 1) if max_pu else 0}%",
-                     barat['producte'], str(date.today())]
+                     barat['producte'], revisar, str(date.today())]
             files.append(fila)
     files.sort(key=lambda f: (f[1], f[0], f[3], f[4], f[2]))
     return files
