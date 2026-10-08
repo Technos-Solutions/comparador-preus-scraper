@@ -21,5 +21,5 @@ jobs:
       - name: Install dependencies
         run: pip install seleniumbase
       # A la branca: diagnostic de l API interna de Bon Preu
-      - name: Run debug_bonpreu_api2
-        run: xvfb-run -a python debug_bonpreu_api2.py
+      - name: Run debug_bonpreu_api3
+        run: xvfb-run -a python debug_bonpreu_api3.py
