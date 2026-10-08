@@ -106,8 +106,22 @@ Pendent per al v3:
 
 20. **07/10: la Part 4 (Bon Preu) només va extreure 1.304 productes** (normalment ~4.300). Neteja de la
     llar, Per la llar, Espai Mascotes, Nadons i Parafarmàcia van sortir a 0 a nivell de categoria
-    principal. Pot ser un bloqueig o un canvi de la web: cal un diagnòstic (títol, HTML, selectors)
-    abans de concloure res. A la Part 5, Carrefour "Aceites y vinagres" (cat20066) va sortir buida.
+    principal. Causa (diagnòstic 08/10): la sessió es va degradar en començar Neteja i el comptador de
+    zeros es posa a 0 a cada categoria principal, així que el reinici no saltava. Amb navegador nou,
+    les 5 categories donen 3.133 productes. **Corregit** (commit e6feb43): es repeteix la categoria
+    principal que dona 0. A la Part 5, Carrefour "Aceites y vinagres" (cat20066) va sortir buida (pendent).
+
+21. **Bon Preu: el scraper només llegeix els primers productes de cada fulla** (llista virtual). Exemples
+    (08/10): packs de llet 21 de 90, estris de cuina 21 de 300, hermètics 10 de 87. Bon Preu té
+    probablement diverses vegades els ~7.800 productes que tenim.
+    **Solució trobada (diagnòstics debug_bonpreu_api*.py):** cada pàgina de fulla porta a
+    `window.__INITIAL_STATE__` tots els ids (`data.products.catalogue.data.productGroups[].products`,
+    `totalProducts`) i el detall dels primers 30 (`productEntities`). La resta s'obté amb una sola crida
+    `PUT /api/webproductpagews/v6/products` (cos = llista d'ids) des de la pàgina, copiant-ne les
+    capçaleres (`x-csrf-token`, `client-route-id`, `page-view-id`, `ecom-request-source`...): 90/90 en
+    0,3 s i 300/300 en 0,7 s. Camps: `name`, `brand`, `packSizeDescription` ("6 x 1L"), `price.amount`
+    i `unitPrice` (preu per litre/kg/unitat). Pendent: portar-ho a scraper_main.py (diagnòstic a escala
+    abans) i comprovar si una categoria principal ja dona tots els ids de cop.
 
 7. **Carrefour: algunes pàgines carreguen parcialment** (16 de 24 productes, fins i tot
    després de tornar a fer scroll). Al run complet del 27/09 es van extreure 16.521 productes únics,
