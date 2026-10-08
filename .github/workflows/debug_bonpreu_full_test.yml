@@ -6,7 +6,7 @@ on:
 jobs:
   debug:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,6 +20,6 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y xvfb
       - name: Install dependencies
         run: pip install seleniumbase
-      # A la branca: diagnostic de les categories que van sortir a 0 el 07/10
-      - name: Run debug_bonpreu_categories_buides
-        run: xvfb-run -a python debug_bonpreu_categories_buides.py
+      # A la branca: diagnostic de la llista virtual (fulles de 21)
+      - name: Run debug_bonpreu_llista_virtual
+        run: xvfb-run -a python debug_bonpreu_llista_virtual.py

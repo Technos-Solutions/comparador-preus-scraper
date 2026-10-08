@@ -1022,8 +1022,20 @@ class BonPreuEsclatScraper:
             # scrape_recursiu).
             for nom_cat, url_cat in categories:
                 print(f"  📂 Categoria principal: {nom_cat}")
+                abans = len(self.productes)
                 self.zeros_seguits = 0
                 self.scrape_recursiu(url_cat, nivell=0)
+                # Una categoria principal mai esta buida: si dona 0 productes,
+                # la sessio s'ha degradat just en comencar-la. Com que el
+                # comptador de zeros es posa a 0 a cada categoria principal,
+                # el reinici normal no salta (07/10: Neteja, Per la llar,
+                # Mascotes, Nadons i Parafarmacia a 0 seguides). Es reinicia
+                # el navegador i es repeteix la categoria un cop.
+                if len(self.productes) == abans:
+                    print(f"  ⚠️  {nom_cat}: 0 productes, reiniciant navegador i repetint la categoria...")
+                    self._crear_driver_nou()
+                    self.zeros_seguits = 0
+                    self.scrape_recursiu(url_cat, nivell=0)
                 time.sleep(2)
         except Exception as e:
             print(f"  ❌ Error: {e}")
