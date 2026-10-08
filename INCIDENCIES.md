@@ -61,7 +61,14 @@ agrupació sense accents ("beguda lactia" = "beguda làctia") i columna "Revisar
 costa més de 2,5 vegades el més barat (cas real: Puleva amb cereals i fruita, format mal llegit
 a Mercadona, 0,33 vs 3,32 €/l). Pendent: variants massa fines ("gust llimona" vs "suc de llimona").
 
+**Primera passada completa del v3 (08/10, 1h15):** 34.953 de 36.070 productes amb atributs,
+**3.830 comparacions** (1.971 marca blanca, 1.859 marca comercial), davant les 370 del v2.
+Tokens: entrada 3,0 M, sortida 1,43 M (~12 €). Gemini ha proposat 90 marques blanques "pendent"
+(n'hi ha de dubtoses: "Essential" a Bon Àrea i Bon Preu, "1601", "Ramblers"...): les ha de revisar el David.
+Els ~1.100 productes sense atributs (lots amb respostes incompletes) es reintenten sols al proper run.
+
 Pendent per al v3:
+- Encadenar-lo a la Part 5 en lloc del v2 i retirar el v2 (incidència 15).
 - Productes sense marca (ous, fruita de Mercadona...) també compten com a marca blanca del supermercat.
 - No comparar unitats diferents (€/u amb €/kg).
 - Com formar les famílies de candidats a producció (per categoria?) i desar-ne els atributs a la caché.
@@ -96,6 +103,11 @@ Pendent per al v3:
    es va fer amb els iogurts en pack de `Comparacions_v2`.
 
 ## Scrapers
+
+20. **07/10: la Part 4 (Bon Preu) només va extreure 1.304 productes** (normalment ~4.300). Neteja de la
+    llar, Per la llar, Espai Mascotes, Nadons i Parafarmàcia van sortir a 0 a nivell de categoria
+    principal. Pot ser un bloqueig o un canvi de la web: cal un diagnòstic (títol, HTML, selectors)
+    abans de concloure res. A la Part 5, Carrefour "Aceites y vinagres" (cat20066) va sortir buida.
 
 7. **Carrefour: algunes pàgines carreguen parcialment** (16 de 24 productes, fins i tot
    després de tornar a fer scroll). Al run complet del 27/09 es van extreure 16.521 productes únics,
