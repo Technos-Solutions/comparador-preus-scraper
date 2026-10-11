@@ -1,6 +1,7 @@
 ﻿import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
+import re
 import os
 from datetime import datetime
 import time
@@ -812,7 +813,19 @@ class BonPreuEsclatScraper:
     # cosa - possible limit intern del lloc); reiniciar el navegador quan
     # es detecten 2 subcategories seguides a 0 recupera dades valides de
     # seguida (verificat amb un run complet real).
+    #
+    # La graella de productes es una llista virtual: nomes mante al DOM els
+    # productes que es veuen, i llegir-la nomes donava els primers 7-21 de cada
+    # fulla (packs de llet 21 de 90, estris de cuina 21 de 300). Des del 10/10
+    # els productes es llegeixen de les dades de la pagina i de la seva API
+    # interna (diagnostics debug_bonpreu_api*.py): window.__INITIAL_STATE__ te
+    # tots els ids de la fulla i el detall dels primers 30, i la resta es demana
+    # amb un sol PUT /api/webproductpagews/v6/products copiant les capcaleres
+    # que fa servir la mateixa pagina (x-csrf-token, client-route-id...). Si
+    # una pagina no porta aquestes dades, es fa servir la lectura del DOM.
     ZEROS_SEGUITS_PER_REINICI = 2
+    URL_API_PRODUCTES = 'https://www.compraonline.bonpreuesclat.cat/api/webproductpagews/v6/products'
+    MIDA_LOT_API = 250
 
     def __init__(self, categories_filtre=None):
         self.base_url = 'https://www.compraonline.bonpreuesclat.cat'
@@ -820,6 +833,9 @@ class BonPreuEsclatScraper:
         self.driver = None
         self.zeros_seguits = 0
         self.reinicis = 0
+        self.capcaleres_api = None
+        self.fulles_api = 0
+        self.fulles_dom = 0
         # Si no s'especifica filtre, usar totes les categories
         if categories_filtre:
             self.categories_valides = categories_filtre
@@ -842,7 +858,9 @@ class BonPreuEsclatScraper:
             except Exception:
                 pass
         self.reinicis += 1
-        self.driver = SeleniumBaseDriver(uc=True, headed=True)
+        self.capcaleres_api = None
+        # log_cdp: logs de xarxa de Chrome, per copiar les capcaleres del PUT de la pagina
+        self.driver = SeleniumBaseDriver(uc=True, headed=True, log_cdp=True)
         self.driver.uc_open_with_reconnect(self.base_url, reconnect_time=6)
         time.sleep(3)
         self.driver.add_cookie({
@@ -933,8 +951,162 @@ class BonPreuEsclatScraper:
             return str(v) + ' l'
         return pes_text
 
+    # ── Lectura via dades de la pagina + API interna ────────────────────────
+    JS_ESTAT = """
+        const s = window.__INITIAL_STATE__ || {};
+        const prods = ((s.data || {}).products || {});
+        const cat = ((prods.catalogue || {}).data) || {};
+        const ids = [];
+        (cat.productGroups || []).forEach(g => (g.products || []).forEach(id => {
+            if (id && !ids.includes(id)) ids.push(id); }));
+        return {hi_ha_estat: !!window.__INITIAL_STATE__ && !!prods.catalogue, ids: ids,
+                total: cat.totalProducts || null, entitats: prods.productEntities || {}};
+    """
+    JS_PUT = """
+        const [url, cos, capcaleres] = [arguments[0], arguments[1], arguments[2]];
+        const done = arguments[arguments.length - 1];
+        fetch(url, {method: 'PUT', credentials: 'include', headers: capcaleres, body: cos})
+          .then(r => r.text().then(t => done([r.status, t])))
+          .catch(e => done([0, String(e)]));
+    """
+    CAPCALERES_EXCLOSES = ('content-length', 'cookie', 'host', 'accept-encoding', 'connection', 'origin',
+                           'referer', 'user-agent', 'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site',
+                           'priority')
+
+    def _capturar_capcaleres_api(self):
+        # Fa uns scrolls perque la pagina faci un PUT de productes i en copia les capcaleres
+        driver = self.driver
+        try:
+            driver.get_log('performance')
+        except Exception:
+            return False
+        for _ in range(5):
+            driver.execute_script('window.scrollBy(0, 800)')
+            time.sleep(0.7)
+        time.sleep(1.5)
+        put = None
+        for entrada in driver.get_log('performance'):
+            try:
+                msg = json.loads(entrada['message'])['message']
+            except Exception:
+                continue
+            p = msg.get('params', {})
+            req = p.get('request', {})
+            if (msg.get('method') == 'Network.requestWillBeSent' and 'webproductpagews' in req.get('url', '')
+                    and req.get('method') == 'PUT'):
+                put = put or {'id': p.get('requestId'), 'h': req.get('headers', {})}
+            elif msg.get('method') == 'Network.requestWillBeSentExtraInfo' and put and p.get('requestId') == put['id']:
+                put['h'] = p.get('headers', put['h'])
+        if not put:
+            return False
+        self.capcaleres_api = {k: v for k, v in put['h'].items()
+                               if not k.startswith(':') and k.lower() not in self.CAPCALERES_EXCLOSES
+                               and not k.lower().startswith('sec-ch')}
+        return True
+
+    def _format_quantitat(self, text):
+        # "1L" -> "1 l", "0.4kg" -> "400 g", "6 x 1L" -> "6 x 1 l", "3 x 200 ml" -> "3 x 200 ml"
+        text = (text or '').strip()
+        m = re.match(r'^(\d+)\s*x\s*(.+)$', text, re.IGNORECASE)
+        if m:
+            return f"{m.group(1)} x {self._format_mida(m.group(2))}"
+        return self._format_mida(text)
+
+    def _format_mida(self, text):
+        m = re.match(r'^([\d.,]+)\s*(kg|g|l|ml|cl)$', text.strip(), re.IGNORECASE)
+        if not m:
+            return text.strip()
+        val = float(m.group(1).replace(',', '.'))
+        unitat = m.group(2).lower()
+        if unitat == 'cl':
+            val, unitat = val * 10, 'ml'
+        if unitat == 'kg' and val < 1:
+            val, unitat = val * 1000, 'g'
+        if unitat == 'l' and val < 1:
+            val, unitat = val * 1000, 'ml'
+        val = round(val, 3)
+        return f"{int(val) if val == int(val) else val} {unitat}"
+
+    def _producte_de_dades(self, o):
+        preu = o.get('price') or {}
+        import_preu = (preu.get('current') or {}).get('amount') or preu.get('amount')
+        try:
+            import_preu = float(import_preu)
+        except (TypeError, ValueError):
+            return None
+        format_ = o.get('packSizeDescription') or o.get('size') or ''
+        if isinstance(format_, dict):
+            format_ = format_.get('value') or ''
+        nom = (o.get('name') or '').strip()
+        if not nom or import_preu <= 0:
+            return None
+        return {
+            'producte': nom,
+            'marca': (o.get('brand') or '').strip() or 'Bon Preu / Esclat',
+            'supermercat': 'Bon Preu / Esclat',
+            'preu': import_preu,
+            'quantitat': self._format_quantitat(str(format_)),
+            'envas': ''
+        }
+
+    def _productes_de_resposta(self, dades, trobats):
+        if isinstance(dades, dict):
+            if dades.get('productId') and dades.get('name'):
+                trobats[dades['productId']] = dades
+            for v in dades.values():
+                self._productes_de_resposta(v, trobats)
+        elif isinstance(dades, list):
+            for v in dades:
+                self._productes_de_resposta(v, trobats)
+        return trobats
+
+    def extreure_productes_api(self, url):
+        """Llegeix tots els productes d'una fulla de l'estat de la pagina i de l'API.
+        Retorna el nombre de productes, o None si la pagina no porta les dades (cal el DOM)."""
+        driver = self.driver
+        driver.get(url)
+        time.sleep(4)
+        estat = driver.execute_script(self.JS_ESTAT)
+        if not estat.get('hi_ha_estat'):
+            return None
+        detalls = self._productes_de_resposta(estat.get('entitats') or {}, {})
+        pendents = [i for i in estat['ids'] if i not in detalls]
+        for inici in range(0, len(pendents), self.MIDA_LOT_API):
+            lot = pendents[inici:inici + self.MIDA_LOT_API]
+            if not self.capcaleres_api and not self._capturar_capcaleres_api():
+                return None
+            status, text = driver.execute_async_script(self.JS_PUT, self.URL_API_PRODUCTES,
+                                                       json.dumps(lot), self.capcaleres_api)
+            if status != 200 and self._capturar_capcaleres_api():
+                # Les capcaleres copiades d'una altra pagina han caducat
+                status, text = driver.execute_async_script(self.JS_PUT, self.URL_API_PRODUCTES,
+                                                           json.dumps(lot), self.capcaleres_api)
+            if status != 200:
+                return None
+            self._productes_de_resposta(json.loads(text), detalls)
+        count = 0
+        for pid in estat['ids']:
+            producte = self._producte_de_dades(detalls.get(pid) or {})
+            if producte:
+                self.productes.append(producte)
+                count += 1
+        return count
+
     def extreure_productes_pagina(self, url):
-        """Extreu productes d'una URL amb scroll infinit"""
+        """Extreu els productes d'una fulla: API de la pagina i, si no es pot, lectura del DOM"""
+        try:
+            count = self.extreure_productes_api(url)
+        except Exception as e:
+            print(f"      ⚠️  API: {str(e)[:150]}")
+            count = None
+        if count is not None:
+            self.fulles_api += 1
+            return count
+        self.fulles_dom += 1
+        return self.extreure_productes_dom(url)
+
+    def extreure_productes_dom(self, url):
+        """Extreu productes d'una URL amb scroll infinit (nomes llegeix els primers: llista virtual)"""
         driver = self.driver
         count = 0
         try:
@@ -1046,7 +1218,8 @@ class BonPreuEsclatScraper:
                 except:
                     pass
 
-        print(f"✅ Bon Preu / Esclat: {len(self.productes)} productes extrets (reinicis de navegador: {self.reinicis})")
+        print(f"✅ Bon Preu / Esclat: {len(self.productes)} productes extrets (reinicis de navegador: {self.reinicis}; "
+              f"fulles via API: {self.fulles_api}, via DOM: {self.fulles_dom})")
         return self.productes
 
 

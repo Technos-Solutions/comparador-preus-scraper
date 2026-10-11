@@ -4,7 +4,7 @@ Incidències detectades per anar resolent un cop acabada la feina en curs.
 Seguir la metodologia de `CLAUDE.md`: primer diagnòstic aïllat, després producció.
 Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
 
-Última revisió: 28/09/2026
+Última revisió: 01/10/2026
 
 ## 🔴 Urgent
 
@@ -26,6 +26,53 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
    - Historial: els runs #4 a #12 (del 15/06 al 10/08) van arribar tots al límit de temps de 5,5 h,
      amb errors "Illegal header value" (problema amb la clau). Com que la caché només es desa al final,
      aquells runs no van deixar res desat.
+
+## Normalitzador v3 (en disseny, 01/10/2026)
+
+Els diagnòstics del 28/09 i l'01/10 (`debug_gemini_thinking.py`, `debug_mateix_producte.py`) mostren
+que el v2 falla per disseny: demana a Gemini un nom lliure en català i després compara text exacte.
+Exemple: la Coca-Cola original surt amb 5 noms diferents ("refresc cola", "refresc de cua",
+"refresc de cola original"...) i no s'agrupa mai. A més, el nom no és estable entre crides
+(28 de 50 iguals) i cada lot de 50 gasta ~6.400 tokens de raonament que no calen.
+
+Mètode nou validat (com ho faria una persona):
+- Gemini veu tota una **família de candidats** dels 5 supermercats en una sola crida i en treu
+  **atributs**: marca, producte, variant, marca blanca i format (unitats × mida, amb el nom i la
+  quantitat de la web).
+- Mateix producte = mateixa marca + producte + variant. Coca-Cola: 7 productes comparables entre
+  supermercats, amb els €/l correctes (abans Carrefour sortia a 5,49 €/l en lloc de 0,92).
+- **Marques blanques**: es comparen entre elles per producte + variant. Llet sencera: Carrefour 0,94,
+  Mercadona 0,96, Dia 0,96 i Bon Àrea 0,99 €/l. Llista fixa per supermercat + camp de Gemini.
+  Gemini n'ha trobat que no eren a la llista: Casa Juncal (Mercadona), La Almazara del Olivar (Dia),
+  De Nuestra Tierra, Simpl i Sensation (Carrefour). Dubtós: "Círculo de Calidad" a Carrefour (és de Lidl?).
+- Sense raonament (`thinking_budget=0`) i temperatura 0: els mateixos grups, 1/3 del cost i noms estables.
+
+Prova del v3 a producció (01/10, `debug_normalitzador_v3.py`, categoria llet sencera del v2):
+620 productes en 8 lots de 80 barrejant supermercats, amb vocabulari compartit. Vocabulari final:
+només 8 productes (llet, batut, crema de llet, llet condensada...). 60 grups de marca comercial
+i 26 de marca blanca comparables, 58 i 26 amb productes de lots diferents (el vocabulari funciona
+entre crides). Exemple: llet semidesnatada de marca blanca, Carrefour 0,82 €/l, Dia i Mercadona 0,84,
+Bon Àrea 0,89. Cost: ~0,33 € per 1.000 productes (resposta compacta) → ~13 € per als 39.000.
+Detall a revisar: variants massa fines ("pasteuritzada, sencera" separada de "sencera").
+
+Primer run real del v3 (07/10, llet+oli+aigua, 445 productes, ~0,15 €): 67 comparacions
+(42 marca comercial, 25 marca blanca). Revisió del David: correcte en general. Corregit al codi:
+agrupació sense accents ("beguda lactia" = "beguda làctia") i columna "Revisar" quan el més car
+costa més de 2,5 vegades el més barat (cas real: Puleva amb cereals i fruita, format mal llegit
+a Mercadona, 0,33 vs 3,32 €/l). Pendent: variants massa fines ("gust llimona" vs "suc de llimona").
+
+**Primera passada completa del v3 (08/10, 1h15):** 34.953 de 36.070 productes amb atributs,
+**3.830 comparacions** (1.971 marca blanca, 1.859 marca comercial), davant les 370 del v2.
+Tokens: entrada 3,0 M, sortida 1,43 M (~12 €). Gemini ha proposat 90 marques blanques "pendent"
+(n'hi ha de dubtoses: "Essential" a Bon Àrea i Bon Preu, "1601", "Ramblers"...): les ha de revisar el David.
+Els ~1.100 productes sense atributs (lots amb respostes incompletes) es reintenten sols al proper run.
+
+Pendent per al v3:
+- ~~Encadenar-lo a la Part 5 en lloc del v2~~ Fet l'11/10: la Part 5 llança el v3; el v2 queda manual.
+- Productes sense marca (ous, fruita de Mercadona...) també compten com a marca blanca del supermercat.
+- No comparar unitats diferents (€/u amb €/kg).
+- Com formar les famílies de candidats a producció (per categoria?) i desar-ne els atributs a la caché.
+- Cost real: el run del v2 del 29/09 va normalitzar Carrefour (~15 €). Saldo de Gemini l'01/10: 1,45 €.
 
 ## Dades (qualitat dels productes)
 
@@ -56,6 +103,27 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
    es va fer amb els iogurts en pack de `Comparacions_v2`.
 
 ## Scrapers
+
+20. **07/10: la Part 4 (Bon Preu) només va extreure 1.304 productes** (normalment ~4.300). Neteja de la
+    llar, Per la llar, Espai Mascotes, Nadons i Parafarmàcia van sortir a 0 a nivell de categoria
+    principal. Causa (diagnòstic 08/10): la sessió es va degradar en començar Neteja i el comptador de
+    zeros es posa a 0 a cada categoria principal, així que el reinici no saltava. Amb navegador nou,
+    les 5 categories donen 3.133 productes. **Corregit** (commit e6feb43): es repeteix la categoria
+    principal que dona 0. A la Part 5, Carrefour "Aceites y vinagres" (cat20066) va sortir buida (pendent).
+
+21. **Bon Preu: el scraper només llegeix els primers productes de cada fulla** (llista virtual). Exemples
+    (08/10): packs de llet 21 de 90, estris de cuina 21 de 300, hermètics 10 de 87. Bon Preu té
+    probablement diverses vegades els ~7.800 productes que tenim.
+    **Solució trobada (diagnòstics debug_bonpreu_api*.py):** cada pàgina de fulla porta a
+    `window.__INITIAL_STATE__` tots els ids (`data.products.catalogue.data.productGroups[].products`,
+    `totalProducts`) i el detall dels primers 30 (`productEntities`). La resta s'obté amb una sola crida
+    `PUT /api/webproductpagews/v6/products` (cos = llista d'ids) des de la pàgina, copiant-ne les
+    capçaleres (`x-csrf-token`, `client-route-id`, `page-view-id`, `ecom-request-source`...): 90/90 en
+    0,3 s i 300/300 en 0,7 s. Camps: `name`, `brand`, `packSizeDescription` ("6 x 1L"), `price.amount`
+    i `unitPrice` (preu per litre/kg/unitat). Una categoria principal es talla a 300 productes, així que cal
+    recórrer les fulles. **Portat a scraper_main.py l'11/10** després de la prova completa a la branca
+    (debug_bonpreu_parts_api.py): Part 3 7.074 únics (abans ~3.600) en 2h33, Part 4 11.265 (abans 4.183) en
+    2h36; ~94% de les fulles via API, la resta via DOM (pendent mirar per què). Es desa la marca real.
 
 7. **Carrefour: algunes pàgines carreguen parcialment** (16 de 24 productes, fins i tot
    després de tornar a fer scroll). Al run complet del 27/09 es van extreure 16.521 productes únics,
@@ -89,7 +157,10 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
 
 ## Automatització i manteniment
 
-10. **Primera setmana amb l'encadenament nou** (28/09, en curs). Fins ara, correcte: Part 1 → Part 2
+10. **05/10: la Part 4 es va cancel·lar sense arrencar** (GitHub no va assignar cap màquina en
+    15 min) i la cadena es va aturar abans de Carrefour. Relançada a mà el 07/10. Reforça la
+    necessitat de l'avís de l'incidència 11.
+    **Primera setmana amb l'encadenament nou** (28/09, en curs). Fins ara, correcte: Part 1 → Part 2
     → Part 3, un sol cop cadascuna. Nota: GitHub endarrereix l'horari de les 04:00 UTC unes 5-6 h
     (la Part 1 va començar a les 10:24, igual que les setmanes anteriors), així que la Part 5 acaba
     de matinada de dimarts. Pendent de verificar les Parts 4, 5 i el normalitzador.
@@ -114,7 +185,10 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit.
 ## Producte
 
 15. **Normalitzador:** decidir entre la v1 (Groq) i la v2 (Gemini) i eliminar-ne una.
-16. **Front-end Streamlit:** no iniciat.
+16. **Front-end:** no iniciat. Proposta (01/10): **GitHub Pages** en lloc de Streamlit. Una pàgina
+    estàtica gratuïta al mateix repositori que el workflow regenera en acabar la cadena setmanal.
+    Google Sheets continua de base de dades fins que vulguem historial de preus (39.000 files per
+    setmana superarien el límit de 10 milions de cel·les en un any); llavors, SQLite o Supabase.
 17. **Navegació visual/OCR per a Carrefour** (idea del David): probablement ja no cal, perquè el
     scraping funciona. Es deixa anotada per si Carrefour torna a bloquejar.
 

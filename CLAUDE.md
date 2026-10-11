@@ -18,14 +18,14 @@ https://github.com/Technos-Solutions/comparador-preus-scraper
 | Mercadona      | ✅ OK    | (Parts 1+2: 14.581 en total) | |
 | Bon Àrea       | ✅ OK    | (inclòs a Parts 1+2) | |
 | Dia            | ✅ OK    | (inclòs a Parts 1+2) | |
-| Bon Preu/Esclat| ✅ OK    | ~8.000 únics    | SeleniumBase headed + Xvfb; reinici si 2 subcategories seguides a 0 |
+| Bon Preu/Esclat| ✅ OK    | ~18.300 únics   | SeleniumBase headed + Xvfb. Des del 11/10 llegeix l'estat de la pàgina + API interna (la graella és una llista virtual i abans només en llegia ~7.800) |
 | Carrefour      | ✅ OK    | ~16.500 únics   | SeleniumBase headed + Xvfb. Cloudflare bloqueja offset >= 1008: es recorre per subcategories (~3h15) |
 Total a `Preus`: 38.990 productes (27/09/2026).
 
 ## Arquitectura GitHub Actions (5 workflows en cadena, un sol cop cadascun)
 Només la **Part 1** té horari (dilluns 04:00 UTC). Cada part, en acabar amb èxit, llança
-la següent amb `workflow_dispatch`, i la Part 5 llança `normalitzador_v2.yml`:
-Part 1 → Part 2 → Part 3 → Part 4 → Part 5 → Normalitzador v2.
+la següent amb `workflow_dispatch`, i la Part 5 llança `normalitzador_v3.yml` (des de l'11/10; abans el v2):
+Part 1 → Part 2 → Part 3 → Part 4 → Part 5 → Normalitzador v3.
 (Fins al 27/09/2026 cada part tenia també el seu propi horari, i això feia que la Part 5
 s'executés fins a 5 cops cada dilluns, amb execucions solapades escrivint als mateixos fulls.
 No tornar a posar horaris a les Parts 2-5. Si la cadena es trenca, llançar a mà la part que falta.)
@@ -39,7 +39,8 @@ No tornar a posar horaris a les Parts 2-5. Si la cadena es trenca, llançar a m�
 ## Normalitzador de noms de productes (Fase 3 — ✅ implementat, en validació)
 Compara el mateix producte entre supermercats normalitzant el nom amb un LLM (no rapidfuzz, tot i que encara apareix a `requirements.txt`/algun workflow de debug).
 - **`normalitzador.py`** (v1): primera versió, feta servir Groq com a LLM. Workflow manual `normalitzador.yml`.
-- **`normalitzador_v2.py`** (v2, activa): fa servir **Gemini Flash 2.0** (`google-generativeai`), amb caché de resultats a la pestanya `Productes_Normalitzats` per no re-normalitzar productes ja processats, gestió de rate limit (15 RPM, sleep 2–5s entre lots de 50) i aturada neta si s'esgota la quota diària de Gemini. Escriu les comparacions a `Comparacions_v2`. Workflow `normalitzador_v2.yml` (`timeout-minutes: 330`), s'executa automàticament després de la Part 5 o manualment.
+- **`normalitzador_v3.py`** (v3, **actiu des de l'11/10**): Gemini (`google.genai`, sense raonament, temperatura 0) extreu **atributs** (marca, producte, variant, marca blanca, format) per categoria, amb un vocabulari compartit perquè el mateix producte tingui sempre el mateix nom; la comparació la fa el codi. Caché a `Productes_Atributs`, marques blanques a `Marques_Blanques` (estat confirmada/pendent/descartada, les revisa el David), resultat a `Comparacions_v3` (columna "Revisar" si el més car costa >2,5× el més barat). Workflow `normalitzador_v3.yml`: automàtic després de la Part 5 o manual (inputs `max_productes`, `categories`, `nomes_comparar`). Primera passada 08/10: 3.830 comparacions (v2: 370), ~12 €. Detalls a `INCIDENCIES.md`.
+- **`normalitzador_v2.py`** (v2, **retirat de la cadena l'11/10**, es manté manual): fa servir **Gemini Flash 2.0** (`google-generativeai`), amb caché de resultats a la pestanya `Productes_Normalitzats` per no re-normalitzar productes ja processats, gestió de rate limit (15 RPM, sleep 2–5s entre lots de 50) i aturada neta si s'esgota la quota diària de Gemini. Escriu les comparacions a `Comparacions_v2`. Workflow `normalitzador_v2.yml` (`timeout-minutes: 330`), s'executa automàticament després de la Part 5 o manualment.
 - Prompt normalitza a català, format `[producte_base] [variant] [atribut]`, sense marca ni quantitat.
 - `debug_bonarea.py` + workflows `debug.yml`/`debug_carrefour.yml`: eines de debug puntual (Bon Àrea/Carrefour), no formen part del flux principal.
 
@@ -74,8 +75,7 @@ Exemples:
 - ✅ ~39.000 productes únics funcionant (27/09/2026: Bon Preu i Carrefour arreglats; Carrefour complet per subcategories)
 - ✅ Camps `quantitat` i `envas` afegits a tots els scrapers
 - ✅ Workflows ampliats a 5 parts (límit 6h) i encadenats automàticament
-- ✅ Normalitzador de noms (Fase 3) implementat amb LLM (v1 Groq, v2 Gemini Flash 2.0 amb caché) — en fase de validació, v1 i v2 conviuen en paral·lel (`Comparacions_v2` vs sortida v1)
-- ⏳ **Pendent:** Decidir/consolidar v1 vs v2 del normalitzador un cop validat
+- ✅ Normalitzador v3 (atributs + marques blanques) a la cadena setmanal des de l'11/10; v1 i v2 retirats (es poden esborrar quan el v3 porti unes setmanes estable)
 - ⏳ **Pendent:** Front-end Streamlit (no iniciat)
 
 **Llista d'incidències pendents: [`INCIDENCIES.md`](INCIDENCIES.md).** Hi s'anota tot el que es detecti
@@ -86,7 +86,8 @@ Exemples:
 comparador-preus-scraper/
 ├── scraper_main.py            # Scraper principal (tots els supermercats, --part=N)
 ├── normalitzador.py            # Normalitzador v1 (Groq)
-├── normalitzador_v2.py         # Normalitzador v2 (Gemini Flash 2.0 + caché)
+├── normalitzador_v2.py         # Normalitzador v2 (retirat, manual)
+├── normalitzador_v3.py         # Normalitzador v3 (actiu: atributs + marques blanques)
 ├── debug_bonarea.py            # Script de debug puntual
 ├── requirements.txt
 └── .github/workflows/
@@ -94,9 +95,10 @@ comparador-preus-scraper/
     ├── Scraper_part2.yml       # Dia
     ├── Scraper_part3.yml       # Bon Preu: Frescos+Alimentació+Begudes
     ├── Scraper_part4.yml       # Bon Preu: Congelats+Làctics+Cura+Neteja+Llar+Mascotes+Nadons+Parafarmàcia
-    ├── Scraper_part5.yml       # Carrefour (encadena normalitzador_v2 en acabar)
+    ├── Scraper_part5.yml       # Carrefour (encadena normalitzador_v3 en acabar)
     ├── normalitzador.yml       # Normalitzador v1, manual
-    ├── normalitzador_v2.yml    # Normalitzador v2, manual o auto després de Part 5
+    ├── normalitzador_v2.yml    # Normalitzador v2, només manual
+    ├── normalitzador_v3.yml    # Normalitzador v3, auto després de Part 5 o manual
     ├── debug.yml               # Debug puntual
     └── debug_carrefour.yml     # Debug puntual Carrefour/Bon Àrea
 ```
