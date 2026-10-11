@@ -109,7 +109,13 @@ Pendent per al v3:
     principal. Causa (diagnòstic 08/10): la sessió es va degradar en començar Neteja i el comptador de
     zeros es posa a 0 a cada categoria principal, així que el reinici no saltava. Amb navegador nou,
     les 5 categories donen 3.133 productes. **Corregit** (commit e6feb43): es repeteix la categoria
-    principal que dona 0. A la Part 5, Carrefour "Aceites y vinagres" (cat20066) va sortir buida (pendent).
+    principal que dona 0. A la Part 5, Carrefour "Aceites y vinagres" (cat20066) va sortir buida:
+    **revisat l'11/10, no es perd res**. És un enllaç antic del menú d'Alimentación; els olis es recorren
+    sencers per la categoria nova "Aceites y vinagres" [cat33207691] (155 de 155). Igualment, "Dulces y
+    desayunos" [cat20010] i "Helados" [cat460001] són enllaços antics que mostren el total de tota La
+    Despensa (6.456) i no aporten cap producte nou (els dolços són a "Dulce" i "Desayuno", els gelats a
+    Congelados). Millora opcional (no urgent): saltar els nodes que indiquen un total igual o més gran que
+    el del pare, per no perdre ~10 min paginant-los, i no comptar-los com a incidència.
 
 21. **Bon Preu: el scraper només llegeix els primers productes de cada fulla** (llista virtual). Exemples
     (08/10): packs de llet 21 de 90, estris de cuina 21 de 300, hermètics 10 de 87. Bon Preu té
