@@ -68,7 +68,7 @@ Tokens: entrada 3,0 M, sortida 1,43 M (~12 €). Gemini ha proposat 90 marques b
 Els ~1.100 productes sense atributs (lots amb respostes incompletes) es reintenten sols al proper run.
 
 Pendent per al v3:
-- Encadenar-lo a la Part 5 en lloc del v2 i retirar el v2 (incidència 15).
+- ~~Encadenar-lo a la Part 5 en lloc del v2~~ Fet l'11/10: la Part 5 llança el v3; el v2 queda manual.
 - Productes sense marca (ous, fruita de Mercadona...) també compten com a marca blanca del supermercat.
 - No comparar unitats diferents (€/u amb €/kg).
 - Com formar les famílies de candidats a producció (per categoria?) i desar-ne els atributs a la caché.
@@ -120,8 +120,10 @@ Pendent per al v3:
     `PUT /api/webproductpagews/v6/products` (cos = llista d'ids) des de la pàgina, copiant-ne les
     capçaleres (`x-csrf-token`, `client-route-id`, `page-view-id`, `ecom-request-source`...): 90/90 en
     0,3 s i 300/300 en 0,7 s. Camps: `name`, `brand`, `packSizeDescription` ("6 x 1L"), `price.amount`
-    i `unitPrice` (preu per litre/kg/unitat). Pendent: portar-ho a scraper_main.py (diagnòstic a escala
-    abans) i comprovar si una categoria principal ja dona tots els ids de cop.
+    i `unitPrice` (preu per litre/kg/unitat). Una categoria principal es talla a 300 productes, així que cal
+    recórrer les fulles. **Portat a scraper_main.py l'11/10** després de la prova completa a la branca
+    (debug_bonpreu_parts_api.py): Part 3 7.074 únics (abans ~3.600) en 2h33, Part 4 11.265 (abans 4.183) en
+    2h36; ~94% de les fulles via API, la resta via DOM (pendent mirar per què). Es desa la marca real.
 
 7. **Carrefour: algunes pàgines carreguen parcialment** (16 de 24 productes, fins i tot
    després de tornar a fer scroll). Al run complet del 27/09 es van extreure 16.521 productes únics,
