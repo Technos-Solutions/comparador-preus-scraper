@@ -14,9 +14,10 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: pip install gspread oauth2client google-generativeai google-genai
-      # A master executa debug_gemini_genai.py; a la branca, la prova del normalitzador v3
-      - name: Run debug_normalitzador_v3
+      # A master executa debug_gemini_genai.py; a la branca, el diagnostic de marques blanques
+      # i categoria "altra" del 13/10 (nomes lectura, sense Gemini)
+      - name: Run debug_marques_altra
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python debug_normalitzador_v3.py
+        run: python debug_marques_altra.py
