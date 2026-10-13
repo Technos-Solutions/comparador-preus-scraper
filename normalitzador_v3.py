@@ -100,9 +100,11 @@ Per a cada producte, extreu:
   ["amb gas"]...), en català i minúscules. NO hi posis trets de procés o de
   màrqueting que no canvien el producte ("pasteuritzada", "original", "clàssic",
   "de sempre"), ni format, envàs o quantitat. [] si és la versió normal.
-- marca_blanca: 1 si és la marca pròpia del supermercat on es ven (Hacendado de
+- marca_blanca: 1 NOMÉS si és la marca pròpia del supermercat on es ven (Hacendado de
   Mercadona, Dia Láctea de Dia, Carrefour/El Mercado de Carrefour, Bonpreu/Ifa de
-  Bon Preu, Bon Àrea...), 0 si no.
+  Bon Preu, Bon Àrea...). Les marques de fabricant són sempre 0, encara que siguin
+  poc conegudes o només es trobin en aquest supermercat (Coca-Cola, Danone, Johnnie
+  Walker, Smirnoff, Larios, Baileys...). Si dubtes, 0.
 - unitats, mida, unitat: format del pack. unitat és "ml", "g" o "u". Converteix
   l i cl a ml, kg a g. Fes servir el nom i "q" (la quantitat de la web): si el nom
   no diu la mida, fes servir q; si q és la mida d'una sola unitat però el nom diu
@@ -174,14 +176,31 @@ def ordre_barrejat(productes):
 
 # ── Marques blanques ──────────────────────────────────────────────────────────
 class MarquesBlanques:
-    def __init__(self, files):
+    # Una marca blanca nomes es ven al seu supermercat: si una marca surt a 2 o mes
+    # supermercats, no ho es (13/10: Gemini va marcar Johnnie Walker, Smirnoff, Baileys...
+    # com a marca blanca). Nomes les "confirmada" pel David s'escapen d'aquesta regla.
+    MIN_SUPERMERCATS_FABRICANT = 2
+
+    def __init__(self, files, atributs=None):
         # files: dicts amb marca, supermercat, estat
         self.estat = {}   # (supermercat, marca normalitzada) -> estat
-        for f in files:
+        self.fila = {}    # (supermercat, marca normalitzada) -> fila del full (per actualitzar l'estat)
+        for i, f in enumerate(files):
             clau = (str(f.get('supermercat', '')).strip(), sense_accents(f.get('marca')))
             if clau[1]:
                 self.estat[clau] = str(f.get('estat', '')).strip().lower() or 'confirmada'
+                self.fila[clau] = i + 2   # fila 1 = capcalera
         self.noves = []   # candidates detectades en aquest run: [marca, supermercat]
+        self.supermercats = defaultdict(set)   # marca normalitzada -> supermercats on es ven
+        for (s, _), a in (atributs or {}).items():
+            self.veure(a.get('marca'), s)
+
+    def veure(self, marca, supermercat):
+        if sense_accents(marca):
+            self.supermercats[sense_accents(marca)].add(supermercat)
+
+    def es_de_fabricant(self, marca):
+        return len(self.supermercats.get(sense_accents(marca), ())) >= self.MIN_SUPERMERCATS_FABRICANT
 
     def _estat(self, marca, supermercat):
         m = sense_accents(marca)
@@ -194,16 +213,23 @@ class MarquesBlanques:
         if not sense_accents(marca):
             return True   # sense marca: producte propi o generic del supermercat
         estat = self._estat(marca, supermercat)
-        if estat == 'descartada':
-            return False
-        if estat in ('confirmada', 'pendent'):
+        if estat == 'confirmada':
             return True
-        return bool(segons_gemini)
+        if estat == 'descartada' or self.es_de_fabricant(marca):
+            return False
+        return estat == 'pendent' or bool(segons_gemini)
 
     def apuntar_candidata(self, marca, supermercat, segons_gemini):
-        if segons_gemini and sense_accents(marca) and self._estat(marca, supermercat) is None:
+        if segons_gemini and sense_accents(marca) and self._estat(marca, supermercat) is None \
+                and not self.es_de_fabricant(marca):
             self.estat[(supermercat, sense_accents(marca))] = 'pendent'
             self.noves.append([marca, supermercat])
+
+    def pendents_a_descartar(self):
+        # Pendents ja desades al full que es venen a 2 o mes supermercats: [(fila, marca, supermercats)]
+        return [(self.fila[(s, m)], m, sorted(self.supermercats[m]))
+                for (s, m), estat in self.estat.items()
+                if estat == 'pendent' and (s, m) in self.fila and self.es_de_fabricant(m)]
 
 
 # ── Vocabulari per categoria ──────────────────────────────────────────────────
@@ -430,7 +456,7 @@ def main():
     llavor = [[m, s, 'confirmada', 'llista inicial', str(date.today())]
               for s, ll in MARQUES_BLANQUES_INICIALS.items() for m in ll]
     ws_marques, _ = obrir_o_crear(sheet, 'Marques_Blanques', CAPCALERA_MARQUES, 2000, llavor)
-    marques = MarquesBlanques(ws_marques.get_all_records())
+    marques = MarquesBlanques(ws_marques.get_all_records(), atributs)
     print(f"Cache v2: {len(cache_v2)} | atributs v3: {len(atributs)} | marques blanques: {len(marques.estat)}")
 
     # Productes nous: els que no tenen atributs (un sol cop per supermercat + nom)
@@ -501,6 +527,7 @@ def main():
                         vocabularis[categoria]['productes'][a['producte']][a['variant']] += 1
                         if a['marca']:
                             vocabularis[categoria]['marques'][a['marca']] += 1
+                        marques.veure(a['marca'], p['supermercat'])
                         marques.apuntar_candidata(a['marca'], p['supermercat'], a['marca_blanca'])
                         files_noves.append([p['supermercat'], p['producte'], categoria, a['marca'],
                                             a['producte'], a['variant'], a['marca_blanca'], a['unitats'],
@@ -513,15 +540,30 @@ def main():
             motiu_aturada = str(e)
             print(f"\n🛑 {motiu_aturada}. El que s'ha fet ja esta desat; es continua amb la comparacio.")
 
-        if marques.noves:
-            ws_marques.append_rows([[m, s, 'pendent', 'Gemini', str(date.today())] for m, s in marques.noves],
-                                   value_input_option='RAW')
-            print(f"\nMarques blanques candidates afegides com a 'pendent': {len(marques.noves)}")
-            for m, s in marques.noves[:30]:
-                print(f"   {s}: {m}")
         print(f"\nTokens Gemini: entrada={gemini.tokens_entrada} sortida={gemini.tokens_sortida}")
         if motiu_aturada:
             print(f"⚠️  Run incomplet: {motiu_aturada}")
+
+    # Les candidates (pendent) que es venen a 2 o mes supermercats es descarten soles;
+    # una candidata nova del run pot haver aparegut despres en un altre supermercat
+    noves_descartades = [[m, s] for m, s in marques.noves if marques.es_de_fabricant(m)]
+    marques.noves = [[m, s] for m, s in marques.noves if not marques.es_de_fabricant(m)]
+    if marques.noves:
+        ws_marques.append_rows([[m, s, 'pendent', 'Gemini', str(date.today())] for m, s in marques.noves],
+                               value_input_option='RAW')
+        print(f"\nMarques blanques candidates afegides com a 'pendent': {len(marques.noves)}")
+        for m, s in marques.noves[:30]:
+            print(f"   {s}: {m}")
+    a_descartar = marques.pendents_a_descartar()
+    if a_descartar:
+        ws_marques.batch_update([{'range': f'C{fila}:D{fila}',
+                                  'values': [['descartada', f"auto: es ven a {len(supers)} supermercats"]]}
+                                 for fila, _, supers in a_descartar])
+        print(f"\nMarques 'pendent' descartades soles (es venen a 2+ supermercats): {len(a_descartar)}")
+        for _, m, supers in a_descartar[:40]:
+            print(f"   {m}: {', '.join(supers)}")
+    if noves_descartades:
+        print(f"Candidates noves no afegides (es venen a 2+ supermercats): {len(noves_descartades)}")
 
     files = comparar(preus, atributs, marques)
     desar_comparacions(sheet, files)

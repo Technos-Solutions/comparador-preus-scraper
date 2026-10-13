@@ -67,6 +67,28 @@ Tokens: entrada 3,0 M, sortida 1,43 M (~12 €). Gemini ha proposat 90 marques b
 (n'hi ha de dubtoses: "Essential" a Bon Àrea i Bon Preu, "1601", "Ramblers"...): les ha de revisar el David.
 Els ~1.100 productes sense atributs (lots amb respostes incompletes) es reintenten sols al proper run.
 
+**Primer run automàtic del v3 a la cadena (13/10, 04:42-05:21 hora local, 39 min):** 15.606 productes
+nous (sobretot Bon Preu, que ara llegeix ~18.300 productes amb l'API), 10.246 sense categoria al caché v2.
+S'ha aturat a la categoria "altra" (lot 24 de 66) per `402 Your prepayment credits are depleted`:
+**s'han acabat els crèdits de Gemini**. El que s'havia fet està desat: 45.832 de 49.444 productes amb
+atributs, **5.036 comparacions** (2.677 marca comercial, 2.359 marca blanca). Tokens: entrada 1,7 M,
+sortida 0,55 M (~5 €). Queden ~3.600 productes per al proper run (~1,2 €), que es reprenen sols.
+- **35 marques blanques "pendent" errònies:** totes són marques de licors (Baileys, Smirnoff, Johnnie
+  Walker, Larios, Martini, Chivas Regal...). Gemini ha marcat `marca_blanca=1` a begudes alcohòliques:
+  cal posar-les com a "descartada" i revisar el prompt per a aquesta categoria.
+- Lots de "altra" (5 a 19) amb exactament 2.085 tokens de sortida cadascun. Diagnòstic
+  `debug_marques_altra.py` (13/10): no són files buides; són **1.260 llibres de Bon Preu** (l'API ara
+  llegeix també el basar), tots "llibre infantil" sense marca ni mida, i per això les respostes són iguals.
+  No es poden comparar (sense mida) i costen ~0,4 €. Opcional: no enviar a Gemini els llibres.
+- El mateix diagnòstic: de 126 marques "pendent", **42 es venen a 2 o més supermercats** (licors,
+  Colorcor, Vaseline, Essential, EL NOSTRE...): són de fabricant. Afectaven 179 productes que es
+  comparaven com a marca blanca. **Corregit (13/10):** una marca que es ven a 2+ supermercats no és mai
+  marca blanca (llevat de les "confirmada"), no s'apunta com a candidata i les "pendent" que ho compleixen
+  passen soles a "descartada" (origen "auto: es ven a N supermercats"). El prompt diu que les marques de
+  fabricant són sempre 0 i, si dubta, 0.
+- Detall: "Deliplus" (confirmada, Mercadona) surt també a Bon Preu en alguns productes (Gemini hi posa
+  aquesta marca). No afecta la comparació, però indica marques mal llegides a Bon Preu.
+
 Pendent per al v3:
 - ~~Encadenar-lo a la Part 5 en lloc del v2~~ Fet l'11/10: la Part 5 llança el v3; el v2 queda manual.
 - Productes sense marca (ous, fruita de Mercadona...) també compten com a marca blanca del supermercat.
