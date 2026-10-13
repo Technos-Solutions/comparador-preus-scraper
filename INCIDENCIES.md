@@ -67,6 +67,18 @@ Tokens: entrada 3,0 M, sortida 1,43 M (~12 €). Gemini ha proposat 90 marques b
 (n'hi ha de dubtoses: "Essential" a Bon Àrea i Bon Preu, "1601", "Ramblers"...): les ha de revisar el David.
 Els ~1.100 productes sense atributs (lots amb respostes incompletes) es reintenten sols al proper run.
 
+**Primer run automàtic del v3 a la cadena (13/10, 04:42-05:21 hora local, 39 min):** 15.606 productes
+nous (sobretot Bon Preu, que ara llegeix ~18.300 productes amb l'API), 10.246 sense categoria al caché v2.
+S'ha aturat a la categoria "altra" (lot 24 de 66) per `402 Your prepayment credits are depleted`:
+**s'han acabat els crèdits de Gemini**. El que s'havia fet està desat: 45.832 de 49.444 productes amb
+atributs, **5.036 comparacions** (2.677 marca comercial, 2.359 marca blanca). Tokens: entrada 1,7 M,
+sortida 0,55 M (~5 €). Queden ~3.600 productes per al proper run (~1,2 €), que es reprenen sols.
+- **35 marques blanques "pendent" errònies:** totes són marques de licors (Baileys, Smirnoff, Johnnie
+  Walker, Larios, Martini, Chivas Regal...). Gemini ha marcat `marca_blanca=1` a begudes alcohòliques:
+  cal posar-les com a "descartada" i revisar el prompt per a aquesta categoria.
+- Lots de "altra" (5 a 19) amb exactament 2.085 tokens de sortida cadascun: pot voler dir que Gemini
+  retorna files buides (sense producte). Cal comprovar-ho a `Productes_Atributs` amb un diagnòstic de lectura.
+
 Pendent per al v3:
 - ~~Encadenar-lo a la Part 5 en lloc del v2~~ Fet l'11/10: la Part 5 llança el v3; el v2 queda manual.
 - Productes sense marca (ous, fruita de Mercadona...) també compten com a marca blanca del supermercat.
