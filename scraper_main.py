@@ -472,6 +472,11 @@ class CarrefourScraper:
     # ha productes que no pengen de cap subcategoria, o una subcategoria no
     # ha carregat), es recorre tambe la mare fins al limit de paginacio.
     COBERTURA_MINIMA = 0.97
+    # Nomes interessen productes de menjar, neteja i higiene (13/10, el David): es salten
+    # les subcategories de basar de "Droguería y limpieza" (~550 productes el 12/10). Se'n
+    # llegeix el total (sense desar productes) perque la suma del pare continui quadrant i
+    # no es recorri el pare sencer com a complement.
+    SUBCATEGORIES_EXCLOSES = {'Calzado', 'Menaje', 'Papelería', 'Bazar'}
     # El job de GitHub Actions te un limit de 6h i les dades nomes s'escriuen
     # a Sheets al final: s'atura el scraping amb marge per poder-les desar.
     TEMPS_MAXIM_SEGONS = 5 * 3600
@@ -728,6 +733,10 @@ class CarrefourScraper:
             print(f"{sagnat}⏱️ Temps maxim esgotat, no es fa {nom}")
             return 0
         url_base = f'{self.web}{cami}/{codi}/c'
+        if nivell > 0 and nom in self.SUBCATEGORIES_EXCLOSES:
+            _, total, _ = self._obrir_node(url_base, cami)
+            print(f"{sagnat}⏭️  {nom} [{codi}]: no és menjar ni neteja, se salta (indica {total})")
+            return total or 0
         productes, total, fills = self._obrir_node(url_base, cami)
         if not productes and total is None and not fills:
             # Ni graella, ni total, ni subcategories: pagina que no ha
@@ -824,6 +833,16 @@ class BonPreuEsclatScraper:
     # que fa servir la mateixa pagina (x-csrf-token, client-route-id...). Si
     # una pagina no porta aquestes dades, es fa servir la lectura del DOM.
     ZEROS_SEGUITS_PER_REINICI = 2
+    # Nomes interessen productes de menjar, neteja i higiene (13/10, el David). Des que es
+    # llegeix l'API, "Per la llar" porta ~6.800 productes de basar (Part 4 del 12/10:
+    # llibres 1.307, jocs i joguines 1.360, papereria 1.284, parament 996, aire lliure 940...)
+    # que no es poden comparar. Es salten aquestes subcategories (slug de la URL); de
+    # "Per la llar" nomes queden ambientadors i insecticides.
+    SUBCATEGORIES_EXCLOSES = {
+        'llibres', 'papereria-i-llibreria', 'jocs-i-joguines', 'parament-de-la-llar',
+        'petit-electrodomèstic', 'tèxtil', 'calçat', 'espelmes', 'pel-foc', 'aire-lliure',
+        'bricolatge-i-automòbil',
+    }
     URL_API_PRODUCTES = 'https://www.compraonline.bonpreuesclat.cat/api/webproductpagews/v6/products'
     MIDA_LOT_API = 250
 
@@ -1150,6 +1169,11 @@ class BonPreuEsclatScraper:
             print(f"      ❌ Error: {e}")
         return count
 
+    def _es_exclosa(self, url):
+        from urllib.parse import unquote
+        slug = unquote(url.split('/')[-2]).lower()   # el mateix tros que nom_cat als logs
+        return slug in self.SUBCATEGORIES_EXCLOSES
+
     def scrape_recursiu(self, url, nivell=0):
         """Descobreix i rasca recursivament totes les subcategories reutilitzant el driver"""
         prefix = '  ' * (nivell + 2)
@@ -1164,6 +1188,9 @@ class BonPreuEsclatScraper:
                 print(f"{prefix}📂 {nom_cat}: {len(subcats)} subcategories")
                 self.zeros_seguits = 0
                 for nom_sub, url_sub in subcats:
+                    if self._es_exclosa(url_sub):
+                        print(f"{prefix}  ⏭️  {url_sub.split('/')[-2]}: no és menjar ni neteja, se salta")
+                        continue
                     self.scrape_recursiu(url_sub, nivell + 1)
             else:
                 # Categoria final — extreure productes

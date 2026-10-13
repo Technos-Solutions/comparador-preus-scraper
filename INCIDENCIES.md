@@ -79,7 +79,12 @@ sortida 0,55 M (~5 €). Queden ~3.600 productes per al proper run (~1,2 €), q
 - Lots de "altra" (5 a 19) amb exactament 2.085 tokens de sortida cadascun. Diagnòstic
   `debug_marques_altra.py` (13/10): no són files buides; són **1.260 llibres de Bon Preu** (l'API ara
   llegeix també el basar), tots "llibre infantil" sense marca ni mida, i per això les respostes són iguals.
-  No es poden comparar (sense mida) i costen ~0,4 €. Opcional: no enviar a Gemini els llibres.
+  No es poden comparar (sense mida) i costen ~0,4 €. **Decisió del David (13/10): només menjar i
+  neteja (i higiene), res de llibres, joguines, etc.** Des del 13/10 el scraper salta a Bon Preu les
+  subcategories de basar de "Per la llar" (llibres, papereria, jocs i joguines, parament, petit
+  electrodomèstic, tèxtil, calçat, espelmes, pel foc, aire lliure, bricolatge: ~6.800 productes; en
+  queden ambientadors i insecticides) i a Carrefour Calzado, Menaje, Papelería i Bazar (~550).
+  `Preus` es refà cada setmana, així que desapareixen al proper run de la cadena.
 - El mateix diagnòstic: de 126 marques "pendent", **42 es venen a 2 o més supermercats** (licors,
   Colorcor, Vaseline, Essential, EL NOSTRE...): són de fabricant. Afectaven 179 productes que es
   comparaven com a marca blanca. **Corregit (13/10):** una marca que es ven a 2+ supermercats no és mai
