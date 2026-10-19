@@ -16,8 +16,8 @@ jobs:
         run: pip install gspread oauth2client google-generativeai google-genai
       # A master executa debug_gemini_genai.py; a la branca, el diagnostic de marques blanques
       # i categoria "altra" del 13/10 (nomes lectura, sense Gemini)
-      - name: Run debug_marques_altra
+      - name: Run debug_marques_pendents
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python debug_marques_altra.py
+        run: python debug_marques_pendents.py
