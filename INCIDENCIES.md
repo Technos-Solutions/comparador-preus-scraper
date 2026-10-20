@@ -131,6 +131,14 @@ Pendent per al v3:
 
 ## Scrapers
 
+22. **19/10: Bon Preu perd fulles senceres quan la sessió es degrada** (Part 3: 6.722 productes, -409
+    respecte el 12/10: galetes 0 en lloc de 288, sucres i mels 0 en lloc de 65). Hi ha 31 fulles a 0 a la
+    Part 3 i 26 a la Part 4 (whisky escocès, tonyina en oli, gats, maquillatge, dentifrici...). El reinici
+    del navegador només salta a la **segona** fulla seguida a 0 i només reintenta aquesta: la primera es
+    perd. Proposta: en qualsevol fulla o node a 0, reiniciar i repetir el node (tornant a buscar
+    subcategories). Cost estimat: ~30-40 min més entre les Parts 3 i 4 (totes dues per sota de 3h).
+    **20/10:** corregit al codi (qualsevol fulla a 0 reinicia i repeteix el node); en prova a la branca.
+
 20. **07/10: la Part 4 (Bon Preu) només va extreure 1.304 productes** (normalment ~4.300). Neteja de la
     llar, Per la llar, Espai Mascotes, Nadons i Parafarmàcia van sortir a 0 a nivell de categoria
     principal. Causa (diagnòstic 08/10): la sessió es va degradar en començar Neteja i el comptador de

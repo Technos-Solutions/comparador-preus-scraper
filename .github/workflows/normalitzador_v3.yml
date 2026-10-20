@@ -1,7 +1,7 @@
 name: Normalitzador v3 (atributs + marques blanques)
 
 on:
-  # De moment nomes manual. Quan estigui validat, la Part 5 el llancara en lloc del v2.
+  # El llanca la Part 5 en acabar la cadena setmanal (des de l'11/10), o a ma
   workflow_dispatch:
     inputs:
       max_productes:
@@ -28,6 +28,13 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: pip install gspread oauth2client google-genai
+      # Historic de preus (des del 20/10): nomes desa preus nous o que canvien. Si falla, el
+      # normalitzador s'executa igualment
+      - name: Historic de preus
+        continue-on-error: true
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python historic_preus.py
       - name: Run normalitzador_v3
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
