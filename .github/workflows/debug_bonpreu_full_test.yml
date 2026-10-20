@@ -24,7 +24,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y xvfb
       - name: Install dependencies
         run: pip install seleniumbase
-      # A la branca: prova de les Parts 3 i 4 de Bon Preu amb el metode nou (API), sense Sheets
+      # A la branca: prova de les Parts 3 i 4 de Bon Preu amb el reintent nou de fulles a 0 (20/10), sense Sheets
       - name: Run debug_bonpreu_parts_api
         env:
           PART: ${{ matrix.part }}
