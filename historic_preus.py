@@ -1,4 +1,8 @@
-# historic_preus.py — Historic de preus a la pestanya Historic_Preus (des del 20/10/2026)
+# historic_preus.py — Historic de preus (des del 19/10/2026)
+#
+# Es desa en un Google Sheet a part, "Comparador_Preus_Historic" (pestanya Historic_Preus),
+# perque es l'unica dada que creix cada setmana i el full principal ja es al ~55% del limit
+# de 10 milions de cel·les. Llegeix els preus actuals de la pestanya Preus del full principal.
 #
 # Per no omplir el Google Sheet (limit de 10 milions de cel·les) nomes es desa una fila
 # quan un producte apareix per primer cop o quan li canvia el preu o el format:
@@ -17,6 +21,8 @@ from datetime import date
 
 from normalitzador_v3 import a_float
 
+FULL_PRINCIPAL = 'Comparador_Preus_DB'
+FULL_HISTORIC = 'Comparador_Preus_Historic'   # creat pel David i compartit amb el compte de servei
 PESTANYA = 'Historic_Preus'
 CAPCALERA = ['data', 'supermercat', 'producte', 'preu', 'quantitat', 'envas']
 MIDA_BLOC = 5000
@@ -39,9 +45,16 @@ def obrir_historic(sheet):
             ws.add_cols(len(CAPCALERA) - ws.col_count)
         return ws
     except gspread.WorksheetNotFound:
-        ws = sheet.add_worksheet(title=PESTANYA, rows=1000, cols=len(CAPCALERA))
+        pestanyes = sheet.worksheets()
+        if len(pestanyes) == 1 and not pestanyes[0].get_all_values():
+            # Full nou: es reaprofita la pestanya buida que porta per defecte ("Full 1")
+            ws = pestanyes[0]
+            ws.update_title(PESTANYA)
+            ws.resize(rows=1000, cols=len(CAPCALERA))
+        else:
+            ws = sheet.add_worksheet(title=PESTANYA, rows=1000, cols=len(CAPCALERA))
         ws.append_row(CAPCALERA)
-        print(f"Pestanya '{PESTANYA}' creada")
+        print(f"Pestanya '{PESTANYA}' creada a {FULL_HISTORIC}")
         return ws
 
 
@@ -52,7 +65,9 @@ def main():
     creds = ServiceAccountCredentials.from_json_keyfile_dict(
         json.loads(os.environ['GOOGLE_CREDENTIALS']),
         ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive'])
-    sheet = gspread.authorize(creds).open('Comparador_Preus_DB')
+    client = gspread.authorize(creds)
+    sheet = client.open(FULL_PRINCIPAL)
+    sheet_historic = client.open(FULL_HISTORIC)
 
     # Preus actuals: preu i format per supermercat + producte
     actuals = {}
@@ -63,7 +78,7 @@ def main():
             format_ = (text_quantitat(f.get('quantitat')), str(f.get('envas', '') or '').strip())
             actuals[clau] = (preu, format_, str(f.get('data', '') or '')[:10] or str(date.today()))
 
-    ws = obrir_historic(sheet)
+    ws = obrir_historic(sheet_historic)
     if os.environ.get('REINICIAR') == '1':
         ws.clear()
         ws.append_row(CAPCALERA)
@@ -103,8 +118,9 @@ def main():
     per_super = Counter(f[1] for f in noves if (f[1], f[2]) in ultim)
     if per_super:
         print(f"Canvis (preu o format) per supermercat: {dict(per_super)}")
-    celles = sum(w.row_count * w.col_count for w in sheet.worksheets())
-    print(f"Cel·les del Google Sheet: {celles:,} de 10.000.000 ({celles / 100000:.1f}%)")
+    for nom, full in ((FULL_PRINCIPAL, sheet), (FULL_HISTORIC, sheet_historic)):
+        celles = sum(w.row_count * w.col_count for w in full.worksheets())
+        print(f"Cel·les de {nom}: {celles:,} de 10.000.000 ({celles / 100000:.1f}%)")
 
 
 if __name__ == '__main__':
