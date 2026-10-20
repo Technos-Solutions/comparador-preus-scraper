@@ -14,10 +14,10 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: pip install gspread oauth2client google-generativeai google-genai
-      # A master executa debug_gemini_genai.py; a la branca, l'actualitzacio de marques blanques
-      # comprovades a internet el 19/10 (escriu nomes a Marques_Blanques, sense Gemini)
-      - name: Run aplicar_marques_blanques
+      # A master executa debug_gemini_genai.py; a la branca, refa Historic_Preus amb les
+      # columnes quantitat i envas (20/10, REINICIAR=1; escriu nomes a Historic_Preus)
+      - name: Run historic_preus (reiniciar)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python aplicar_marques_blanques.py
+        run: REINICIAR=1 python historic_preus.py
