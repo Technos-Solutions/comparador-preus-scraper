@@ -137,7 +137,11 @@ Pendent per al v3:
     del navegador només salta a la **segona** fulla seguida a 0 i només reintenta aquesta: la primera es
     perd. Proposta: en qualsevol fulla o node a 0, reiniciar i repetir el node (tornant a buscar
     subcategories). Cost estimat: ~30-40 min més entre les Parts 3 i 4 (totes dues per sota de 3h).
-    **20/10:** corregit al codi (qualsevol fulla a 0 reinicia i repeteix el node); en prova a la branca.
+    **20/10: corregit i portat a master.** Qualsevol fulla a 0 reinicia el navegador i repeteix el node sencer.
+    Prova completa (només lectura, run 39440035812): Part 3 7.509 únics en 139 min (19/10: 6.722; galetes
+    i sucres recuperats), Part 4 6.654 en 104 min (19/10: 6.058); 0 fulles via DOM. En aquesta prova la
+    sessió gairebé no es va degradar (1-2 reinicis, a la cadena n'hi ha ~30): el reintent només va saltar
+    un cop (rosegadors, que segueix a 0). Cal confirmar-ho a la cadena del 26/10.
 
 20. **07/10: la Part 4 (Bon Preu) només va extreure 1.304 productes** (normalment ~4.300). Neteja de la
     llar, Per la llar, Espai Mascotes, Nadons i Parafarmàcia van sortir a 0 a nivell de categoria

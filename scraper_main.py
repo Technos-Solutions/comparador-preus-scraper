@@ -1174,7 +1174,7 @@ class BonPreuEsclatScraper:
         slug = unquote(url.split('/')[-2]).lower()   # el mateix tros que nom_cat als logs
         return slug in self.SUBCATEGORIES_EXCLOSES
 
-    def scrape_recursiu(self, url, nivell=0):
+    def scrape_recursiu(self, url, nivell=0, reintent=False):
         """Descobreix i rasca recursivament totes les subcategories reutilitzant el driver"""
         prefix = '  ' * (nivell + 2)
         try:
@@ -1195,15 +1195,17 @@ class BonPreuEsclatScraper:
             else:
                 # Categoria final — extreure productes
                 count = self.extreure_productes_pagina(url)
-                if count == 0:
-                    self.zeros_seguits += 1
-                    if self.zeros_seguits >= self.ZEROS_SEGUITS_PER_REINICI:
-                        print(f"{prefix}⚠️  {self.zeros_seguits} subcategories seguides a 0, reiniciant navegador i reintentant...")
-                        self._crear_driver_nou()
-                        self.zeros_seguits = 0
-                        count = self.extreure_productes_pagina(url)
-                if count > 0:
+                if count == 0 and not reintent:
+                    # Una fulla a 0 sol voler dir que la sessio s'ha degradat (19/10: galetes 0 de
+                    # 288, sucres i mels 0 de 65...), i llavors tampoc es veuen les subcategories.
+                    # Abans nomes es reiniciava a la segona fulla seguida a 0 i la primera es perdia:
+                    # ara es reinicia sempre i es repeteix el node sencer (subcategories incloses)
+                    print(f"{prefix}⚠️  {nom_cat}: 0 productes, reiniciant navegador i repetint...")
+                    self._crear_driver_nou()
                     self.zeros_seguits = 0
+                    self.scrape_recursiu(url, nivell, reintent=True)
+                    return
+                self.zeros_seguits = 0 if count > 0 else self.zeros_seguits + 1
                 print(f"{prefix}└ {nom_cat}: {count} productes")
 
         except Exception as e:
