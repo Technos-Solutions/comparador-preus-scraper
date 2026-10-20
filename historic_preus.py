@@ -83,7 +83,10 @@ def main():
         ws.clear()
         ws.append_row(CAPCALERA)
         print(f"{PESTANYA} buidada (REINICIAR=1)")
-    files = ws.get_all_values()
+    # Valors sense format: el full de l'historic es en catala (ca_ES, "17,25") i el principal en
+    # angles (en_US, "17.25"); amb els valors purs no depenem del format de cada full
+    files = ws.get_all_values(value_render_option='UNFORMATTED_VALUE')
+    files = [[str(x) for x in fila] for fila in files]
     if files and files[0] != CAPCALERA:
         raise SystemExit(f"La capcalera de {PESTANYA} no es {CAPCALERA}: no es barregen estructures")
 
