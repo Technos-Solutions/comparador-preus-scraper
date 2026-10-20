@@ -52,7 +52,7 @@ Compara el mateix producte entre supermercats normalitzant el nom amb un LLM (no
   - `Preus_Temp`, `Preus_Temp_1`, `Preus_Temp_2` — temporals que fa servir el scraper segons la part
   - `Productes_Normalitzats` — caché del normalitzador v2
   - `Comparacions_v2` — sortida de comparacions de preus normalitzades
-  - `Historic_Preus` — històric de preus des del 19/10/2026 (`historic_preus.py`, pas previ del workflow `normalitzador_v3.yml`): només una fila `data | supermercat | producte | preu | quantitat | envas` quan un producte apareix o li canvia el preu o el format
+- Google Sheet a part: **"Comparador_Preus_Historic"** (des del 20/10/2026, compartit amb el compte de servei), pestanya `Historic_Preus` — històric de preus des del 19/10/2026 (`historic_preus.py`, pas previ del workflow `normalitzador_v3.yml`): només una fila `data | supermercat | producte | preu | quantitat | envas` quan un producte apareix o li canvia el preu o el format. Va a part perquè és l'única dada que creix cada setmana (el full principal és al ~55% del límit de 10 milions de cel·les)
 - Autenticació: Service Account de Google (secrets de GitHub Actions)
 
 ## Camps de cada producte
