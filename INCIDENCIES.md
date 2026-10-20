@@ -137,6 +137,7 @@ Pendent per al v3:
     del navegador només salta a la **segona** fulla seguida a 0 i només reintenta aquesta: la primera es
     perd. Proposta: en qualsevol fulla o node a 0, reiniciar i repetir el node (tornant a buscar
     subcategories). Cost estimat: ~30-40 min més entre les Parts 3 i 4 (totes dues per sota de 3h).
+    **20/10:** corregit al codi (qualsevol fulla a 0 reinicia i repeteix el node); en prova a la branca.
 
 20. **07/10: la Part 4 (Bon Preu) només va extreure 1.304 productes** (normalment ~4.300). Neteja de la
     llar, Per la llar, Espai Mascotes, Nadons i Parafarmàcia van sortir a 0 a nivell de categoria
