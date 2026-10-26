@@ -14,10 +14,10 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: pip install gspread oauth2client google-generativeai google-genai
-      # A master executa debug_gemini_genai.py; a la branca, porta l'historic de preus al full
-      # separat Comparador_Preus_Historic i esborra la pestanya antiga (20/10, un sol cop)
-      - name: Run migrar_historic
+      # A master executa debug_gemini_genai.py; a la branca, exporta (nomes lectura) les dades
+      # reals per al prototip visual de l'aplicacio (26/10)
+      - name: Run debug_export_prototip
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python migrar_historic.py
+        run: python debug_export_prototip.py
