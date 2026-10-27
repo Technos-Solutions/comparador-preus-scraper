@@ -142,6 +142,8 @@ Pendent per al v3:
     i sucres recuperats), Part 4 6.654 en 104 min (19/10: 6.058); 0 fulles via DOM. En aquesta prova la
     sessió gairebé no es va degradar (1-2 reinicis, a la cadena n'hi ha ~30): el reintent només va saltar
     un cop (rosegadors, que segueix a 0). Cal confirmar-ho a la cadena del 26/10.
+    **Confirmat a la cadena del 26/10:** 34 reintents a la Part 3 i 27 a la Part 4, totes les fulles
+    recuperades (només rosegadors a 0, probablement buida). Part 3 7.511 únics, Part 4 6.670.
 
 20. **07/10: la Part 4 (Bon Preu) només va extreure 1.304 productes** (normalment ~4.300). Neteja de la
     llar, Per la llar, Espai Mascotes, Nadons i Parafarmàcia van sortir a 0 a nivell de categoria
@@ -199,6 +201,15 @@ Pendent per al v3:
     Per a l'app caldrà decidir com comparar genèrics, p. ex. "llet sencera" de qualsevol marca per €/l.
     A més, de 28.919 productes només n'entren 13.920 a la taula: la resta es descarten per la
     categoria "altra", per no tenir quantitat o per unitat incompatible.
+
+23. **Històric de preus: soroll als canvis de format** (primer run real, 27/10: 5.479 files; 2.656 nous,
+    1.721 pugen, 721 baixen, 381 canvis de format). La majoria de canvis de format no són reduflació:
+    - Mercadona i bonÀrea: fruita i verdura per peça o a granel, amb pes variable cada setmana.
+    - Bon Preu: productes amb el mateix nom i mides diferents (Weleda 150 ml / 30 ml); el scraper
+      desa un sol producte per nom (veure item 5) i cada setmana pot quedar una mida diferent.
+    Al prototip, la reduflació es filtra: menys quantitat amb el mateix preu o més, sense peces ni
+    granel (4 casos reals el 27/10, p. ex. suavitzant Bonpreu 80 dosis 2 l → 1,6 l a 1,79 €).
+    Pendent: aplicar aquest criteri a `historic_preus.py` i desduplicar Bon Preu per nom + format.
 
 ## Automatització i manteniment
 
