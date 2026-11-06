@@ -211,6 +211,13 @@ Pendent per al v3:
     granel (4 casos reals el 27/10, p. ex. suavitzant Bonpreu 80 dosis 2 l → 1,6 l a 1,79 €).
     Pendent: aplicar aquest criteri a `historic_preus.py` i desduplicar Bon Preu per nom + format.
 
+24. **Normalitzador v3: es perd el model o la gamma del producte** (detectat pel David, 06/11). Lavazza
+    "Qualità Oro" i "Crema e Gusto" queden al mateix grup (`cafè mòlt natural`, Lavazza), perquè el prompt
+    diu que no s'hi posin noms de màrqueting. La comparació pot barrejar models diferents d'una marca.
+    Proposta: afegir un camp `gamma` (línia o model comercial: Qualità Oro, Crema e Gusto, Zero...) per a
+    les marques comercials i tornar a extreure atributs només d'aquests productes (cost estimat ~8 €).
+    Mentrestant, el prototip busca al nom real de cada producte i mostra el producte concret.
+
 ## Automatització i manteniment
 
 10. **05/10: la Part 4 es va cancel·lar sense arrencar** (GitHub no va assignar cap màquina en
