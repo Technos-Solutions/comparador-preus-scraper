@@ -218,6 +218,14 @@ Pendent per al v3:
     les marques comercials i tornar a extreure atributs només d'aquests productes (cost estimat ~8 €).
     Mentrestant, el prototip busca al nom real de cada producte i mostra el producte concret.
 
+25. **Guardar la marca d'oferta de cada supermercat** (petició del David, 06/11). Ara les ofertes del
+    prototip es dedueixen de l'històric (el preu ha baixat respecte la setmana anterior) i no se sap si
+    són temporals. Moltes webs marquen la promoció (preu ratllat, etiqueta, preu anterior). Afegir als
+    scrapers dos camps, `oferta` (sí/no o text de la promoció) i `preu_anterior`, i provar-ho supermercat
+    per supermercat amb un diagnòstic aïllat (Mercadona no fa ofertes; Bon Preu: dades de l'API;
+    Carrefour i Dia: preu ratllat a la graella; bonÀrea: per comprovar). Els preus de soci (Club Dia,
+    targetes) queden fora de moment.
+
 ## Automatització i manteniment
 
 10. **05/10: la Part 4 es va cancel·lar sense arrencar** (GitHub no va assignar cap màquina en
