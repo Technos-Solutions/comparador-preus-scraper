@@ -226,6 +226,24 @@ Pendent per al v3:
     Carrefour i Dia: preu ratllat a la graella; bonÀrea: per comprovar). Els preus de soci (Club Dia,
     targetes) queden fora de moment.
 
+26. **Normalitzador v3: preu per kg/l mal calculat en alguns productes** (sospita del David, 08/11;
+    auditoria amb l'exportació del 06/11, 45.608 productes). La quantitat total la decideix Gemini i
+    queda a la caché per nom, en lloc de fer servir la quantitat de la web de cada setmana.
+    - Errors greus (factor ≥ x1,5) en 329 productes; 142 de 5.161 comparacions (2,8%) en tenen algun,
+      i en 98 el "més barat" que es mostra és fals. Errors lleus (<50%) en unes 225 comparacions més.
+    - Tipus: kg no convertit a g (Carrefour "Calabacín 1,5 kg" → 1.500 €/kg); x10 (Dia "Frambuesa
+      170 g" → 1.700 g; "Mini bolas 30 g" → 900 g); càpsules comptades malament (Starbucks 10 ud → 100 u).
+    - Caché per nom obsoleta: si el format canvia però el nom no (Mercadona "Nachos Hacendado" 150 → 200 g,
+      peces de pes variable de bonÀrea cada setmana), o si dos formats tenen el mateix nom (Bon Preu
+      "BONPREU Oli refinat de gira-sol" 1 l i 2 l), el preu/kg queda mal calculat.
+    - Al revés, la web no sempre diu el pack (Carrefour "pack 24 latas 33 cl" → quantitat "33 cl"): aquí
+      Gemini encerta (555 productes).
+    Proposta (sense cost de Gemini, només el codi de `comparar`): quantitat de la web de cada setmana;
+    la de Gemini només si la web no en té o si coincideix amb un pack que diu el nom (N x M). Simulació
+    amb les dades del 06/11: 0 comparacions amb el més barat erroni (abans 98). La validació en part
+    és circular (compara amb la web i el nom); els ~850 productes sense quantitat a la web continuen
+    depenent de Gemini.
+
 ## Automatització i manteniment
 
 10. **05/10: la Part 4 es va cancel·lar sense arrencar** (GitHub no va assignar cap màquina en
