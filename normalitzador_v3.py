@@ -35,6 +35,7 @@
 #   NOMES_COMPARAR "1" per no cridar Gemini i nomes recalcular Comparacions_v3
 
 import json
+import math
 import os
 import re
 import time
@@ -180,6 +181,8 @@ def quantitat_web(text, nom=''):
     t = str(text or '').lower().replace('aprox.', '').strip().rstrip('.').strip()
     if not t:
         return None
+    # Punt de milers (bonÀrea: "1.250 ml"); els decimals de les webs no tenen mai 3 xifres
+    t = re.sub(r'(?<![\d.,])(\d{1,3})\.(\d{3})(?![\d.,])', r'\1\2', t)
     k = 1
     m = re.fullmatch(NUM + r'\s*x\s*' + NUM + r'\s*(.+)', t)
     if m:
@@ -210,11 +213,17 @@ def packs_del_nom(nom):
     return resultat
 
 
-def quantitat_comparable(nom, quantitat, a):
+FACTOR_ESCALA = 50     # web i Gemini tan lluny = error d'escala (g/kg, ml/l, cl/l) d'un dels dos
+
+
+def quantitat_comparable(nom, quantitat, a, preu=0, referencia=None):
     """(unitats, mida, unitat, motiu) per calcular el preu per kg/l/u d'una fila de Preus.
     Gemini a vegades s'equivoca (x10, kg sense passar a g) i la seva quantitat queda a la cache
     per nom encara que el format canvii; la de la web es llegeix cada setmana. Pero la web no
-    sempre diu el pack ("pack 24 latas 33 cl" -> "33 cl"): llavors es fa servir la de Gemini."""
+    sempre diu el pack ("pack 24 latas 33 cl" -> "33 cl"): llavors es fa servir la de Gemini.
+    Si es contradiuen per un factor de 50 o mes, un dels dos te un error d'escala, i a vegades
+    es la web ("Pienso 2,8 g", "Pepsi 1,75 cl", "perfumador 720 l"): es tria la quantitat que
+    dona un preu per kg/l mes proper a la mediana de la categoria (referencia, en €/g, €/ml o €/u)."""
     gemini = (a['unitats'] or 1) * (a['mida'] or 0)
     w = quantitat_web(quantitat, nom)
     if not w:
@@ -226,7 +235,24 @@ def quantitat_comparable(nom, quantitat, a):
         return a['unitats'], a['mida'], a['unitat'], 'iguals'
     if gemini > total * 1.5 and any(u == unitat and abs(gemini / v - 1) < 0.03 for u, v in packs_del_nom(nom)):
         return a['unitats'], a['mida'], a['unitat'], 'gemini: pack que diu el nom'
+    if gemini > 0 and preu > 0 and referencia and max(gemini / total, total / gemini) >= FACTOR_ESCALA:
+        if abs(math.log(preu / gemini / referencia)) < abs(math.log(preu / total / referencia)):
+            return a['unitats'], a['mida'], a['unitat'], "gemini: error d'escala de la web"
     return 1, total, unitat, 'web: Gemini discrepa'
+
+
+def referencies_preu(preus, atributs):
+    """Mediana del preu per g/ml/u de cada (categoria, unitat), amb els productes on la web i
+    Gemini coincideixen. Serveix per decidir qui s'equivoca en els errors d'escala."""
+    valors = defaultdict(list)
+    for f in preus:
+        a = atributs.get((f['supermercat'], f['producte']))
+        if not a or not a['producte'] or f['preu'] <= 0:
+            continue
+        unitats, mida, unitat, motiu = quantitat_comparable(f['producte'], f['quantitat'], a)
+        if motiu == 'iguals' and unitats * mida > 0:
+            valors[(a['categoria'], unitat)].append(f['preu'] / (unitats * mida))
+    return {k: sorted(v)[len(v) // 2] for k, v in valors.items() if len(v) >= 5}
 
 
 def ordre_barrejat(productes):
@@ -404,12 +430,14 @@ def comparar(preus, atributs, marques):
     # Les claus no tenen en compte accents ni majuscules ("beguda lactia" = "beguda làctia");
     # per mostrar es fa servir la forma mes frequent
     comercials, blanques = defaultdict(list), defaultdict(list)
+    referencies = referencies_preu(preus, atributs)
     for f in preus:
         clau = (f['supermercat'], f['producte'])
         a = atributs.get(clau)
         if not a or not a['producte']:
             continue
-        pu, u = preu_unitat(f['preu'], *quantitat_comparable(f['producte'], f['quantitat'], a)[:3])
+        pu, u = preu_unitat(f['preu'], *quantitat_comparable(
+            f['producte'], f['quantitat'], a, f['preu'], referencies.get((a['categoria'], a['unitat'])))[:3])
         if not pu:
             continue
         entrada = dict(f, pu=pu, u=u, marca=a['marca'], producte_n=a['producte'], variant=a['variant'])
