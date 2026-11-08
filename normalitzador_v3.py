@@ -181,8 +181,9 @@ def quantitat_web(text, nom=''):
     t = str(text or '').lower().replace('aprox.', '').strip().rstrip('.').strip()
     if not t:
         return None
-    # Punt de milers (bonÀrea: "1.250 ml"); els decimals de les webs no tenen mai 3 xifres
-    t = re.sub(r'(?<![\d.,])(\d{1,3})\.(\d{3})(?![\d.,])', r'\1\2', t)
+    # Punt de milers de bonÀrea ("1.250 ml", "2.000 g"). Bon Preu fa servir el punt decimal amb 3
+    # xifres ("66.667 g", "2.145 kg"): nomes es tracta com a milers en g/ml i acabat en 0
+    t = re.sub(r'(?<![\d.,])(\d{1,3})\.(\d\d0)(?=\s*(?:g|ml)\b)', r'\1\2', t)
     k = 1
     m = re.fullmatch(NUM + r'\s*x\s*' + NUM + r'\s*(.+)', t)
     if m:
