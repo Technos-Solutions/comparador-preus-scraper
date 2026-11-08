@@ -248,6 +248,17 @@ Pendent per al v3:
     barat, 203 de millor preu per kg/l, +216 comparacions noves (productes per unitats que Gemini havia
     deixat sense mida). Cas que queda malament: errors del nom a la web (Carrefour "Pepsi pack 2
     botellas 1,75 cl", que és 1,75 l). Primer run real: cadena del 09/11.
+    **08/11 (2a part, a `master` c5a805b):** errors d'escala de la web. Si web i Gemini es contradiuen
+    per x50 o més, es tria la quantitat que dona un preu per kg/l més proper a la mediana de la
+    categoria. S'activa en 7 productes, tots errors de la web (Carrefour "Pienso Purina One 2,8 g",
+    confirmat pel David a la web: el paquet és de 2,8 kg; "Pepsi/Ron Brugal 1,75 cl"; bonÀrea "Ekosan
+    720 l"). Queda malament: Bon Preu "ISDIN Llapis enfortidor d'ungles 2,5 l" (cosmètic).
+
+27. **Llegir el preu per kg/l que publica cada supermercat** (idea del 08/11, arran de la captura de
+    Carrefour: "18,45 € · 6,59 €/kg"). És obligatori a les etiquetes i a les webs, i seria la millor
+    validació del nostre càlcul (i del format). Mercadona: `reference_price`/`bulk_price` de l'API; Bon
+    Preu: per mirar a l'API; Carrefour i Dia: text de la graella; bonÀrea: per comprovar. Provar-ho
+    amb un diagnòstic aïllat per supermercat abans de tocar els scrapers.
 
 ## Automatització i manteniment
 
