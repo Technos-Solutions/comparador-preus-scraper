@@ -243,6 +243,11 @@ Pendent per al v3:
     amb les dades del 06/11: 0 comparacions amb el més barat erroni (abans 98). La validació en part
     és circular (compara amb la web i el nom); els ~850 productes sense quantitat a la web continuen
     depenent de Gemini.
+    **08/11: aplicat a `master`** (commit 1c7edaf, `quantitat_comparable` a `normalitzador_v3.py`). Validat
+    amb les dades reals (`debug_preu_unitat.py`): 118 de 5.161 comparacions canvien de supermercat més
+    barat, 203 de millor preu per kg/l, +216 comparacions noves (productes per unitats que Gemini havia
+    deixat sense mida). Cas que queda malament: errors del nom a la web (Carrefour "Pepsi pack 2
+    botellas 1,75 cl", que és 1,75 l). Primer run real: cadena del 09/11.
 
 ## Automatització i manteniment
 
