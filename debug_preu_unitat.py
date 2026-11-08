@@ -8,12 +8,13 @@
 # Gemini nomes si la web no en te, si les unitats no lliguen (g/ml/u) o si coincideix amb un pack
 # que diu el nom ("pack 24 latas 33 cl", "2x210 g") i la web nomes dona la mida d'una unitat.
 # Compara les comparacions actuals amb les que sortirien amb la regla nova.
+# 08/11 (2a versio): la regla ja es a normalitzador_v3.quantitat_comparable; aqui es reconstrueix
+# la comparacio antiga per comparar-les.
 
 import inspect
 import json
 import os
 import random
-import re
 from collections import Counter, defaultdict
 
 import gspread
@@ -22,80 +23,16 @@ from oauth2client.service_account import ServiceAccountCredentials
 import normalitzador_v3 as nv3
 from normalitzador_v3 import MarquesBlanques, comparar, llegir_atributs, llegir_preus
 
-NUM = r'(\d+(?:[.,]\d+)?)'
-# Unitats que fan servir els scrapers a la columna quantitat -> (unitat del normalitzador, factor)
-UNITATS_WEB = {'g': ('g', 1), 'gr': ('g', 1), 'kg': ('g', 1000), 'ml': ('ml', 1), 'cl': ('ml', 10),
-               'l': ('ml', 1000), 'u': ('u', 1), 'ud': ('u', 1), 'uds': ('u', 1), 'unidad': ('u', 1),
-               'unidades': ('u', 1), 'per paquet': ('u', 1), 'd': ('u', 1)}
-# Mides que es poden llegir del nom del producte
-UNITATS_NOM = {'g': ('g', 1), 'gr': ('g', 1), 'kg': ('g', 1000), 'ml': ('ml', 1), 'cl': ('ml', 10),
-               'l': ('ml', 1000), 'litro': ('ml', 1000), 'litros': ('ml', 1000)}
-PARAULES_PACK = (r'x|ud\b|uds\b|unidades|unitats|u\.|latas|llaunes|botellas|botellines|ampolles|briks?|bricks?|'
-                 r'sobres|cápsulas|capsulas|càpsules|bolsitas|piezas|rollos|per paquet|tarrinas|vasos|envases|paquetes')
+quantitat_final = nv3.quantitat_comparable
 
 
-def num(text):
-    return float(text.replace(',', '.'))
-
-
-def quantitat_web(text, nom=''):
-    """'6 x 1.5 l' -> ('ml', 9000). None si no es pot llegir."""
-    t = str(text or '').lower().replace('aprox.', '').strip().rstrip('.').strip()
-    if not t:
-        return None
-    k = 1
-    m = re.fullmatch(NUM + r'\s*x\s*' + NUM + r'\s*(.+)', t)
-    if m:
-        k, t = num(m.group(1)), m.group(2) + ' ' + m.group(3)
-    m = re.fullmatch(NUM + r'\s*(.+?)\.?', t)
-    if not m or m.group(2).strip() not in UNITATS_WEB:
-        return None
-    unitat, factor = UNITATS_WEB[m.group(2).strip()]
-    # Dia/Carrefour treuen la quantitat del nom: "66 lavados" acabava com "66 l"
-    if unitat == 'ml' and re.search(r'\d+\s*(lavados|rentades|dosis)', nom.lower()):
-        return None
-    total = k * num(m.group(1)) * factor
-    return (unitat, total) if total > 0 else None
-
-
-def packs_del_nom(nom):
-    """Quantitats totals de pack que diu el nom: '24 latas 33 cl' -> {('ml', 7920), ('u', 24)}."""
-    t = nom.lower()
-    mides = [(num(v), UNITATS_NOM[u]) for v, u in re.findall(NUM + r'\s*(kg|gr|g|ml|cl|litros|litro|l)\b', t)]
-    packs = [num(x) for x in re.findall(r'(\d+)\s*(?:' + PARAULES_PACK + ')', t)]
-    packs += [num(x) for x in re.findall(r'(?:pack|paquete|caja|estuche|maletín)\s+(?:de\s+)?(\d+)', t)]
-    resultat = set()
-    for k in packs:
-        if k >= 2:
-            resultat.add(('u', k))
-            for v, (u, f) in mides:
-                resultat.add((u, k * v * f))
-    return resultat
-
-
-def quantitat_final(nom, quantitat, a):
-    """(unitats, mida, unitat, motiu) per calcular el preu per kg/l/u."""
-    gemini = (a['unitats'] or 1) * (a['mida'] or 0)
-    w = quantitat_web(quantitat, nom)
-    if not w:
-        return a['unitats'], a['mida'], a['unitat'], 'gemini: la web no diu la quantitat'
-    unitat, total = w
-    if unitat != a['unitat']:
-        return a['unitats'], a['mida'], a['unitat'], 'gemini: unitats diferents de la web'
-    if gemini > 0 and abs(gemini / total - 1) < 0.03:
-        return a['unitats'], a['mida'], a['unitat'], 'iguals'
-    if gemini > total * 1.5 and any(u == unitat and abs(gemini / v - 1) < 0.03 for u, v in packs_del_nom(nom)):
-        return a['unitats'], a['mida'], a['unitat'], 'gemini: pack que diu el nom'
-    return 1, total, unitat, 'web: Gemini discrepa'
-
-
-def comparar_nou():
-    # Mateixa funcio que normalitzador_v3.comparar, nomes canvia d'on surt la quantitat
+def comparar_antic():
+    # normalitzador_v3.comparar tal com era abans del 08/11: quantitat de Gemini (cache)
     font = inspect.getsource(comparar)
-    vell = "pu, u = preu_unitat(f['preu'], a['unitats'], a['mida'], a['unitat'])"
-    assert font.count(vell) == 1
-    font = font.replace(vell, "pu, u = preu_unitat(f['preu'], *quantitat_final(f['producte'], f['quantitat'], a)[:3])")
-    espai = dict(vars(nv3), quantitat_final=quantitat_final)
+    nou = "pu, u = preu_unitat(f['preu'], *quantitat_comparable(f['producte'], f['quantitat'], a)[:3])"
+    assert font.count(nou) == 1
+    font = font.replace(nou, "pu, u = preu_unitat(f['preu'], a['unitats'], a['mida'], a['unitat'])")
+    espai = dict(vars(nv3))
     exec(font, espai)
     return espai['comparar']
 
@@ -133,8 +70,8 @@ def main():
             print('   ', e)
 
     # 2. Comparacions actuals vs regla nova
-    vell = {tuple(f[:6]): f for f in comparar(preus, atributs, marques)}
-    nou = {tuple(f[:6]): f for f in comparar_nou()(preus, atributs, marques)}
+    vell = {tuple(f[:6]): f for f in comparar_antic()(preus, atributs, marques)}
+    nou = {tuple(f[:6]): f for f in comparar(preus, atributs, marques)}
     comuns = vell.keys() & nou.keys()
     canvi_barat = [k for k in comuns if vell[k][12] != nou[k][12]]
     canvi_preu = [k for k in comuns if abs(nou[k][11] / vell[k][11] - 1) > 0.03] if comuns else []

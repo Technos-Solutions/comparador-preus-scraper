@@ -18,6 +18,9 @@
 #     - Marca blanca: mateix producte + variant entre la marca propia de cada supermercat
 #       (llista de Marques_Blanques + criteri de Gemini + productes sense marca)
 #     - Nomes es comparen unitats iguals (€/l, €/kg o €/u)
+#     - La quantitat per calcular el preu per kg/l/u es la de la web de cada setmana (columna
+#       quantitat de Preus); la de Gemini (cache) nomes si la web no en te, si les unitats no
+#       lliguen o si es un pack que diu el nom i la web nomes dona una unitat (INCIDENCIES item 26)
 #
 # Pestanyes que escriu (no toca Preus, Productes_Normalitzats ni Comparacions_v2):
 #   Productes_Atributs  cache d'atributs (una fila per supermercat + nom)
@@ -33,6 +36,7 @@
 
 import json
 import os
+import re
 import time
 import unicodedata
 from collections import Counter, defaultdict
@@ -158,6 +162,71 @@ def preu_unitat(preu, unitats, mida, unitat):
     if unitat == 'u':
         return preu / total, '€/u'
     return None, ''
+
+
+# Quantitat de la web (columna quantitat dels scrapers) -> (unitat del normalitzador, factor)
+UNITATS_WEB = {'g': ('g', 1), 'gr': ('g', 1), 'kg': ('g', 1000), 'ml': ('ml', 1), 'cl': ('ml', 10),
+               'l': ('ml', 1000), 'u': ('u', 1), 'ud': ('u', 1), 'uds': ('u', 1), 'unidad': ('u', 1),
+               'unidades': ('u', 1), 'per paquet': ('u', 1), 'd': ('u', 1)}
+UNITATS_NOM = {'g': ('g', 1), 'gr': ('g', 1), 'kg': ('g', 1000), 'ml': ('ml', 1), 'cl': ('ml', 10),
+               'l': ('ml', 1000), 'litro': ('ml', 1000), 'litros': ('ml', 1000)}
+NUM = r'(\d+(?:[.,]\d+)?)'
+PARAULES_PACK = (r'x|ud\b|uds\b|unidades|unitats|u\.|latas|llaunes|botellas|botellines|ampolles|briks?|bricks?|'
+                 r'sobres|cápsulas|capsulas|càpsules|bolsitas|piezas|rollos|per paquet|tarrinas|vasos|envases|paquetes')
+
+
+def quantitat_web(text, nom=''):
+    """'6 x 1.5 l' -> ('ml', 9000). None si no es pot llegir ('', '180', '300g - 400g'...)."""
+    t = str(text or '').lower().replace('aprox.', '').strip().rstrip('.').strip()
+    if not t:
+        return None
+    k = 1
+    m = re.fullmatch(NUM + r'\s*x\s*' + NUM + r'\s*(.+)', t)
+    if m:
+        k, t = a_float(m.group(1)), m.group(2) + ' ' + m.group(3)
+    m = re.fullmatch(NUM + r'\s*(.+?)\.?', t)
+    if not m or m.group(2).strip() not in UNITATS_WEB:
+        return None
+    unitat, factor = UNITATS_WEB[m.group(2).strip()]
+    # Dia i Carrefour treuen la quantitat del nom: "66 lavados" acabava com "66 l"
+    if unitat == 'ml' and re.search(r'\d+\s*(lavados|rentades|dosis)', str(nom).lower()):
+        return None
+    total = k * a_float(m.group(1)) * factor
+    return (unitat, total) if total > 0 else None
+
+
+def packs_del_nom(nom):
+    """Quantitats totals de pack que diu el nom: '24 latas 33 cl' -> {('ml', 7920), ('u', 24)}."""
+    t = str(nom).lower()
+    mides = [(a_float(v), UNITATS_NOM[u]) for v, u in re.findall(NUM + r'\s*(kg|gr|g|ml|cl|litros|litro|l)\b', t)]
+    packs = [a_float(x) for x in re.findall(r'(\d+)\s*(?:' + PARAULES_PACK + ')', t)]
+    packs += [a_float(x) for x in re.findall(r'(?:pack|paquete|caja|estuche|maletín)\s+(?:de\s+)?(\d+)', t)]
+    resultat = set()
+    for k in packs:
+        if k >= 2:
+            resultat.add(('u', k))
+            for v, (u, f) in mides:
+                resultat.add((u, k * v * f))
+    return resultat
+
+
+def quantitat_comparable(nom, quantitat, a):
+    """(unitats, mida, unitat, motiu) per calcular el preu per kg/l/u d'una fila de Preus.
+    Gemini a vegades s'equivoca (x10, kg sense passar a g) i la seva quantitat queda a la cache
+    per nom encara que el format canvii; la de la web es llegeix cada setmana. Pero la web no
+    sempre diu el pack ("pack 24 latas 33 cl" -> "33 cl"): llavors es fa servir la de Gemini."""
+    gemini = (a['unitats'] or 1) * (a['mida'] or 0)
+    w = quantitat_web(quantitat, nom)
+    if not w:
+        return a['unitats'], a['mida'], a['unitat'], 'gemini: la web no diu la quantitat'
+    unitat, total = w
+    if unitat != a['unitat']:
+        return a['unitats'], a['mida'], a['unitat'], 'gemini: unitats diferents de la web'
+    if gemini > 0 and abs(gemini / total - 1) < 0.03:
+        return a['unitats'], a['mida'], a['unitat'], 'iguals'
+    if gemini > total * 1.5 and any(u == unitat and abs(gemini / v - 1) < 0.03 for u, v in packs_del_nom(nom)):
+        return a['unitats'], a['mida'], a['unitat'], 'gemini: pack que diu el nom'
+    return 1, total, unitat, 'web: Gemini discrepa'
 
 
 def ordre_barrejat(productes):
@@ -340,7 +409,7 @@ def comparar(preus, atributs, marques):
         a = atributs.get(clau)
         if not a or not a['producte']:
             continue
-        pu, u = preu_unitat(f['preu'], a['unitats'], a['mida'], a['unitat'])
+        pu, u = preu_unitat(f['preu'], *quantitat_comparable(f['producte'], f['quantitat'], a)[:3])
         if not pu:
             continue
         entrada = dict(f, pu=pu, u=u, marca=a['marca'], producte_n=a['producte'], variant=a['variant'])
