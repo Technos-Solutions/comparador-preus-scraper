@@ -251,7 +251,8 @@ Pendent per al v3:
     **08/11 (2a part, a `master` c5a805b):** errors d'escala de la web. Si web i Gemini es contradiuen
     per x50 o més, es tria la quantitat que dona un preu per kg/l més proper a la mediana de la
     categoria. S'activa en 7 productes, tots errors de la web (Carrefour "Pienso Purina One 2,8 g",
-    confirmat pel David a la web: el paquet és de 2,8 kg; "Pepsi/Ron Brugal 1,75 cl"; bonÀrea "Ekosan
+    confirmat pel David a la web: el paquet és de 2,8 kg; "Pepsi/Ron Brugal 1,75 cl", confirmat el 09/11:
+    la foto diu 2 x 1,75 L i Carrefour mostra 0,84 €/l, igual que el nostre càlcul; bonÀrea "Ekosan
     720 l"). Queda malament: Bon Preu "ISDIN Llapis enfortidor d'ungles 2,5 l" (cosmètic; la web diu
     2,5 L i la capsa 2,5 ml, confirmat pel David).
 
