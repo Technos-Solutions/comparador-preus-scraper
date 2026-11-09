@@ -265,6 +265,10 @@ Pendent per al v3:
     també ho és (Bon Preu "ISDIN Llapis enfortidor d'ungles": web "2.5L (10,78 € per litre)", la capsa
     diu 2,5 ml; confirmat pel David el 08/11). Serveix per contrastar: si web, Gemini i preu per kg del
     supermercat quadren, és fiable; si no, es marca per revisar.
+    Revisió del David (08-09/11): Carrefour "Pepsi 1,75 cl" i "Ron Brugal 1,75 cl" mostren el preu per litre
+    correcte (0,84 / 0,97 / 21,14 €/l, iguals que el nostre); només el títol està malament: bona font per
+    contrastar. bonÀrea ("Ekosan 720 l", "0,00 €/ml") i Bon Preu (ISDIN "2.5L", "10,78 € per litre")
+    calculen el seu preu per kg amb la quantitat errònia: no serveixen per contrastar.
 
 ## Automatització i manteniment
 
