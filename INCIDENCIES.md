@@ -282,6 +282,9 @@ Pendent per al v3:
 
 11. **Si una part falla, la cadena s'atura en silenci.** Cal un avís, per exemple un correu o
     una alerta quan una part falla o no s'executa.
+    Cas real 09/11: la Part 3 es va marcar com a fallada als 52 s sense que GitHub creés el treball de
+    scraping (error de GitHub, no del codi). La cadena va quedar aturada fins que la vam tornar a llançar
+    a mà el 10/11 a les 04:01 UTC; Parts 3-5 i normalitzador van acabar bé a les 12:10 UTC.
 
 12. **Alerta de caiguda de productes per supermercat.** Carrefour va estar setmanes a 0 sense
     que ningú se n'adonés. Proposta: en acabar cada part, comparar el recompte amb la
