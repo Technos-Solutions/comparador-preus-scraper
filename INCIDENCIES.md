@@ -290,6 +290,11 @@ Pendent per al v3:
     - Sabors amb Gemini: MIXT, 17 unificacions, ~13 bones (tonyina/atun, avellana/nocciola, margarida/
       margarita, peperoni/pepperoni) i ~4 dolentes (treu o afegeix trets). Millor un diccionari fix petit
       amb els bons casos.
+    **Aplicat a `master` (813e044, 12/11): sabors amb codi + diccionari** (atun/tonno = tonyina, nocciola =
+    avellana, platano = plàtan, margarita = margarida, pepperoni = peperoni) i el "+" compta a les claus
+    ("talla 4+" no és "talla 4"). Validat: 5.389 comparacions. Queda pendent: la gamma amb la regla B
+    (columna nova i ~1 $) i les compreses de Mercadona a 2,35 €/u (paquet sense nombre d'unitats; surten a
+    "Revisar").
 
 28. **Preu de la botiga diferent del de la web (Dia)** (David, 12/11). Pizza Dr. Oetker Ristorante
     prosciutto 340 g: web de Dia 3,14 € (el que llegim, correcte), botiga 2,99 € (-5%), sense targeta
