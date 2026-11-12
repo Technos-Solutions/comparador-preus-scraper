@@ -25,6 +25,20 @@ def main():
     print(f"Codi nou:       {len(nou)} {dict(Counter(f[0] for f in nou))} | Revisar {sum(1 for f in nou if f[-2])}")
     print(f"Files sense categoria: {sum(1 for f in nou if not f[1])} | columnes per fila: {Counter(len(f) for f in nou)}")
     print(f"Pendents a descartar (marques blanques): {len(marques.pendents_a_descartar())}")
+    # Comparacions noves per la clau de variant (numeros en lletres, sinonims, ordre)
+    original = nv3.variant_clau
+    nv3.variant_clau = nv3.sense_accents
+    try:
+        sense = nv3.comparar(preus, atributs, nv3.MarquesBlanques(sheet.worksheet('Marques_Blanques').get_all_records(), atributs))
+    finally:
+        nv3.variant_clau = original
+    print(f"Sense la clau de variant nova: {len(sense)} | amb: {len(nou)}")
+    claus_sense = {(f[0], f[2], f[3], f[4], f[5]) for f in sense}
+    noves = [f for f in nou if (f[0], f[2], f[3], f[4], f[5]) not in claus_sense]
+    print(f"Comparacions noves o ampliades per la variant: {len(noves)}")
+    for f in noves[:60]:
+        preus_s = ' | '.join(f"{s[:9]} {v}" for s, v in zip(nv3.SUPERMERCATS, f[6:11]) if v != '')
+        print(f"   {f[0][:8]} | {f[2][:30]} | {f[3]} {f[4]} {f[5]} | {preus_s} | Revisar {f[-2] or '-'}")
     print("\nDr. Oetker (codi nou):")
     for f in nou:
         if 'oetker' in f[2].lower():

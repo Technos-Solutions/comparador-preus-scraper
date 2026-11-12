@@ -136,7 +136,27 @@ def sense_accents(text):
     # Clau per comparar textos: sense accents, majuscules ni puntuacio (12/11: "Dr Oetker" i
     # "Dr. Oetker", "Moët & Chandon" i "Moet Chandon" eren marques diferents)
     text = unicodedata.normalize('NFKD', str(text or '')).encode('ascii', 'ignore').decode()
-    return ' '.join(re.sub(r'[^\w\s]', ' ', text.lower().replace('-', ' ')).split())
+    # el "+" si que canvia el producte ("talla 4+" no es "talla 4", "FPS 50+" no es "FPS 50")
+    return ' '.join(re.sub(r'[^\w\s]', ' ', text.lower().replace('-', ' ').replace('+', ' plus ')).split())
+
+
+# Variants: la mateixa cosa escrita diferent (12/11, debug_proves_gamma_sabors.py). Numeros en lletres
+# ("4 formatges" = "quatre formatges") i sinonims segurs trobats a les proves amb Gemini
+NUMEROS_VARIANT = {'2': 'dos', '3': 'tres', '4': 'quatre', '5': 'cinc', '6': 'sis', '7': 'set',
+                   '8': 'vuit', '9': 'nou', '10': 'deu'}
+SINONIMS_VARIANT = {'atun': 'tonyina', 'tonno': 'tonyina', 'nocciola': 'avellana', 'platano': 'platan',
+                    'margarita': 'margarida', 'margherita': 'margarida', 'pepperoni': 'peperoni'}
+
+
+def variant_clau(variant):
+    """Clau d'una variant per comparar: cada tret sense accents ni puntuacio, numeros en lletres i
+    sinonims unificats, sense repeticions i en ordre ("pernil, formatge" = "formatge, pernil")."""
+    trets = set()
+    for tret in str(variant or '').split(','):
+        paraules = [SINONIMS_VARIANT.get(p, NUMEROS_VARIANT.get(p, p)) for p in sense_accents(tret).split()]
+        if paraules:
+            trets.add(' '.join(paraules))
+    return ', '.join(sorted(trets))
 
 
 def a_float(valor):
@@ -447,7 +467,7 @@ def comparar(preus, atributs, marques):
             continue
         entrada = dict(f, pu=pu, u=u, marca=a['marca'], producte_n=a['producte'], variant=a['variant'],
                        categoria=a['categoria'])
-        producte, variant = sense_accents(a['producte']), sense_accents(a['variant'])
+        producte, variant = sense_accents(a['producte']), variant_clau(a['variant'])
         if marques.es_blanca(a['marca'], f['supermercat'], a['marca_blanca']):
             blanques[(a['categoria'], producte, variant, u)].append(entrada)
         else:

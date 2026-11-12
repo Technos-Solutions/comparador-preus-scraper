@@ -17,7 +17,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 from normalitzador_v3 import (MarquesBlanques, comparar, llegir_atributs, llegir_preus, preu_unitat,
-                              quantitat_comparable, referencies_preu, sense_accents)
+                              quantitat_comparable, referencies_preu, sense_accents,
+                              variant_clau)
 
 
 def main():
@@ -45,7 +46,7 @@ def main():
         mb = 0
         if a and a['producte'] and pu:
             mb = 1 if marques.es_blanca(a['marca'], f['supermercat'], a['marca_blanca']) else 0
-            producte, variant = sense_accents(a['producte']), sense_accents(a['variant'])
+            producte, variant = sense_accents(a['producte']), variant_clau(a['variant'])
             clau = ((a['categoria'], producte, variant, u) if mb else
                     (sense_accents(a['marca']), producte, variant, u))
             if clau not in index_grup:
