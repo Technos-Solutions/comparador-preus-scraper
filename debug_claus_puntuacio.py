@@ -92,6 +92,38 @@ def main():
     for f in noves[:30]:
         sups = [s for s, v in zip(nv3.SUPERMERCATS, f[6:11]) if v != '']
         print(f"   {f[0][:8]} | {f[2]} | {f[3]} {f[4]} {f[5]} | {', '.join(s[:9] for s in sups)} | barat {f[12]} {f[11]}")
+    # C: B + sense la categoria a la clau de les marques comercials (Gemini posa el mateix producte
+    # en categories diferents segons el supermercat: pizzes de Dia vs Bon Preu/Carrefour)
+    font = inspect.getsource(nv3.comparar)
+    vell = "comercials[(a['categoria'], sense_accents(a['marca']), producte, variant, u)]"
+    assert font.count(vell) == 1
+    font = font.replace(vell, "comercials[('', sense_accents(a['marca']), producte, variant, u)]")
+    espai = dict(vars(nv3), sense_accents=sense_puntuacio)
+    exec(font, espai)
+    nv3.sense_accents = sense_puntuacio
+    try:
+        c = espai['comparar'](preus, atributs, nv3.MarquesBlanques(files_marques, atributs))
+    finally:
+        nv3.sense_accents = ORIGINAL
+    resum('C (B + sense categoria a les marques comercials)', c)
+    claus_b = {tuple(sense_puntuacio(x) for x in f[2:6]) for f in b if f[0] == 'Marca comercial'}
+    noves_c = [f for f in c if f[0] == 'Marca comercial' and tuple(sense_puntuacio(x) for x in f[2:6]) not in claus_b]
+    print(f"   comparacions comercials noves amb C: {len(noves_c)}. Exemples:")
+    for f in noves_c[:25]:
+        preus_s = ' | '.join(f"{s[:9]} {v}" for s, v in zip(nv3.SUPERMERCATS, f[6:11]) if v != '')
+        print(f"   {f[2]} | {f[3]} {f[4]} {f[5]} | {preus_s} | Revisar {f[-2] or '-'}")
+    print("\nCategoria de les pizzes Dr. Oetker per supermercat:")
+    cats = Counter()
+    for (sup, nom), at in atributs.items():
+        if 'oetker' in at['marca'].lower() and at['producte'].lower() == 'pizza':
+            cats[(sup, at['categoria'])] += 1
+    for (sup, cat), n in sorted(cats.items()):
+        print(f"   {sup}: {cat} ({n})")
+    print("\nDr. Oetker amb C:")
+    for f in c:
+        if 'oetker' in str(f[2]).lower():
+            preus_s = ' | '.join(f"{s[:9]} {v}" for s, v in zip(nv3.SUPERMERCATS, f[6:11]) if v != '')
+            print(f"   {f[3]} {f[4]} {f[5]} | {preus_s}")
     print("\nDr. Oetker amb B:")
     for f in b:
         if 'oetker' in str(f[2]).lower():
