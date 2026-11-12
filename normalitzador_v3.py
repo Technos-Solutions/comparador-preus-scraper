@@ -133,8 +133,10 @@ class AturadaGemini(Exception):
 
 # ── Utilitats ─────────────────────────────────────────────────────────────────
 def sense_accents(text):
+    # Clau per comparar textos: sense accents, majuscules ni puntuacio (12/11: "Dr Oetker" i
+    # "Dr. Oetker", "Moët & Chandon" i "Moet Chandon" eren marques diferents)
     text = unicodedata.normalize('NFKD', str(text or '')).encode('ascii', 'ignore').decode()
-    return ' '.join(text.lower().replace('-', ' ').split())
+    return ' '.join(re.sub(r'[^\w\s]', ' ', text.lower().replace('-', ' ')).split())
 
 
 def a_float(valor):
@@ -428,8 +430,10 @@ def demanar_atributs(gemini, vocabulari, lot):
 
 # ── Comparacio (sense Gemini) ─────────────────────────────────────────────────
 def comparar(preus, atributs, marques):
-    # Les claus no tenen en compte accents ni majuscules ("beguda lactia" = "beguda làctia");
-    # per mostrar es fa servir la forma mes frequent
+    # Les claus no tenen en compte accents, majuscules ni puntuacio ("beguda lactia" = "beguda làctia");
+    # per mostrar es fa servir la forma mes frequent. Les marques comercials es comparen sense la
+    # categoria: Gemini a vegades posa el mateix producte en categories diferents segons el
+    # supermercat (12/11: pizzes Dr. Oetker "altra" a Dia i "congelat" a Bon Preu i Carrefour)
     comercials, blanques = defaultdict(list), defaultdict(list)
     referencies = referencies_preu(preus, atributs)
     for f in preus:
@@ -441,12 +445,13 @@ def comparar(preus, atributs, marques):
             f['producte'], f['quantitat'], a, f['preu'], referencies.get((a['categoria'], a['unitat'])))[:3])
         if not pu:
             continue
-        entrada = dict(f, pu=pu, u=u, marca=a['marca'], producte_n=a['producte'], variant=a['variant'])
+        entrada = dict(f, pu=pu, u=u, marca=a['marca'], producte_n=a['producte'], variant=a['variant'],
+                       categoria=a['categoria'])
         producte, variant = sense_accents(a['producte']), sense_accents(a['variant'])
         if marques.es_blanca(a['marca'], f['supermercat'], a['marca_blanca']):
             blanques[(a['categoria'], producte, variant, u)].append(entrada)
         else:
-            comercials[(a['categoria'], sense_accents(a['marca']), producte, variant, u)].append(entrada)
+            comercials[(sense_accents(a['marca']), producte, variant, u)].append(entrada)
 
     files = []
     for tipus, grups in (('Marca comercial', comercials), ('Marca blanca', blanques)):
@@ -457,7 +462,7 @@ def comparar(preus, atributs, marques):
                     millors[e['supermercat']] = e
             if len(millors) < 2:
                 continue
-            categoria, u = clau[0], clau[-1]
+            categoria, u = Counter(e['categoria'] for e in entrades).most_common(1)[0][0], clau[-1]
             producte = Counter(e['producte_n'] for e in entrades).most_common(1)[0][0]
             variant = Counter(e['variant'] for e in entrades).most_common(1)[0][0]
             if tipus == 'Marca comercial':
