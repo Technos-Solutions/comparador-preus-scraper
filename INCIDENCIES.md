@@ -270,6 +270,12 @@ Pendent per al v3:
     contrastar. bonÀrea ("Ekosan 720 l", "0,00 €/ml") i Bon Preu (ISDIN "2.5L", "10,78 € per litre")
     calculen el seu preu per kg amb la quantitat errònia: no serveixen per contrastar.
 
+29. **El mateix producte no es comparava per la marca o la categoria** (12/11, pizzes Dr. Oetker de Dia).
+    "Dr Oetker" i "Dr. Oetker" eren marques diferents, i Gemini havia posat les pizzes de Dia a "altra" i
+    les de Bon Preu i Carrefour a "congelat". **Arreglat a `master` (cef4414)**: claus sense puntuacio i
+    marques comercials comparades sense categoria. 5.376 comparacions (abans 5.340). Queda pendent:
+    sabors amb noms diferents ("mozzarella"/"margarida", "4 formatges"/"quatre formatges").
+
 28. **Preu de la botiga diferent del de la web (Dia)** (David, 12/11). Pizza Dr. Oetker Ristorante
     prosciutto 340 g: web de Dia 3,14 € (el que llegim, correcte), botiga 2,99 € (-5%), sense targeta
     Club Dia ni cartell d'oferta. Hipòtesi: la web de Dia mostra el preu d'una zona o botiga per
