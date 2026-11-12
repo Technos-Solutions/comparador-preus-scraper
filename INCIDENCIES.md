@@ -270,6 +270,14 @@ Pendent per al v3:
     contrastar. bonÀrea ("Ekosan 720 l", "0,00 €/ml") i Bon Preu (ISDIN "2.5L", "10,78 € per litre")
     calculen el seu preu per kg amb la quantitat errònia: no serveixen per contrastar.
 
+28. **Preu de la botiga diferent del de la web (Dia)** (David, 12/11). Pizza Dr. Oetker Ristorante
+    prosciutto 340 g: web de Dia 3,14 € (el que llegim, correcte), botiga 2,99 € (-5%), sense targeta
+    Club Dia ni cartell d'oferta. Hipòtesi: la web de Dia mostra el preu d'una zona o botiga per
+    defecte (no li diem el codi postal). Per fer: anotar més casos a la llista de la botiga i provar
+    amb un diagnòstic si la web/API de Dia dona preus diferents segons el codi postal (Catalunya).
+    Mercadona té el mateix risc: llegim el magatzem de Madrid (wh=mad1). Si es confirma, l'aplicació
+    ha d'avisar que els preus són els de la web.
+
 ## Automatització i manteniment
 
 10. **05/10: la Part 4 es va cancel·lar sense arrencar** (GitHub no va assignar cap màquina en
