@@ -14,10 +14,10 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: pip install gspread oauth2client google-generativeai google-genai
-      # A master executa debug_gemini_genai.py; a la branca, exporta les dades del prototip
-      # amb les claus noves (12/11; nomes lectura, sense Gemini)
-      - name: Run debug_export_prototip
+      # A master executa debug_gemini_genai.py; a la branca, proves de gamma i sabors
+      # (cafe i congelats, 12/11; nomes lectura de Sheets, Gemini < 0,50 euros)
+      - name: Run debug_proves_gamma_sabors
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python debug_export_prototip.py
+        run: python debug_proves_gamma_sabors.py
