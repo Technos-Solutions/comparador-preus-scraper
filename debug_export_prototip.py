@@ -47,7 +47,7 @@ def main():
             mb = 1 if marques.es_blanca(a['marca'], f['supermercat'], a['marca_blanca']) else 0
             producte, variant = sense_accents(a['producte']), sense_accents(a['variant'])
             clau = ((a['categoria'], producte, variant, u) if mb else
-                    (a['categoria'], sense_accents(a['marca']), producte, variant, u))
+                    (sense_accents(a['marca']), producte, variant, u))
             if clau not in index_grup:
                 index_grup[clau] = len(grups)
                 grups.append([mb, a['categoria'], a['marca'], a['producte'], a['variant'], u])
