@@ -16,8 +16,8 @@ from collections import Counter
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-from normalitzador_v3 import (MarquesBlanques, llegir_atributs, llegir_preus, preu_unitat,
-                              sense_accents)
+from normalitzador_v3 import (MarquesBlanques, comparar, llegir_atributs, llegir_preus, preu_unitat,
+                              quantitat_comparable, referencies_preu, sense_accents)
 
 
 def main():
@@ -30,6 +30,8 @@ def main():
     atributs = llegir_atributs(sheet.worksheet('Productes_Atributs'))
     files_marques = sheet.worksheet('Marques_Blanques').get_all_records()
     marques = MarquesBlanques(files_marques, atributs)
+    # 10/11: preu per kg/l amb la mateixa regla que normalitzador_v3.comparar (quantitat de la web)
+    referencies = referencies_preu(preus, atributs)
 
     # Grups de comparacio: la mateixa clau que normalitzador_v3.comparar
     grups, index_grup, productes = [], {}, []
@@ -37,7 +39,8 @@ def main():
         a = atributs.get((f['supermercat'], f['producte']))
         pu, u = (None, '')
         if a and a['producte']:
-            pu, u = preu_unitat(f['preu'], a['unitats'], a['mida'], a['unitat'])
+            pu, u = preu_unitat(f['preu'], *quantitat_comparable(
+                f['producte'], f['quantitat'], a, f['preu'], referencies.get((a['categoria'], a['unitat'])))[:3])
         gid = -1
         mb = 0
         if a and a['producte'] and pu:
@@ -74,15 +77,27 @@ def main():
     mida_grup = Counter(p[7] for p in productes if p[7] >= 0)
     print(f"Grups amb 2+ productes: {sum(1 for n in mida_grup.values() if n >= 2)}")
 
-    # Diagnostic: per que "Lavazza Oro" no surt a les comparacions
-    print('\n--- Lavazza ---')
+    # Comprovacio: el millor preu i el supermercat mes barat de cada grup (el que mostra el prototip)
+    # han de coincidir amb Comparacions_v3 del full
+    millors = {}
     for p in productes:
-        if 'lavazza' in p[1].lower():
-            a = atributs.get((p[0], p[1]), {})
-            print(f"{p[0]:<18} | {p[1][:60]:<60} | {p[2]} | {p[3]} | marca={a.get('marca')!r} "
-                  f"producte={a.get('producte')!r} variant={a.get('variant')!r} "
-                  f"{a.get('unitats')}x{a.get('mida')}{a.get('unitat')} | grup {p[7]}")
-
+        if p[7] >= 0 and p[6]:
+            g = millors.setdefault(p[7], {})
+            if p[0] not in g or p[6] < g[p[0]]:
+                g[p[0]] = p[6]
+    del_prototip = Counter((round(min(g.values()), 2), min(g, key=g.get)) for g in millors.values() if len(g) > 1)
+    full = sheet.worksheet('Comparacions_v3').get_all_values()[1:]
+    del_full = Counter((round(float(str(f[11]).replace(',', '.')), 2), f[12]) for f in full if f[11])
+    del_codi = Counter((round(f[11], 2), f[12]) for f in comparar(preus, atributs, marques))
+    print(f"\nComprovacio: grups comparables al prototip {sum(del_prototip.values())} | files de Comparacions_v3 "
+          f"{sum(del_full.values())} | comparar() ara {sum(del_codi.values())}")
+    print(f"   prototip = full (millor preu i supermercat): {sum((del_prototip & del_full).values())} | "
+          f"nomes al prototip: {sum((del_prototip - del_full).values())} | nomes al full: {sum((del_full - del_prototip).values())}")
+    print(f"   full = comparar() d'ara: {sum((del_full & del_codi).values())} de {sum(del_full.values())}")
+    for k, n in list((del_prototip - del_full).items())[:10]:
+        print('   nomes prototip:', k, n)
+    for k, n in list((del_full - del_prototip).items())[:10]:
+        print('   nomes full:', k, n)
 
 if __name__ == '__main__':
     main()

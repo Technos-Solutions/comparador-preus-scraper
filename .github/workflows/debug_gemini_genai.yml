@@ -14,10 +14,10 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: pip install gspread oauth2client google-generativeai google-genai
-      # A master executa debug_gemini_genai.py; a la branca, claus de comparacio sense puntuacio
-      # ("Dr Oetker" = "Dr. Oetker", 12/11; nomes lectura de Sheets, sense Gemini)
-      - name: Run debug_claus_puntuacio
+      # A master executa debug_gemini_genai.py; a la branca, exporta les dades del prototip
+      # amb la regla nova i les compara amb Comparacions_v3 (12/11; nomes lectura, sense Gemini)
+      - name: Run debug_export_prototip
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python debug_claus_puntuacio.py
+        run: python debug_export_prototip.py
