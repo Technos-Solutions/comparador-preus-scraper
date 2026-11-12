@@ -275,6 +275,21 @@ Pendent per al v3:
     les de Bon Preu i Carrefour a "congelat". **Arreglat a `master` (cef4414)**: claus sense puntuacio i
     marques comercials comparades sense categoria. 5.376 comparacions (abans 5.340). Queda pendent:
     sabors amb noms diferents ("mozzarella"/"margarida", "4 formatges"/"quatre formatges").
+    **Proves del 12/11** (`debug_proves_gamma_sabors.py`, cafe + congelats + totes les pizzes, 2.423 productes,
+    Gemini ~0,12 $ en dues rondes):
+    - Gamma nomes afegida (crida a part, sense tocar la resta d'atributs). Regla A (qualsevol gamma diferent
+      separa): NEGATIVA, separa 59 comparacions i en perd 20 perque moltes webs no diuen la linia al nom
+      (Marcilla "mescla" sense "Gran Aroma"). Regla B (nomes separa si TOTS els productes del grup tenen
+      gamma): POSITIVA, separa 16 grups i 13 son correctes (Ristorante / Casa di Mama / Rustica / Pannini,
+      Lavazza Oro / Crema e Gusto, Starbucks Blonde / Pike Place, Buitoni Forno di Pietra / La Grandiosa...);
+      3 errors (ColaCao "0%" / "Cero", Lotus "Biscoff" / "Biscuit", Ristorante "Piccolissima").
+      Cost estimat de la primera passada per a tots els productes de marca: ~1 $. Cal una columna nova
+      `gamma` a Productes_Atributs.
+    - Sabors amb codi (numeros en lletres, trets sense repetir ni ordre): POSITIU, +7 comparacions, totes
+      correctes (pizza 4 formatges de marca blanca a 5 supermercats, 5 formatges, Carte d'Or...). Sense cost.
+    - Sabors amb Gemini: MIXT, 17 unificacions, ~13 bones (tonyina/atun, avellana/nocciola, margarida/
+      margarita, peperoni/pepperoni) i ~4 dolentes (treu o afegeix trets). Millor un diccionari fix petit
+      amb els bons casos.
 
 28. **Preu de la botiga diferent del de la web (Dia)** (David, 12/11). Pizza Dr. Oetker Ristorante
     prosciutto 340 g: web de Dia 3,14 € (el que llegim, correcte), botiga 2,99 € (-5%), sense targeta
