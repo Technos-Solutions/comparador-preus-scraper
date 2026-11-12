@@ -61,7 +61,7 @@ def main():
     files = []
     for f in preus:
         a = atributs.get((f['supermercat'], f['producte']))
-        if not a or not a['producte'] or a['categoria'] not in PROVA:
+        if not a or not a['producte'] or (a['categoria'] not in PROVA and 'pizza' not in a['producte'].lower()):
             continue
         pu, u = nv3.preu_unitat(f['preu'], *nv3.quantitat_comparable(
             f['producte'], f['quantitat'], a, f['preu'], ref.get((a['categoria'], a['unitat'])))[:3])
@@ -81,11 +81,21 @@ def main():
     def comparables(g):
         return {k: v for k, v in g.items() if len({x['s'] for x in v}) > 1}
 
-    def clau_com(x, gamma=False, variant=None):
+    NUMS = {'2': 'dos', '3': 'tres', '4': 'quatre', '5': 'cinc', '6': 'sis', '7': 'set', '8': 'vuit', '9': 'nou', '10': 'deu'}
+
+    def variant_codi(v):
+        # sense Gemini: numeros en lletres, trets sense repetir i en ordre ("4 formatges" = "quatre formatges")
+        trets = {' '.join(NUMS.get(w, w) for w in sa(t).split()) for t in str(v or '').split(',')}
+        return ', '.join(sorted(t for t in trets if t))
+
+    def clau_com(x, gamma=False, variant=None, regla_gamma='A'):
         a = x['a']
         v = sa(x['variant'] if variant is None else variant)
         if x['blanca']:
             return ('B', a['categoria'], sa(a['producte']), v, x['u'])
+        if gamma and regla_gamma == 'B':
+            # B: la gamma nomes separa si tots els productes del grup en tenen
+            return ('C', sa(a['marca']), sa(a['producte']), v, x['u'], x.get('gamma_b', ''))
         return ('C', sa(a['marca']), sa(a['producte']), v, x['u']) + ((sa(x['gamma']),) if gamma else ())
 
     abans = comparables(grups(clau_com))
@@ -105,7 +115,8 @@ def main():
                  'productes': [{'id': x['id'], 'n': x['n'], 'm': x['a']['marca'], 'p': x['a']['producte'],
                                 'v': x['a']['variant']} for x in lot]}
         per_id = {x['id']: x for x in lot}
-        for r in gemini.cridar(PROMPT_GAMMA, dades):
+        resposta = gemini.cridar(PROMPT_GAMMA, dades) or gemini.cridar(PROMPT_GAMMA, dades)
+        for r in resposta:
             if isinstance(r, list) and len(r) >= 2 and str(r[0]) in per_id:
                 x = per_id[str(r[0])]
                 x['gamma'] = str(r[1] or '').strip()
@@ -124,7 +135,19 @@ def main():
     for m, c in sorted(gammes.items(), key=lambda kv: -sum(kv[1].values()))[:20]:
         print(f"   {m}: {dict(c.most_common(10))}")
     despres = comparables(grups(lambda x: clau_com(x, gamma=True)))
-    print(f"Comparacions: abans {len(abans)} | amb gamma {len(despres)}")
+    print(f"Comparacions: abans {len(abans)} | amb gamma (regla A: qualsevol diferencia separa) {len(despres)}")
+    for k, v in grups(clau_com).items():
+        if k[0] == 'C':
+            tots = all(x['gamma'] for x in v)
+            for x in v:
+                x['gamma_b'] = sa(x['gamma']) if tots else ''
+    despres_b = comparables(grups(lambda x: clau_com(x, gamma=True, regla_gamma='B')))
+    separats_b = [k for k, v in abans.items() if k[0] == 'C' and len({x['gamma_b'] for x in v}) > 1]
+    print(f"Regla B (nomes separa si tots tenen gamma): {len(despres_b)} comparacions | grups separats {len(separats_b)}")
+    for k in separats_b[:20]:
+        v = abans[k]
+        detall = '; '.join(f"{x['s'][:9]} {x['gamma']} {x['pu']:.2f}" for x in sorted(v, key=lambda x: x['gamma']))
+        print(f"   B separa: {k[1]} | {k[2]} {k[3]} | {detall[:220]}")
     # Grups d'abans que la gamma separa
     separats, perduts = [], []
     for k, v in abans.items():
@@ -149,7 +172,7 @@ def main():
     per_producte = defaultdict(set)
     for x in files:
         if x['variant']:
-            per_producte[(x['a']['categoria'], x['a']['producte'].lower())].add(x['variant'])
+            per_producte[('', x['a']['producte'].lower())].add(x['variant'])
     llista = [(f"G{i}", k, sorted(v)) for i, (k, v) in enumerate(sorted(per_producte.items())) if len(v) > 1]
     canonica = {}
     for i in range(0, len(llista), 40):
@@ -164,7 +187,7 @@ def main():
     for (k, v), c in sorted(canonica.items()):
         print(f"   {k[1]}: {v!r} -> {c!r}")
     def var_nova(x):
-        return canonica.get((((x['a']['categoria'], x['a']['producte'].lower())), x['variant']), x['variant'])
+        return canonica.get((('', x['a']['producte'].lower()), x['variant']), x['variant'])
     despres2 = comparables(grups(lambda x: clau_com(x, variant=var_nova(x))))
     claus_abans = set(abans)
     noves = {k: v for k, v in despres2.items() if k not in claus_abans}
@@ -176,6 +199,21 @@ def main():
                 millors[x['s']] = x
         detall = ' | '.join(f"{s[:9]} {x['pu']:.2f} ({x['variant']})" for s, x in millors.items())
         print(f"   {k[1] if k[0] == 'C' else 'marca blanca'} | {k[2]} {k[3]} | {detall[:240]}")
+
+    # Sabors sense Gemini (codi)
+    despres3 = comparables(grups(lambda x: clau_com(x, variant=variant_codi(x['variant']))))
+    noves3 = {k: v for k, v in despres3.items() if k not in claus_abans}
+    print(f"\nSabors amb codi (numeros en lletres, sense repeticions ni ordre): {len(despres3)} comparacions | noves {len(noves3)}")
+    for k, v in list(noves3.items())[:30]:
+        millors = {}
+        for x in v:
+            if x['s'] not in millors or x['pu'] < millors[x['s']]['pu']:
+                millors[x['s']] = x
+        detall = ' | '.join(f"{s[:9]} {x['pu']:.2f} ({x['variant']})" for s, x in millors.items())
+        print(f"   {k[1] if k[0] == 'C' else 'marca blanca'} | {k[2]} {k[3]} | {detall[:240]}")
+    print("\nVariants de les pizzes Dr. Oetker (per veure 'mozzarella' / 'margarida' / '4 formatges'):")
+    vp = Counter((x['s'][:9], x['variant']) for x in files if 'oetker' in x['a']['marca'].lower() and x['a']['producte'].lower() == 'pizza')
+    print('   ' + '; '.join(f"{s} {v}" for (s, v), n in sorted(vp.items())))
 
     cost = gemini.tokens_entrada / 1e6 * 0.30 + gemini.tokens_sortida / 1e6 * 2.5
     print(f"\nTokens totals: entrada {gemini.tokens_entrada} sortida {gemini.tokens_sortida} | "
