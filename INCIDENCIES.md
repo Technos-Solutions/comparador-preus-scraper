@@ -150,7 +150,7 @@ Ordre proposat: 11 (avís si la cadena falla) i 28 (preu de la botiga vs web).
 - **1. Carrefour: quantitat mal calculada en packs amb format `NxM`** — Resolta (08/11, 1c7edaf): el normalitzador fa servir el pack que diu el nom ("6x15 g" = 90 g) quan la web només dona una unitat. El scraper no s'ha tocat.
 - **6. Auditoria de quantitats a tots els supermercats** — Resolta (08/11): auditoria de quantitats feta a tots els supermercats (incidència 26).
 - **10. 05/10: la Part 4 es va cancel·lar sense arrencar** — Resolta (07/10): cas puntual (GitHub no va assignar màquina); rellançada a mà. El problema de fons és la 11.
-- **15. Normalitzador:** — Resolta (11/10): ja no cal triar: el normalitzador v3 és l'actiu. Esborrar el v1 i el v2 va amb la 14.
+- **15. Normalitzador: decidir entre la v1 (Groq) i la v2 (Gemini)** — Resolta (11/10): ja no cal triar: el normalitzador v3 és l'actiu. Esborrar el v1 i el v2 va amb la 14.
 - **19. Poques comparacions: 370 de 13.920 productes** — Resolta (08/10): resolta amb el normalitzador v3: 3.830 comparacions el 08/10 i 5.389 el 12/11.
 - **20. 07/10: la Part 4 (Bon Preu) només va extreure 1.304 productes** — Resolta (08/10, e6feb43): es repeteix la categoria principal que dona 0.
 - **21. Bon Preu: el scraper només llegeix els primers productes de cada fulla** — Resolta (11/10): Bon Preu es llegeix amb l'estat de la pàgina i l'API interna.
