@@ -15,6 +15,11 @@ Ordre proposat: 11 (avís si la cadena falla) i 28 (preu de la botiga vs web).
     Cas real 09/11: la Part 3 es va marcar com a fallada als 52 s sense que GitHub creés el treball de
     scraping (error de GitHub, no del codi). La cadena va quedar aturada fins que la vam tornar a llançar
     a mà el 10/11 a les 04:01 UTC; Parts 3-5 i normalitzador van acabar bé a les 12:10 UTC.
+    Cas real 16/11: la Part 2 (Dia) va fallar als 4 min instal·lant Chromium amb apt (és un paquet snap i
+    el servidor de snapcraft rebutjava la connexió). La cadena va quedar aturada fins al 19/11, quan el
+    David va veure dades estranyes al prototip; rellançada a mà el 19/11 a les 16:45 UTC. A més, no hi havia
+    cap revisió programada per al dimarts. Proposta addicional: la Part 2 hauria d'instal·lar Chrome com la
+    Part 3 (`browser-actions/setup-chrome`) en lloc de `apt install chromium` (snap).
 
 28. **Preu de la botiga diferent del de la web (Dia)** (David, 12/11). Pizza Dr. Oetker Ristorante
     prosciutto 340 g: web de Dia 3,14 € (el que llegim, correcte), botiga 2,99 € (-5%), sense targeta
@@ -52,6 +57,11 @@ Ordre proposat: 11 (avís si la cadena falla) i 28 (preu de la botiga vs web).
     per supermercat amb un diagnòstic aïllat (Mercadona no fa ofertes; Bon Preu: dades de l'API;
     Carrefour i Dia: preu ratllat a la graella; bonÀrea: per comprovar). Els preus de soci (Club Dia,
     targetes) queden fora de moment.
+    **19/11 (David):** al prototip, les baixades i pujades més grans de Bon Preu són promocions: NIVEA Sèrum
+    19,99 → 9,95, LINDT xocolata blanca 3,99 → 1,99, FREIXENET Meritum caixa 102,55 → 51,27, ALPRO civada
+    11,94 → 5,97 (exactament la meitat); i al revés, promocions que s'acaben (ALPRO ametlles 6,57 → 13,14,
+    Coca-Cola zero llima 1,00 → 1,69, Moritz 6x33 5,03 → 8,34; Dia Pepsi lima 1,75 → 1,00 → 1,75). Les dades
+    són correctes (és el preu de la web), però sense la marca d'oferta semblen pujades i baixades reals.
 
 ## Pendents — prioritat mitjana
 
