@@ -14,10 +14,10 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: pip install gspread oauth2client google-generativeai google-genai
-      # A master executa debug_gemini_genai.py; a la branca, valida la clau de variant nova
-      # (numeros en lletres i sinonims, 12/11; nomes lectura, sense Gemini)
-      - name: Run debug_validar_claus
+      # A master executa debug_gemini_genai.py; a la branca, cerca productes a Preus i a l historic
+      # (baixades de Bon Preu, 19/11; nomes lectura, sense Gemini)
+      - name: Run debug_cerca
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python debug_validar_claus.py
+        run: python debug_cerca.py

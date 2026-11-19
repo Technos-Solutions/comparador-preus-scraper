@@ -9,7 +9,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 import normalitzador_v3 as nv3
 
-CERCA = ['oetker', 'ristorante', 'casa di mama', 'la mia grande', 'tradizionale', 'flammkuchen']
+CERCA = ['nivea cellular sèrum facial', 'lindt xocolata blanca', 'freixenet meritum', 'alpro pack 6u', 'cesar menjar',
+         'pepsi zero azúcar sabor lima 1,75', 'coca-cola refresc de cola zero sucre llima en ampolla', 'moritz cervesa']
 
 
 def main():
@@ -33,5 +34,21 @@ def main():
               f"{(round(pu, 2) if pu else '-')!s:>6} {ue:<5} | {attr}")
 
 
+def historic():
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(
+        json.loads(os.environ['GOOGLE_CREDENTIALS']),
+        ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive'])
+    files = gspread.authorize(creds).open('Comparador_Preus_Historic').worksheet('Historic_Preus') \
+        .get_all_values(value_render_option='UNFORMATTED_VALUE')
+    print(f"\nHistoric_Preus: {len(files) - 1} files. Historial dels productes cercats:")
+    per = {}
+    for f in files[1:]:
+        if any(c in str(f[2]).lower() for c in CERCA):
+            per.setdefault((f[1], f[2]), []).append(f)
+    for (sup, nom), fs in sorted(per.items()):
+        print(f"   {sup[:10]:<10} | {nom[:60]:<60} | " + ' -> '.join(f"{f[0]} {f[3]}€ {f[4]}" for f in fs))
+
+
 if __name__ == '__main__':
+    historic()
     main()
