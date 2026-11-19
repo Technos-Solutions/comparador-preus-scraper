@@ -8,7 +8,8 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit, sense esb
 
 ## Pendents — prioritat alta
 
-Ordre proposat: 11 (avís si la cadena falla) i 28 (preu de la botiga vs web).
+**Següent: la 11 (avís si la cadena falla). Aprovat pel David el 19/11: fer-la de seguida que acabi la
+cadena del 16/11 (rellançada el 19/11), sense tocar codi mentre s'executa.** Després, la 28.
 
 11. **Si una part falla, la cadena s'atura en silenci.** Cal un avís, per exemple un correu o
     una alerta quan una part falla o no s'executa.
