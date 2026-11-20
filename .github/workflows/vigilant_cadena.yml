@@ -1,0 +1,30 @@
+name: Vigilant de la cadena
+
+# Comprova cada 2 hores, de dilluns a dijous, que la cadena setmanal avanci (INCIDENCIES item 11).
+# Si una part falla, la torna a llançar un cop i obre un avis (issue "[Cadena] ...") que GitHub
+# notifica per correu i a l'app. Quan el normalitzador acaba be, tanca l'avis. Veure vigilant_cadena.py.
+on:
+  schedule:
+    - cron: '41 */2 * * 1-4'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+jobs:
+  vigilar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install requests
+      - name: Comprova la cadena
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python vigilant_cadena.py

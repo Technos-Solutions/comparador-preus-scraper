@@ -21,6 +21,15 @@ cadena del 16/11 (rellançada el 19/11), sense tocar codi mentre s'executa.** De
     David va veure dades estranyes al prototip; rellançada a mà el 19/11 a les 16:45 UTC. A més, no hi havia
     cap revisió programada per al dimarts. Proposta addicional: la Part 2 hauria d'instal·lar Chrome com la
     Part 3 (`browser-actions/setup-chrome`) en lloc de `apt install chromium` (snap).
+    **20/11: proposta preparada a la branca** (`vigilant_cadena.py` + `.github/workflows/vigilant_cadena.yml`).
+    Cada 2 hores de dilluns a dijous mira l'estat de la cadena (no es pot fer amb `workflow_run` perquè GitHub
+    no el dispara quan la part l'ha llançada un altre workflow). Si la part on és la cadena ha fallat, la torna
+    a llançar un cop i obre un avís (issue "[Cadena] ...", que GitHub notifica per correu i a l'app); si torna a
+    fallar, només avisa. També avisa si una part porta més de 6 h en marxa, si la següent no arrenca en 30 min
+    o si la Part 1 no ha començat en 8 dies, i tanca l'avís quan el normalitzador acaba bé.
+    Prova en mode prova (DRY_RUN) amb moments reals: 10/11 03:00 → rellançaria la Part 3 i avisaria; 18/11
+    08:00 → rellançaria la Part 2 i avisaria; 19/11 20:00 → Part 3 en marxa, tot correcte; 20/11 → cadena
+    acabada, tancaria l'avís. Pendent: l'OK del David per portar-ho a master.
 
 28. **Preu de la botiga diferent del de la web (Dia)** (David, 12/11). Pizza Dr. Oetker Ristorante
     prosciutto 340 g: web de Dia 3,14 € (el que llegim, correcte), botiga 2,99 € (-5%), sense targeta
