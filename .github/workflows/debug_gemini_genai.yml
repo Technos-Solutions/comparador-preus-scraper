@@ -7,17 +7,26 @@ jobs:
   debug:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Nomes lectura: el vigilant en mode prova (DRY_RUN) no llança ni escriu res
+    permissions:
+      contents: read
+      actions: read
+      issues: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install dependencies
-        run: pip install gspread oauth2client google-generativeai google-genai
-      # A master executa debug_gemini_genai.py; a la branca, cerca productes a Preus i a l historic
-      # (baixades de Bon Preu, 19/11; nomes lectura, sense Gemini)
-      - name: Run debug_cerca
+        run: pip install requests
+      # A master executa debug_gemini_genai.py; a la branca, prova del vigilant de la cadena (item 11,
+      # 20/11) en mode prova amb moments reals: aturades del 09/11 i del 16/11, cadena en marxa i acabada
+      - name: Prova vigilant_cadena (DRY_RUN)
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python debug_cerca.py
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: '1'
+        run: |
+          for ara in 2026-11-10T03:00:00Z 2026-11-18T08:00:00Z 2026-11-19T20:00:00Z 2026-11-20T07:00:00Z ""; do
+            echo "=================================================="
+            ARA="$ara" python vigilant_cadena.py
+          done
