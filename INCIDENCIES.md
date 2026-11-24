@@ -8,8 +8,7 @@ Quan se'n resolgui una, moure-la a "Resoltes" amb la data i el commit, sense esb
 
 ## Pendents — prioritat alta
 
-**Següent: la 11 (avís si la cadena falla). Aprovat pel David el 19/11: fer-la de seguida que acabi la
-cadena del 16/11 (rellançada el 19/11), sense tocar codi mentre s'executa.** Després, la 28.
+**La 11 (avís si la cadena falla) està feta i activa des del 24/11. Següent: la 28 (preu de la botiga vs web).**
 
 11. **Si una part falla, la cadena s'atura en silenci.** Cal un avís, per exemple un correu o
     una alerta quan una part falla o no s'executa.
@@ -29,7 +28,9 @@ cadena del 16/11 (rellançada el 19/11), sense tocar codi mentre s'executa.** De
     o si la Part 1 no ha començat en 8 dies, i tanca l'avís quan el normalitzador acaba bé.
     Prova en mode prova (DRY_RUN) amb moments reals: 10/11 03:00 → rellançaria la Part 3 i avisaria; 18/11
     08:00 → rellançaria la Part 2 i avisaria; 19/11 20:00 → Part 3 en marxa, tot correcte; 20/11 → cadena
-    acabada, tancaria l'avís. Pendent: l'OK del David per portar-ho a master.
+    acabada, tancaria l'avís. **24/11: aprovat pel David i portat a master (1db44ef).** Primera execució real
+    (24/11 19:50 UTC): la cadena del 23/11 havia acabat bé, cap avís. A partir d'ara s'executa sol cada 2 h
+    de dilluns a dijous. Pendent menor: canviar la Part 2 a `browser-actions/setup-chrome`.
 
 28. **Preu de la botiga diferent del de la web (Dia)** (David, 12/11). Pizza Dr. Oetker Ristorante
     prosciutto 340 g: web de Dia 3,14 € (el que llegim, correcte), botiga 2,99 € (-5%), sense targeta
